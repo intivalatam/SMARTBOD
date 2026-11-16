@@ -1,13 +1,12 @@
 # Actualización vigente
-Lee primero **LEEME_ACTUALIZACION.md** para el rendimiento por producto y el descuento al vender. Las secciones siguientes documentan la instalación y la evolución de versiones anteriores. La validación actual es de 79 pruebas aprobadas. Incluye historial de precios, reposición guiada e instalación como aplicación web, además de la clasificación por unidad, rendimiento o peso/volumen.
+Lee primero **LEEME_ACTUALIZACION.md** para el rendimiento por producto y el descuento al vender. SMARTBOD también ofrece lotes y vencimientos, mermas, compras por proveedor, turnos de caja, ubicaciones de venta con stock compartido, cola de ventas offline y respaldos diarios verificables en S3.
 
 # Actualización más reciente: preparación simplificada
 En la fila de una receta pulsa + Preparar, escribe cuántas unidades preparaste y pulsa Agregar al stock de venta. El diálogo muestra stock anterior, resultado previsto y, después de la respuesta del servidor, stock confirmado. Los ingredientes están en un detalle plegable; si falta alguno el mensaje indica cuál y cuánto hay.
 Si necesitas modificar el rendimiento/ingredientes, el editor permite Guardar receta y agregar al stock de venta en una sola transacción; ya no exige guardar, cerrar y volver a abrir. La operación se rechaza completa si falta stock o los datos cambiaron. No se cargan unidades ficticias ni se omite la validación.
 Después de preparar se enfoca el SKU en Inventario y se quitan filtros de stock/categoría que podrían ocultarlo. Se actualiza Caja con el estado del servidor. El filtro de agotados/bajo/normal ahora clasifica también recetas por su stock preparado.
 Se verificó el código actual de public/index.html en el repositorio intivalatam/SMARTBOD antes de modificar el flujo. Se confirmó el bloqueo de preparación al cambiar ingredientes/rendimiento; no se verificó la causa de cada intento fallido en la base de datos real del usuario.
-Validación actual: 48 pruebas de dominio, reportes y representación de Caja. Dos pruebas usan los métodos reales del frontend en un DOM simulado: respuesta de preparación -> 24 visibles y clic al carrito; venta -> 23 visibles, sin doble consumo. No equivalen a una prueba visual completa en navegador ni una ejecución contra PostgreSQL real.
-Conserva el respaldo y actualiza api, lib y public juntos. No cambies tu base ni las variables. Esta entrega es un ZIP; no se ha cambiado la rama de producción automáticamente.
+Antes de actualizar, conserva un respaldo de PostgreSQL y el JSON manual. Las nuevas tablas de lotes se inicializan al primer acceso: las existencias previas se migran como lotes de apertura sin fecha; asigna su vencimiento en Operación antes de vender perecederos.
 
 # SMARTBOD Cloud
 
@@ -18,11 +17,11 @@ Versión con API para Vercel y PostgreSQL. Requiere conectar la base de datos an
 2. Crea una base PostgreSQL administrada (por ejemplo Neon) y obtén su conexión con SSL y pool. La cuenta usada por la aplicación necesita crear tablas en su base dedicada. No reutilices una base de otro sistema.
 3. Sube el contenido de esta carpeta a una rama de revisión del repositorio SMARTBOD. La estructura incluye public/, api/, lib/, tests/, package.json y vercel.json. Retira del repositorio la anterior configuración estática y el index.html antiguo de raíz al integrar esta versión.
 4. En Vercel: Framework Other; Root Directory raíz; Output Directory public; Install Command npm install; Build Command vacío; Node 22.x. Las rutas /api se ejecutan como funciones Node. Conserva smartbod.intiva.edu.pe en Domains.
-5. En Settings > Environment Variables configura DATABASE_URL, ADMIN_USERNAME y ADMIN_PASSWORD (mínimo 12 caracteres). Solo Production para datos reales. Preview debe usar una base separada y sus propias credenciales. No copies secretos al código, al chat ni al README.
+5. En Settings > Environment Variables configura DATABASE_URL, ADMIN_USERNAME y ADMIN_PASSWORD (mínimo 12 caracteres). Para respaldos automáticos agrega CRON_SECRET, BACKUP_S3_BUCKET, BACKUP_S3_REGION, BACKUP_S3_ACCESS_KEY_ID y BACKUP_S3_SECRET_ACCESS_KEY. BACKUP_S3_ENDPOINT es opcional para servicios compatibles con S3. Otorga a las credenciales acceso de lectura/listado/escritura y borrado únicamente al bucket/prefijo de SMARTBOD. Solo Production para datos reales. Preview debe usar otra base, otro bucket y credenciales separadas. No copies secretos al repositorio, al chat ni al README.
 6. Despliega. El esquema se crea al recibir la primera solicitud; el primer inicio de sesión crea el administrador indicado en las variables. No hay registro público. Tras comprobar el acceso, puedes retirar ADMIN_PASSWORD y ADMIN_USERNAME del entorno y redesplegar: el usuario ya permanece en la base.
 7. Desde Usuarios y permisos crea vendedores y fija descuentos. Las cuentas locales anteriores NO se importan: recréalas para darles contraseñas nuevas.
 8. En Reportes restaura el respaldo JSON después de revisarlo. Reemplaza los datos centrales y requiere confirmación. Hazlo una sola vez, antes de iniciar ventas con otros equipos.
-9. Comprueba con dos navegadores: login, compra, venta, stock, reporte, descuento rechazado, usuario desactivado y cierre de sesión. No elimines tu respaldo anterior.
+9. Comprueba con dos navegadores: login, abrir turno, compra con vencimiento, venta, arqueo, recepción de orden, venta offline y conflicto de stock, restauración de respaldo y cierre de sesión. No elimines tu respaldo anterior.
 
 Si ya sustituiste la versión anterior, /migrar.html permite descargar sus datos locales desde el MISMO dominio y navegador. No migra automáticamente ni borra los datos locales.
 
@@ -31,21 +30,25 @@ Si ya sustituiste la versión anterior, /migrar.html permite descargar sus datos
 - Sesión de 8 horas en cookie HttpOnly/Secure/SameSite, contraseñas scrypt con sal, límite de intentos de login y permisos consultados en el servidor.
 - Administrador: inventario, importación, usuarios, descuentos, reportes y respaldo. Vendedor: catálogo y ventas. El servidor rechaza cambios administrativos del vendedor y no entrega el historial financiero global.
 - El servidor usa sus precios, costos, recetas y límites; no acepta el total ni el permiso enviados por el cliente.
-- Venta y consumo de insumos en una transacción con bloqueo. Reintentos con mismo identificador no duplican ventas. Con error de red, reintenta el mismo carrito antes de modificarlo.
+- Cada venta requiere un turno abierto. El arqueo compara fondo inicial, ventas en efectivo no anuladas y efectivo contado. No incluye ingresos/retiros de caja externos.
+- Los ingresos y preparaciones crean lotes; salida y preparación consumen FEFO (primero vence, primero sale). Los lotes vencidos se bloquean. Las existencias antiguas se migran como lote de apertura sin vencimiento, que el administrador debe actualizar. Las mermas actualizan stock e historial.
+- Proveedores y órdenes de compra se guardan en la nube; recibir una orden crea entradas y lotes una sola vez. Las ubicaciones se guardan en tickets y reportes, pero comparten un solo inventario: no representan stock separado por sucursal.
+- Venta offline: la app cachea el shell y el último estado visible en el navegador; una venta sin conexión queda en IndexedDB, sin ticket ni confirmación de stock hasta que el servidor la acepte. Al reconectar se sincroniza con el mismo identificador; conflictos se mantienen pendientes para revisión. La cola es local al dispositivo, no es una sincronización entre equipos y puede perderse si se borran los datos del navegador.
+- Venta y consumo de insumos en una transacción con bloqueo. Reintentos con el mismo identificador no duplican ventas.
 - Las ediciones administrativas llevan revisión: un estado antiguo se rechaza para evitar sobrescribir ventas de otro equipo. Si hay conflicto, recarga y repite tu cambio.
 - Actualizar datos consulta el estado central. No incluye actualización instantánea por WebSockets: una pantalla abierta se refresca con ese botón o después de guardar/vender. Cada venta siempre valida el stock actual del servidor.
-- Reportes guardados y respaldos contienen los datos centrales. Las copias JSON no incluyen cuentas/contraseñas. Configura retención y recuperación de respaldos con tu proveedor PostgreSQL; esta entrega no contrata ni activa un plan de backups automáticos.
+- El respaldo diario de Vercel Cron copia estado, configuración e imágenes a S3, verifica lectura e integridad y conserva hasta 30 copias. Restaurar desde Operación reemplaza estado e imágenes y requiere confirmación. Usa un bucket separado de la base productiva y prueba la restauración periódicamente; el proveedor S3 debe mantener sus propias medidas de durabilidad.
 - Tickets internos, sin facturación electrónica. No incluye recuperación de contraseña por email ni MFA. Otro administrador puede restablecer una contraseña; conserva acceso administrativo al proveedor.
 - La migración conserva los datos disponibles y congela el histórico estimado de la versión anterior. No reconstruye costos que nunca se registraron.
 - Los reportes actuales y acumulados mantienen sus límites históricos. PDF de entrada: plantilla rellenable SMARTBOD, no escaneos.
 
 ## Verificación realizada
-Ejecutar `npm test` (11 pruebas del dominio): consumo conjunto, límites de descuento, precios del servidor, pago insuficiente, reintentos, dos ventas sucesivas, migración, conservación de costos, filtrado del vendedor y cantidades inválidas. Comprobación de sintaxis JavaScript y referencias de interfaz.
+Ejecutar `npm test` para las pruebas de dominio, lotes FEFO, vencimientos, mermas, compras, caja, reportes y PWA.
 
-Pendiente de conexión: instalación de dependencias en Vercel, prueba contra PostgreSQL real, login/roles de extremo a extremo y comprobación visual del despliegue. Las pruebas del dominio no sustituyen estas comprobaciones.
+Pendiente de configuración: credenciales PostgreSQL/S3 y Vercel, pruebas contra servicios reales, login/roles de extremo a extremo y comprobación visual. Las pruebas automatizadas no sustituyen estas comprobaciones. La publicación requiere conectar esta carpeta al repositorio GitHub y proyecto Vercel destino.
 
 ## Arquitectura y mantenimiento
-api/index.js: autenticación, autorización y transacciones. lib/schema.sql: tablas propias sb_*. lib/domain.js: validación/cálculo de ventas. public/: interfaz y plantillas. sb_audit registra operaciones administrativas y ventas. Los datos de negocio se guardan como documento JSONB versionado, adecuado para una primera instalación pequeña; no es un motor analítico de alto volumen. La API limita el documento de entrada a 3 MB. Vigila crecimiento de historial y migra a tablas normalizadas/paginación antes de alcanzar ese límite.
+api/index.js: autenticación, autorización, transacciones y respaldo S3. lib/schema.sql: tablas propias sb_*. lib/domain.js: validación/cálculo y operaciones de inventario. public/: interfaz, cola local de ventas y plantillas. sb_audit registra operaciones administrativas y ventas. Los datos de negocio se guardan como documento JSONB versionado; no es un motor analítico de alto volumen. La API limita las solicitudes a 3 MB. Vigila crecimiento de historial e imágenes y migra a tablas normalizadas/paginación antes de alcanzar ese límite.
 
 ## Actualización: preparación por tandas
 Antes de actualizar exporta el respaldo JSON. Sustituye los archivos del proyecto Cloud completo; no basta con actualizar public/index.html porque también cambia la API. Conserva las variables y base de datos de Vercel.

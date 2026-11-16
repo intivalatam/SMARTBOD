@@ -831,13 +831,13 @@ body{font-size:16px;line-height:1.55}button,input,select,textarea{font:inherit}.
 </head>
 <body>
 <div class="install-bar"><span id="connection-status" role="status" aria-live="polite"></span><button id="install-app" class="btn ghost" type="button">Instalar en mi teléfono</button></div>
-<dialog id="install-help"><h2>SMARTBOD en tu teléfono</h2><p>Se instala desde el navegador como aplicación web. Usa la misma cuenta y los mismos datos.</p><ol><li><strong>iPhone:</strong> abre esta dirección en Safari, pulsa Compartir y elige Añadir a pantalla de inicio. Activa Abrir como app web si aparece.</li><li><strong>Android:</strong> abre el menú del navegador y busca Instalar aplicación o Añadir a pantalla de inicio.</li><li><strong>Huawei:</strong> abre el menú de tu navegador y busca Añadir a pantalla de inicio. Según el sistema y navegador puede instalar una app web o crear un acceso directo; si no aparece, puedes seguir usando la web.</li></ol><p>Necesitas conexión para guardar compras y ventas. No se instala mediante App Store, Google Play ni AppGallery.</p><button id="install-help-close" type="button" class="btn">Entendido</button></dialog>
+<dialog id="install-help"><h2>SMARTBOD en tu teléfono</h2><p>Se instala desde el navegador como aplicación web. Usa la misma cuenta y los mismos datos.</p><ol><li><strong>iPhone:</strong> abre esta dirección en Safari, pulsa Compartir y elige Añadir a pantalla de inicio. Activa Abrir como app web si aparece.</li><li><strong>Android:</strong> abre el menú del navegador y busca Instalar aplicación o Añadir a pantalla de inicio.</li><li><strong>Huawei:</strong> abre el menú de tu navegador y busca Añadir a pantalla de inicio. Según el sistema y navegador puede instalar una app web o crear un acceso directo; si no aparece, puedes seguir usando la web.</li></ol><p>Si pierdes la conexión, puedes dejar una venta en cola; no se emite ticket ni se confirma hasta que el servidor la procese. No se instala mediante App Store, Google Play ni AppGallery.</p><button id="install-help-close" type="button" class="btn">Entendido</button></dialog>
 <section id="auth-screen" class="auth-screen login-page">
 <header class="login-top"><a class="login-brand" href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#064e3b"/><path d="M45 19H25a9 9 0 0 0 0 18h14a5 5 0 0 1 0 10H19" stroke="#fff" stroke-width="7" stroke-linecap="square"/><path d="M19 45h20a9 9 0 0 0 0-18H25a5 5 0 0 1 0-10h20" stroke="#34d399" stroke-width="3"/><path d="m43 12 6 6-6 6" stroke="#34d399" stroke-width="3" stroke-linejoin="miter"/></svg><span>SMARTBOD</span></a><span>Gestión para tu negocio</span></header>
 <main class="login-layout"><div class="login-story"><h1>Tu negocio organizado.<br>Cada venta cuenta.</h1><div class="login-accent"></div><p class="login-lead">Gestiona tus ventas, controla tu inventario y organiza tus eventos desde un solo lugar.</p><div class="login-scene"><img src="assets/login-reference.png" alt="Ventas del día, control de inventario y ventas en eventos: tienda, punto de venta y puesto de feria" fetchpriority="high"></div><p class="login-caption">En tu local, en ferias y donde crezca tu negocio.</p></div>
 <form id="auth-form" class="login-card"><div class="login-card-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#064e3b"/><path d="M45 19H25a9 9 0 0 0 0 18h14a5 5 0 0 1 0 10H19" stroke="#fff" stroke-width="7" stroke-linecap="square"/><path d="M19 45h20a9 9 0 0 0 0-18H25a5 5 0 0 1 0-10h20" stroke="#34d399" stroke-width="3"/><path d="m43 12 6 6-6 6" stroke="#34d399" stroke-width="3" stroke-linejoin="miter"/></svg></div><h2 id="auth-heading">Bienvenido a SMARTBOD</h2><p class="login-card-sub">Ingresa para gestionar tu negocio.</p><label for="auth-user">Usuario</label><div class="login-input"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/></svg></span><input id="auth-user" autocomplete="username" required maxlength="80" placeholder="Ingresa tu usuario"></div><label for="auth-password">Contraseña</label><div class="login-input"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="12" rx="3"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg></span><input id="auth-password" type="password" autocomplete="current-password" required placeholder="Ingresa tu contraseña"><button id="auth-toggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false">Ver</button></div><button class="login-submit" type="submit">Ingresar <span aria-hidden="true">→</span></button><p id="auth-status" role="status" aria-live="polite"></p><p class="login-security">Las cuentas son administradas por tu organización.</p></form></main>
 <footer class="login-footer">SMARTBOD · Ventas, inventario y eventos</footer></section>
-<dialog id="quick-production"><form id="quick-production-form"><h2 id="quick-production-title">Preparar para vender</h2><input id="quick-production-id" type="hidden"><p id="quick-production-before" class="production-total"></p><label>¿Cuántas unidades preparaste?<input id="quick-production-qty" type="number" min="1" step="1" required style="font-size:28px;font-weight:800"></label><p id="quick-production-after" class="production-total"></p><details><summary>Ver ingredientes que se descontarán</summary><div id="quick-production-needs"></div></details><p id="quick-production-status" role="status" aria-live="polite"></p><div class="report-controls"><button id="quick-production-submit" class="btn" type="submit">Agregar al stock de venta</button><button id="quick-production-close" class="btn ghost" type="button">Cerrar</button></div></form></dialog>
+<dialog id="quick-production"><form id="quick-production-form"><h2 id="quick-production-title">Preparar para vender</h2><input id="quick-production-id" type="hidden"><p id="quick-production-before" class="production-total"></p><label>¿Cuántas unidades preparaste?<input id="quick-production-qty" type="number" min="1" step="1" required style="font-size:28px;font-weight:800"></label><label>Vencimiento de esta tanda (opcional)<input id="quick-production-expiration" type="date"></label><p id="quick-production-after" class="production-total"></p><details><summary>Ver ingredientes que se descontarán</summary><div id="quick-production-needs"></div></details><p id="quick-production-status" role="status" aria-live="polite"></p><div class="report-controls"><button id="quick-production-submit" class="btn" type="submit">Agregar al stock de venta</button><button id="quick-production-close" class="btn ghost" type="button">Cerrar</button></div></form></dialog>
 <dialog id="restock-dialog"><form id="restock-form"><h2 id="restock-heading">Reponer producto</h2><p id="restock-sku" class="item-sku"></p><p id="restock-stock"></p><p id="restock-previous" class="help-note"></p><input id="restock-id" type="hidden">
 <fieldset><legend>1. ¿Cuánto compraste?</legend><div class="report-controls"><label>La compra viene<select id="restock-mode"><option value="units">En unidades o envases</option><option value="packages">En paquetes de varias unidades</option></select></label><label><span id="restock-count-label">Unidades que ingresan</span><input id="restock-count" type="number" min="1" step="1" required></label><label id="restock-units-label">Unidades dentro de cada paquete<input id="restock-units" type="number" min="1" step="1" required></label></div></fieldset>
 <fieldset><legend>2. Registra los precios de esta compra</legend><div class="report-controls"><label><span id="restock-cost-label">Nuevo costo por unidad (S/)</span><input id="restock-cost" type="number" min="0" step="0.01" placeholder="Lo que pagaste ahora" required></label><label><span id="restock-discount-label">Descuento de compra</span><input id="restock-discount" type="number" min="0" step="0.01" required></label><label>Nuevo precio de venta por unidad (S/)<input id="restock-price" type="number" min="0.01" step="0.01" placeholder="Precio que cobrarás" required></label></div><button id="restock-keep-price" class="btn ghost" type="button">Mantener precio de venta actual</button>
@@ -1356,7 +1356,7 @@ body{font-size:16px;line-height:1.55}button,input,select,textarea{font:inherit}.
       <p class="sub-t">Registra el stock en envases o bolsas. Si una bolsa rinde 40 porciones, cada plato vendido usa 1/40 de bolsa. Se aplica a las recetas que incluyan este insumo; no se descuenta al preparar. La venta directa del envase sigue descontando una unidad completa.</p>
     </section>
     <section class="panel"><label for="mp-image-file">Imagen del producto (JPG, PNG o WebP)</label><input id="mp-image-file" type="file" accept="image/jpeg,image/png,image/webp"><img id="mp-image-preview" alt="Vista previa del producto" style="width:130px;height:130px;object-fit:contain;border:1px solid var(--line);border-radius:12px"><p id="mp-image-status" role="status"></p><button id="mp-image-remove" class="btn ghost" type="button">Quitar imagen</button><p class="sub-t">Se optimiza la foto y se guarda en la nube al guardar el producto. Máximo 10 MB de entrada.</p></section>
-    <section id="mp-recipe" hidden class="panel"><label>La receta completa rinde (porciones)<input id="mp-yield" type="number" min="1" step="1"></label><label>Precio de venta por porción (S/)<input id="mp-recipe-price" type="number" min="0.01" step="0.01"></label><h4>Ingredientes por receta completa</h4><p class="sub-t">1 envase para una receta de 24 porciones es válido. Si el envase alcanza para 48, elige «Un envase rinde X porciones» e indica 48: al preparar 24 se usará medio envase. También puedes ingresar cantidades como 0.25.</p><div id="mp-ingredients"></div><p id="mp-ready"></p><label>Porciones que vas a preparar ahora<input id="mp-prepare-qty" type="number" min="1" step="1" value="1"></label><section class="panel"><h4>¿Es suficiente para la preparación?</h4><div id="mp-sufficiency"></div><p id="mp-sufficiency-status" role="status"></p></section><button id="mp-prepare" class="btn soft" type="button">Registrar preparación</button><p class="sub-t">Este botón guarda los cambios de receta y registra la preparación en una sola operación. La venta descuenta las porciones listas y los insumos configurados para descontarse al vender.</p></section>
+    <section id="mp-recipe" hidden class="panel"><label>La receta completa rinde (porciones)<input id="mp-yield" type="number" min="1" step="1"></label><label>Precio de venta por porción (S/)<input id="mp-recipe-price" type="number" min="0.01" step="0.01"></label><h4>Ingredientes por receta completa</h4><p class="sub-t">1 envase para una receta de 24 porciones es válido. Si el envase alcanza para 48, elige «Un envase rinde X porciones» e indica 48: al preparar 24 se usará medio envase. También puedes ingresar cantidades como 0.25.</p><div id="mp-ingredients"></div><p id="mp-ready"></p><label>Porciones que vas a preparar ahora<input id="mp-prepare-qty" type="number" min="1" step="1" value="1"></label><label>Vencimiento de esta tanda (opcional)<input id="mp-prepare-expiration" type="date"></label><section class="panel"><h4>¿Es suficiente para la preparación?</h4><div id="mp-sufficiency"></div><p id="mp-sufficiency-status" role="status"></p></section><button id="mp-prepare" class="btn soft" type="button">Registrar preparación</button><p class="sub-t">Este botón guarda los cambios de receta y registra la preparación en una sola operación. La venta descuenta las porciones listas y los insumos configurados para descontarse al vender.</p></section>
     <div class="row-inputs-3" id="mp-stock-fields">
       <div class="input-group">
         <label for="mp-qty">Unid. Compradas</label>
@@ -1446,6 +1446,7 @@ body{font-size:16px;line-height:1.55}button,input,select,textarea{font:inherit}.
 
 <script src="prices.js"></script>
 <script src="cloud.js"></script>
+<script src="operations.js"></script>
 <script>
 (async function () {
   const boot=await Cloud.start();
@@ -1625,7 +1626,7 @@ body{font-size:16px;line-height:1.55}button,input,select,textarea{font:inherit}.
   });
 
   let saving=false;
-  function captureState(){return {items,kardex,events:JSON.parse(lsGet('smartbod-events-v1','[]')),receipts:JSON.parse(lsGet('smartbod-receipts-v1','[]')),savedReports:JSON.parse(lsGet('smartbod-saved-reports-v1','[]')),negocio:neg,telefono:negTel};}
+  function captureState(){return {...(window.SmartOps?.snapshot?.()||{}),items,kardex,events:JSON.parse(lsGet('smartbod-events-v1','[]')),receipts:JSON.parse(lsGet('smartbod-receipts-v1','[]')),savedReports:JSON.parse(lsGet('smartbod-saved-reports-v1','[]')),negocio:neg,telefono:negTel};}
   function applyCloud(result){cloudRevision=result.revision;hydrate(result.state);items=result.state.items;kardex=result.state.kardex;neg=result.state.negocio;negTel=result.state.telefono;currentPolicy=result.policy;activeUser=result.user;renderApp();accountUI();renderEvents();}
   async function save(options={}){
     if(saving)throw Error('Espera a que termine el guardado');
@@ -2557,7 +2558,7 @@ body{font-size:16px;line-height:1.55}button,input,select,textarea{font:inherit}.
   let saleAttempt=null;
   document.getElementById('btn-process-sale').addEventListener('click',async()=>{
     if(!cart.length||saving)return;
-    const input={eventId:document.getElementById('pos-event').value||null,lines:cart.map(c=>({id:c.item.id,qty:c.qty})),discount:num(document.getElementById('pos-discount').value),cash:num(document.getElementById('pos-cash-received').value),payMethod:selectedPayMethod,client:document.getElementById('pos-client').value};
+    const shift=window.SmartOps?.saleContext?.();const input={eventId:document.getElementById('pos-event').value||null,lines:cart.map(c=>({id:c.item.id,qty:c.qty})),discount:num(document.getElementById('pos-discount').value),cash:num(document.getElementById('pos-cash-received').value),payMethod:selectedPayMethod,client:document.getElementById('pos-client').value,...(shift||{})};
     const signature=JSON.stringify(input);if(!saleAttempt||saleAttempt.signature!==signature)saleAttempt={signature,id:crypto.randomUUID()};
     saving=true;document.getElementById('app').inert=true;
     try{
@@ -2585,7 +2586,7 @@ body{font-size:16px;line-height:1.55}button,input,select,textarea{font:inherit}.
         <div style="font-size:11px;">${r.date}</div>
       </div>
       <div style="margin-bottom:8px; font-size:11.5px;">
-        <div><b>Origen:</b> ${esc(r.eventSnapshot?.name||'Venta diaria / local')}</div><div><b>Cliente:</b> ${esc(r.client)}</div>
+        <div><b>Origen:</b> ${esc(r.eventSnapshot?.name||'Venta diaria / local')}</div><div><b>Ubicación:</b> ${esc(r.locationName||'Local')}</div><div><b>Cliente:</b> ${esc(r.client)}</div>
         <div><b>Pago:</b> ${esc(r.payMethod)}</div>
       </div>
       <div style="border-top:1px dashed #94a3b8; border-bottom:1px dashed #94a3b8; padding:8px 0; margin:8px 0;">
@@ -2975,12 +2976,13 @@ body{font-size:16px;line-height:1.55}button,input,select,textarea{font:inherit}.
   // Backup JSON export/import & Reset
   document.getElementById('btn-export-json').addEventListener('click', () => {
     const payload = {
-      version: "3.0",
+      version: "4.0",
       exportDate: new Date().toISOString(),
       negocio: neg,
       telefono: negTel,
       savedReports:JSON.parse(lsGet('smartbod-saved-reports-v1','[]')),
       events:JSON.parse(lsGet("smartbod-events-v1","[]")),
+      ...(window.SmartOps?.snapshot?.()||{}),
       receipts:JSON.parse(lsGet("smartbod-receipts-v1","[]")),
       items,
       kardex
@@ -3041,8 +3043,8 @@ body{font-size:16px;line-height:1.55}button,input,select,textarea{font:inherit}.
 
   // ==================== TABS NAVIGATION ====================
   function switchTab(tabKey) {
-    if(!activeUser || (activeUser.role!=='admin' && !['pos','cat'].includes(tabKey)))return;
-    ["inv", "pos", "kardex", "cat", "est", "rep", "events"].forEach(k => {
+    if(!activeUser || (activeUser.role!=='admin' && !['pos','cat','ops'].includes(tabKey)))return;
+    ["inv", "pos", "kardex", "cat", "est", "rep", "events", "ops"].forEach(k => {
       document.getElementById("v-" + k).hidden = (k !== tabKey);
     });
     document.querySelectorAll(".tab").forEach(t => {
@@ -3070,7 +3072,7 @@ body{font-size:16px;line-height:1.55}button,input,select,textarea{font:inherit}.
     el('manage-users').hidden=!admin;
     ['negocio','negocio-tel','save-business'].forEach(id=>el(id).disabled=!admin);
     document.querySelectorAll('[data-admin-guide]').forEach(b=>b.hidden=!admin);
-    document.querySelectorAll('[data-tab]').forEach(b=>b.hidden=!admin && !['pos','cat'].includes(b.dataset.tab));
+    document.querySelectorAll('[data-tab]').forEach(b=>b.hidden=!admin && !['pos','cat','ops'].includes(b.dataset.tab));
     ['btn-load-demo','chip-low-stock'].forEach(id=>{if(el(id))el(id).hidden=!admin;});
     el('discount-policy-note').textContent='Descuento autorizado: hasta '+policy()[activeUser?.role||'seller']+'% del subtotal';
   }
@@ -3112,15 +3114,15 @@ body{font-size:16px;line-height:1.55}button,input,select,textarea{font:inherit}.
   document.getElementById('mp-prepare-qty').oninput=checkPreparation;document.getElementById('mp-yield').oninput=checkPreparation;
   function showPreparedStock(id){const p=items.find(p=>p.id===id);if(!p)return;document.getElementById('inv-status-filter').value='ALL';document.getElementById('inv-search').value=p.sku;activeInvCat='ALL';document.querySelectorAll('#inv-cat-pills .pill').forEach(b=>b.classList.toggle('active',b.dataset.cat==='ALL'));document.getElementById('pos-search').value='';activePosCat='ALL';document.querySelectorAll('#pos-cat-pills .pill').forEach(b=>b.classList.toggle('active',b.dataset.poscat==='ALL'));renderApp();}
   let preparationAttempt=null;
-  function preparePayload(id,qty,patch){const signature=JSON.stringify({id,qty,patch});if(preparationAttempt?.signature!==signature)preparationAttempt={signature,requestId:crypto.randomUUID()};return {id,qty,requestId:preparationAttempt.requestId,...(patch?{recipePatch:patch,revision:cloudRevision}:{})};}
+  function preparePayload(id,qty,patch,expirationDate){const signature=JSON.stringify({id,qty,patch,expirationDate});if(preparationAttempt?.signature!==signature)preparationAttempt={signature,requestId:crypto.randomUUID()};return {id,qty,requestId:preparationAttempt.requestId,expirationDate:expirationDate||null,...(patch?{recipePatch:patch,revision:cloudRevision}:{})};}
   function productionRecipePatch(){const p=items.find(x=>x.id===el('mp-id').value),yieldValue=num(el('mp-yield').value);return {recipeYield:yieldValue,precio:num(el('mp-recipe-price').value),ingredientes:[...document.querySelectorAll('[data-ingredient-index]')].map((input,index)=>{const mode=document.querySelector('[data-ingredient-mode="'+index+'"]').value,value=num(input.value);return {idInsumo:p.ingredientes[index].idInsumo,cantidad:mode==='coverage'?yieldValue/value:value,measureMode:mode,servingsPerUnit:mode==='coverage'?value:null};})};}
   el('mp-prepare').onclick=async()=>{
-    if(saving)return;const id=el('mp-id').value,qty=num(el('mp-prepare-qty').value),request=preparePayload(id,qty,productionRecipePatch());saving=true;el('mp-prepare').disabled=true;
+    if(saving)return;const id=el('mp-id').value,qty=num(el('mp-prepare-qty').value),request=preparePayload(id,qty,productionRecipePatch(),el('mp-prepare-expiration').value);saving=true;el('mp-prepare').disabled=true;
     try{const result=await Cloud.api('prepare',{production:request});preparationAttempt=null;applyCloud(result);showPreparedStock(id);modalProduct.hidden=true;const ready=num(items.find(p=>p.id===id)?.preparedStock);showToast('Stock de venta actualizado',qty+' unidades preparadas. Disponibles: '+ready);el('cloud-status').textContent='Preparación confirmada · '+ready+' unidades listas para vender';}
     catch(e){el('mp-sufficiency-status').textContent=e.message;showToast('No se confirmó la preparación',e.message,'error');}finally{saving=false;el('mp-prepare').disabled=false;}
   };
   function openQuickProduction(p){
-    el('quick-production-id').value=p.id;el('quick-production-title').textContent='Preparar: '+p.nombre;el('quick-production-qty').value=p.recipeYield||1;el('quick-production-status').textContent='';preparationAttempt=null;quickProductionPreview();el('quick-production').showModal();
+    el('quick-production-id').value=p.id;el('quick-production-title').textContent='Preparar: '+p.nombre;el('quick-production-qty').value=p.recipeYield||1;el('quick-production-expiration').value='';el('quick-production-status').textContent='';preparationAttempt=null;quickProductionPreview();el('quick-production').showModal();
   }
   function quickProductionPreview(){const p=items.find(x=>x.id===el('quick-production-id').value);if(!p)return;const qty=num(el('quick-production-qty').value),ready=num(p.preparedStock),needs={},use=getConsumoElaborados();let valid=Number.isInteger(qty)&&qty>0;const missing=[];el('quick-production-before').textContent='Stock listo para vender: '+ready;el('quick-production-after').textContent='Después de preparar: '+(valid?ready+qty:'—')+' unidades';
     for(const ing of p.ingredientes||[]){if(items.find(x=>x.id===ing.idInsumo)?.deductOnSale)continue;const amount=ing.measureMode==='coverage'?qty/num(ing.servingsPerUnit):num(ing.cantidad)*qty/(p.recipeYield||1);needs[ing.idInsumo]=(needs[ing.idInsumo]||0)+amount;}
@@ -3128,7 +3130,7 @@ body{font-size:16px;line-height:1.55}button,input,select,textarea{font:inherit}.
     el('quick-production-status').textContent=missing.length?'Falta stock: '+missing.join('; '):valid?'Los ingredientes de preparación alcanzan. Los insumos por venta se comprobarán y descontarán al cobrar. Confirma para añadir las unidades a Caja.':'Ingresa una cantidad entera mayor a cero.';el('quick-production-submit').disabled=!valid||saving;
   }
   el('quick-production-qty').oninput=quickProductionPreview;el('quick-production-close').onclick=()=>el('quick-production').close();
-  el('quick-production-form').onsubmit=async e=>{e.preventDefault();if(saving)return;const id=el('quick-production-id').value,qty=num(el('quick-production-qty').value),request=preparePayload(id,qty);saving=true;el('quick-production-submit').disabled=true;el('quick-production-status').textContent='Guardando preparación…';
+  el('quick-production-form').onsubmit=async e=>{e.preventDefault();if(saving)return;const id=el('quick-production-id').value,qty=num(el('quick-production-qty').value),request=preparePayload(id,qty,null,el('quick-production-expiration').value);saving=true;el('quick-production-submit').disabled=true;el('quick-production-status').textContent='Guardando preparación…';
     try{const result=await Cloud.api('prepare',{production:request});preparationAttempt=null;applyCloud(result);showPreparedStock(id);const ready=num(items.find(p=>p.id===id)?.preparedStock);el('quick-production-before').textContent='Stock confirmado en la nube: '+ready+' unidades';el('quick-production-after').textContent='Disponible en Inventario y Caja';el('quick-production-status').textContent='Preparación registrada correctamente. Puedes cerrar esta ventana y vender.';el('quick-production-qty').value='';el('cloud-status').textContent='Stock actualizado: '+ready+' unidades listas para vender';}
     catch(err){el('quick-production-status').textContent='No confirmado: '+err.message+' Puedes reintentar la misma operación.';el('quick-production-submit').disabled=false;}finally{saving=false;}
   };

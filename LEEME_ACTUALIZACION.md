@@ -1,7 +1,7 @@
 # Actualización: precios históricos, uso sencillo e instalación móvil
 
 ## Actualizar tu instalación
-Descarga un respaldo desde SMARTBOD. Extrae el ZIP y reemplaza en GitHub el contenido completo de la carpeta SMARTBOD: api, lib, public, tests, package.json y vercel.json. Incluye prices.js, pwa.js, sw.js, offline.html, manifest.webmanifest y los iconos en public/assets. Conserva DATABASE_URL, las variables actuales y la base de datos. No requiere otro servicio. Revisa el despliegue en Vercel antes de iniciar ventas.
+Descarga un respaldo desde SMARTBOD. Extrae el ZIP y reemplaza en GitHub el contenido completo de la carpeta SMARTBOD: api, lib, public, tests, package.json y vercel.json. Conserva DATABASE_URL y la base de datos. Esta versión añade el SDK S3 y requiere configurar los secretos `CRON_SECRET`, `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION`, `BACKUP_S3_ACCESS_KEY_ID` y `BACKUP_S3_SECRET_ACCESS_KEY` en Vercel para activar copias automáticas. Revisa el despliegue y restaura una copia de prueba antes de iniciar ventas.
 
 ## Reponer con precios nuevos
 Busca el producto existente y pulsa «+ Reponer stock».
@@ -11,7 +11,15 @@ Busca el producto existente y pulsa «+ Reponer stock».
 
 Se registra costo neto por unidad/envase, precio de venta, cantidad, total, fecha, responsable y datos del paquete. Reintentar la misma operación no duplica la compra. Los tickets anteriores conservan sus precios y costos. Editar el precio de un producto también deja una fila; una edición sin compra no se cuenta como compra.
 
-En Inventario se muestra la última compra y, por separado, el costo promedio registrado. Los cálculos de costos existentes siguen utilizando el costo acumulado de compras dividido entre unidades compradas (y el valor de preparación para platos). No se ha convertido el sistema a FIFO ni a valoración por lotes. La última compra no sobrescribe el costo histórico del inventario.
+En Inventario se muestra la última compra y, por separado, el costo promedio registrado. Los cálculos financieros existentes siguen utilizando el costo acumulado de compras dividido entre unidades compradas (y el valor de preparación para platos); el consumo físico de existencias sí sigue los lotes FEFO.
+
+## Operación: lotes, caja, compras y conectividad
+- Reposición y recepción de órdenes crean lotes con fecha de vencimiento opcional. En **Operación** el administrador puede asignar fecha a lotes de apertura, revisar vencimientos y registrar mermas. Ventas y preparación consumen lotes vigentes por fecha FEFO; los vencidos no se venden.
+- El administrador registra proveedores, crea órdenes de uno o más productos y las recibe una sola vez. Las entradas actualizan stock, precio e historial de compra.
+- Cada venta requiere que el cajero abra un turno, indique ubicación y fondo inicial. Al cierre se compara efectivo esperado (fondo más ventas en efectivo no anuladas) con el monto contado. No se incluyen retiros ni ingresos externos de caja.
+- Las ubicaciones se guardan en los tickets; en esta versión comparten un solo inventario. No uses las ubicaciones como existencias independientes.
+- La PWA conserva la interfaz pública y el último estado visible. Si se pierde la red, una venta se guarda localmente como pendiente y no genera ticket hasta confirmación del servidor. Al reconectar se reintenta con el mismo identificador; conflictos por stock requieren revisión. La cola pertenece a ese navegador/dispositivo y no sincroniza ventas offline entre equipos.
+- Vercel Cron crea un respaldo diario en S3 compatible, incluye imágenes, verifica su integridad al leerlo y conserva hasta 30 copias. **Operación** permite crear y restaurar copias manuales. Usa un bucket separado y prueba la restauración; para otros servicios S3 configura `BACKUP_S3_ENDPOINT`.
 
 ## Evolución y métricas
 Pulsa «Ver evolución de precios» o Reportes > Historial de precios. Selecciona producto y fechas.
@@ -33,11 +41,11 @@ Abre https://smartbod.intiva.edu.pe tras desplegar y pulsa «Instalar en mi tel�
 - Android: botón de instalación cuando esté disponible, o menú del navegador > Instalar aplicación / Añadir a pantalla de inicio.
 - Huawei: menú del navegador > Añadir a pantalla de inicio. Según modelo, sistema y navegador puede crear un acceso directo en vez de una instalación independiente. Sin esa opción puedes seguir usando la web.
 
-Es una aplicación web instalable (PWA), no un APK ni una publicación en App Store, Google Play o AppGallery. Usa las mismas cuentas y base de datos. Necesita HTTPS y conexión para consultar y guardar operaciones. Sin red muestra ayuda: no guarda ventas en una cola ni sincroniza después. El service worker solo almacena una página pública de ayuda, no datos del negocio. Si se interrumpe una operación, revisa el resultado al reconectar antes de iniciar otra distinta.
+Es una aplicación web instalable (PWA), no un APK ni una publicación en App Store, Google Play o AppGallery. Usa las mismas cuentas y base de datos. Necesita HTTPS. Con conexión consulta y guarda operaciones en el servidor; sin conexión solo permite consultar el último estado visible y guardar ventas pendientes en la cola local del dispositivo. No emite ticket ni confirma stock hasta que el servidor acepte la venta. Al reconectar reintenta con el mismo identificador; conflictos por stock requieren revisión. La cola no se comparte entre dispositivos y puede perderse al borrar los datos del navegador. Si se interrumpe una operación, revisa su resultado antes de iniciar otra distinta.
 Referencia técnica: https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable
 
 ## Verificación
-79 pruebas automatizadas aprobadas: dominio, precios, reportes, formularios con DOM simulado, manifest, iconos y límites del service worker. Sintaxis, referencias de interfaz, recursos locales y CSP comprobados. Pendiente: prueba visual completa, conexión a tu PostgreSQL y prueba de instalación en dispositivos físicos iPhone/Android/Huawei. No se ha desplegado automáticamente.
+87 pruebas automatizadas aprobadas, incluidas reglas de lotes FEFO, vencimientos, mermas, compras, caja, reportes y PWA. Ejecuta `npm test` después de actualizar. Pendiente: prueba visual completa, conexión a tu PostgreSQL/S3 y prueba de instalación en dispositivos físicos iPhone/Android/Huawei.
 
 ---
 
