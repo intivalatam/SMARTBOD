@@ -2,7 +2,7 @@ import pg from 'pg';
 import {randomBytes,randomUUID,createHash,scrypt as scryptCallback,timingSafeEqual} from 'node:crypto';
 import {promisify} from 'node:util';
 import {readFile} from 'node:fs/promises';
-import {empty,fail,normalize,sell,prepare,voidSale,upsertEvent,restock,publicState} from '../lib/domain.js';
+import {empty,fail,normalize,validateConsumptionChange,recordPriceEdits,sell,prepare,voidSale,upsertEvent,restock,publicState} from '../lib/domain.js';
 const scrypt=promisify(scryptCallback);let pool,ready;
 const digest=s=>createHash('sha256').update(s).digest('hex');
 const safeUser=u=>({id:u.id,username:u.username,name:u.name,role:u.role,enabled:u.enabled});
@@ -54,13 +54,13 @@ export default async function handler(req,res){
   }
   else if(action==='policy'){admin();policy=b.policy;if(!policy||!['admin','seller'].every(k=>typeof policy[k]==='number'&&policy[k]>=0&&policy[k]<=100))fail('Límites inválidos');await c.query('UPDATE sb_store SET policy=$1 WHERE id=1',[policy]);}
   else if(action==='save'){
-   admin();if(b.revision!==revision)fail('Otro usuario actualizó los datos. Recarga antes de guardar.',409);data=normalize({...b.state,events:b.state.events??store.data.events??[]});revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);
+   admin();if(b.revision!==revision)fail('Otro usuario actualizó los datos. Recarga antes de guardar.',409);const next=normalize({...b.state,events:b.state.events??store.data.events??[]});data=b.restore===true?next:recordPriceEdits(data,validateConsumptionChange(data,next),safeUser(fresh));revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);
   }
   else if(action==='restock'){admin();data=restock(data,b.restock,safeUser(fresh));revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);}
   else if(action==='event'){admin();if(b.revision!==revision)fail('Los datos cambiaron. Actualiza antes de guardar el evento.',409);data=upsertEvent(data,b.event,safeUser(fresh));revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);}
   else if(action==='void'){admin();data=voidSale(data,b.void,safeUser(fresh));revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);}
   else if(action==='imageUpload'){admin();if(typeof b.image!=='string'||b.image.length>210000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.image))fail('Imagen inválida');const bytes=Buffer.from(b.image.split(',')[1],'base64');if(bytes.length>150000||bytes[0]!==255||bytes[1]!==216||bytes[2]!==255)fail('Imagen inválida o demasiado grande');const id=randomUUID();await c.query('INSERT INTO sb_images(id,content,mime) VALUES($1,$2,$3)',[id,bytes,'image/jpeg']);return {url:'/api/index?image='+id};}
-  else if(action==='prepare'){admin();data=prepare(data,b.production,safeUser(fresh));revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);}
+  else if(action==='prepare'){admin();if(b.production?.recipePatch&&b.production.revision!==revision&&!data.kardex.some(k=>k.productionId===b.production.requestId))fail('El inventario cambió. Actualiza los datos y vuelve a revisar la receta.',409);data=prepare(data,b.production,safeUser(fresh));revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);}
   else if(action==='sale'){
    const sale=sell(data,b.sale,safeUser(fresh),policy);data=sale.state;receipt=sale.receipt;revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);
   }else fail('Operación desconocida',404);

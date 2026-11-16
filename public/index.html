@@ -4,7 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>SMARTBOD</title>
-<meta name="theme-color" content="#059669">
+<meta name="theme-color" content="#064e3b">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SMARTBOD">
+<script src="/pwa.js" defer></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -816,17 +821,28 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
 @media(max-width:850px){.login-layout{grid-template-columns:1fr;padding:28px 6%;gap:25px}.login-story h1{font-size:40px}.login-lead{font-size:19px}.login-scene,.login-caption{display:none}.login-page #auth-form{max-width:520px;margin:auto;padding:28px}.login-card-logo{display:none}.login-top>span{font-size:13px}.login-brand{font-size:24px}.login-brand svg{width:36px;height:36px}.login-card-sub{margin-bottom:18px}}
 
 #mp-ingredients .ingredient-setting{display:grid;grid-template-columns:minmax(140px,1fr) minmax(180px,1fr) 160px;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}#mp-ingredients .ingredient-setting label{display:flex;flex-direction:column;align-items:stretch;gap:5px;font-size:11px}#mp-sufficiency p{margin:6px 0;font-size:13px}@media(max-width:650px){#mp-ingredients .ingredient-setting{grid-template-columns:1fr}#mp-ingredients .ingredient-setting label{font-size:12px}}
-</style>
+.production-total{font-size:22px;font-weight:750;padding:14px;border-radius:12px;background:var(--accent-soft);color:var(--ink)}#quick-production{max-width:620px}#quick-production-status{padding:12px;background:var(--surface-2);border-radius:10px;line-height:1.6}
+
+/* Comfortable defaults: larger text, readable actions and touch targets. */
+body{font-size:16px;line-height:1.55}button,input,select,textarea{font:inherit}.btn,.tab,input,select,summary{min-height:46px}.btn.small{font-size:15px;padding:10px 14px}.sub-t{font-size:14px!important}.clean-table td{font-size:15px}.clean-table th{font-size:14px}.help-note{padding:16px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px}fieldset{border:1px solid var(--line);border-radius:14px;margin:18px 0;padding:18px}legend{font-weight:700;padding:0 8px}summary{cursor:pointer;padding:12px 0;font-weight:600}.task-guide{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);padding:20px;border:1px solid var(--line);border-radius:18px;margin:20px 0}.task-guide p{margin:2px 0}.task-guide>div{margin-right:auto}:focus-visible{outline:3px solid #2563eb;outline-offset:3px}dialog{max-height:90dvh;overflow:auto}dialog::backdrop{background:#0f172a99}[hidden]{display:none!important}@media(max-width:640px){.task-guide .btn{width:100%}.header-actions{gap:8px}.report-controls{display:grid;grid-template-columns:1fr}.report-controls>*{min-width:0}.tabs{flex-wrap:wrap}.tab{flex:1 1 120px}dialog{width:calc(100% - 24px);padding:16px}.modal-card{padding:16px}.row-inputs-3{grid-template-columns:1fr!important}}
+.install-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 24px;background:var(--surface);color:var(--ink);border-bottom:1px solid var(--line);font-size:14px}.offline{color:#b91c1c;font-weight:700}@media(max-width:600px){.install-bar{flex-wrap:wrap;padding:10px 16px}}@media print{.install-bar,.task-guide{display:none!important}}</style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20fill%3D%22none%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2218%22%20fill%3D%22%23064e3b%22%2F%3E%3Cpath%20d%3D%22M45%2019H25a9%209%200%200%200%200%2018h14a5%205%200%200%201%200%2010H19%22%20stroke%3D%22%23fff%22%20stroke-width%3D%227%22%20stroke-linecap%3D%22square%22%2F%3E%3Cpath%20d%3D%22M19%2045h20a9%209%200%200%200%200-18H25a5%205%200%200%201%200-10h20%22%20stroke%3D%22%2334d399%22%20stroke-width%3D%223%22%2F%3E%3Cpath%20d%3D%22m43%2012%206%206-6%206%22%20stroke%3D%22%2334d399%22%20stroke-width%3D%223%22%20stroke-linejoin%3D%22miter%22%2F%3E%3C%2Fsvg%3E">
 <script src="vendor/pdf-lib.min.js"></script>
 </head>
 <body>
+<div class="install-bar"><span id="connection-status" role="status" aria-live="polite"></span><button id="install-app" class="btn ghost" type="button">Instalar en mi teléfono</button></div>
+<dialog id="install-help"><h2>SMARTBOD en tu teléfono</h2><p>Se instala desde el navegador como aplicación web. Usa la misma cuenta y los mismos datos.</p><ol><li><strong>iPhone:</strong> abre esta dirección en Safari, pulsa Compartir y elige Añadir a pantalla de inicio. Activa Abrir como app web si aparece.</li><li><strong>Android:</strong> abre el menú del navegador y busca Instalar aplicación o Añadir a pantalla de inicio.</li><li><strong>Huawei:</strong> abre el menú de tu navegador y busca Añadir a pantalla de inicio. Según el sistema y navegador puede instalar una app web o crear un acceso directo; si no aparece, puedes seguir usando la web.</li></ol><p>Necesitas conexión para guardar compras y ventas. No se instala mediante App Store, Google Play ni AppGallery.</p><button id="install-help-close" type="button" class="btn">Entendido</button></dialog>
 <section id="auth-screen" class="auth-screen login-page">
 <header class="login-top"><a class="login-brand" href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#064e3b"/><path d="M45 19H25a9 9 0 0 0 0 18h14a5 5 0 0 1 0 10H19" stroke="#fff" stroke-width="7" stroke-linecap="square"/><path d="M19 45h20a9 9 0 0 0 0-18H25a5 5 0 0 1 0-10h20" stroke="#34d399" stroke-width="3"/><path d="m43 12 6 6-6 6" stroke="#34d399" stroke-width="3" stroke-linejoin="miter"/></svg><span>SMARTBOD</span></a><span>Gestión para tu negocio</span></header>
 <main class="login-layout"><div class="login-story"><h1>Tu negocio organizado.<br>Cada venta cuenta.</h1><div class="login-accent"></div><p class="login-lead">Gestiona tus ventas, controla tu inventario y organiza tus eventos desde un solo lugar.</p><div class="login-scene"><img src="assets/login-reference.png" alt="Ventas del día, control de inventario y ventas en eventos: tienda, punto de venta y puesto de feria" fetchpriority="high"></div><p class="login-caption">En tu local, en ferias y donde crezca tu negocio.</p></div>
 <form id="auth-form" class="login-card"><div class="login-card-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#064e3b"/><path d="M45 19H25a9 9 0 0 0 0 18h14a5 5 0 0 1 0 10H19" stroke="#fff" stroke-width="7" stroke-linecap="square"/><path d="M19 45h20a9 9 0 0 0 0-18H25a5 5 0 0 1 0-10h20" stroke="#34d399" stroke-width="3"/><path d="m43 12 6 6-6 6" stroke="#34d399" stroke-width="3" stroke-linejoin="miter"/></svg></div><h2 id="auth-heading">Bienvenido a SMARTBOD</h2><p class="login-card-sub">Ingresa para gestionar tu negocio.</p><label for="auth-user">Usuario</label><div class="login-input"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/></svg></span><input id="auth-user" autocomplete="username" required maxlength="80" placeholder="Ingresa tu usuario"></div><label for="auth-password">Contraseña</label><div class="login-input"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="12" rx="3"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg></span><input id="auth-password" type="password" autocomplete="current-password" required placeholder="Ingresa tu contraseña"><button id="auth-toggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false">Ver</button></div><button class="login-submit" type="submit">Ingresar <span aria-hidden="true">→</span></button><p id="auth-status" role="status" aria-live="polite"></p><p class="login-security">Las cuentas son administradas por tu organización.</p></form></main>
 <footer class="login-footer">SMARTBOD · Ventas, inventario y eventos</footer></section>
-<dialog id="restock-dialog"><form id="restock-form"><h2 id="restock-heading">Reponer producto</h2><p id="restock-sku" class="item-sku"></p><p id="restock-stock"></p><input id="restock-id" type="hidden"><div class="report-controls"><label>Tipo de ingreso<select id="restock-mode"><option value="units">Por unidades</option><option value="packages">Por paquetes</option></select></label><label><span id="restock-count-label">Unidades que ingresan</span><input id="restock-count" type="number" min="1" step="1" required></label><label>Unidades por paquete<input id="restock-units" type="number" min="1" step="1" required></label><label><span id="restock-cost-label">Costo</span><input id="restock-cost" type="number" min="0" step="0.01" required></label><label><span id="restock-discount-label">Descuento</span><input id="restock-discount" type="number" min="0" step="0.01" required></label><label>Margen sobre venta (%)<input id="restock-margin" type="number" min="0" max="99.99" step="0.01" required></label><label>Precio de venta por unidad (S/)<input id="restock-price" type="number" min="0.01" step="0.01" required></label></div><p id="restock-preview" role="status"></p><button id="restock-use-price" class="btn ghost" type="button">Usar precio sugerido</button><p class="sub-t">Se sumará esta compra al SKU existente. El precio actual se conserva a menos que lo cambies.</p><p id="restock-status" role="status"></p><div class="report-controls"><button class="btn" type="submit">Confirmar reposición</button><button class="btn ghost" id="restock-close" type="button">Cancelar</button></div></form></dialog>
+<dialog id="quick-production"><form id="quick-production-form"><h2 id="quick-production-title">Preparar para vender</h2><input id="quick-production-id" type="hidden"><p id="quick-production-before" class="production-total"></p><label>¿Cuántas unidades preparaste?<input id="quick-production-qty" type="number" min="1" step="1" required style="font-size:28px;font-weight:800"></label><p id="quick-production-after" class="production-total"></p><details><summary>Ver ingredientes que se descontarán</summary><div id="quick-production-needs"></div></details><p id="quick-production-status" role="status" aria-live="polite"></p><div class="report-controls"><button id="quick-production-submit" class="btn" type="submit">Agregar al stock de venta</button><button id="quick-production-close" class="btn ghost" type="button">Cerrar</button></div></form></dialog>
+<dialog id="restock-dialog"><form id="restock-form"><h2 id="restock-heading">Reponer producto</h2><p id="restock-sku" class="item-sku"></p><p id="restock-stock"></p><p id="restock-previous" class="help-note"></p><input id="restock-id" type="hidden">
+<fieldset><legend>1. ¿Cuánto compraste?</legend><div class="report-controls"><label>La compra viene<select id="restock-mode"><option value="units">En unidades o envases</option><option value="packages">En paquetes de varias unidades</option></select></label><label><span id="restock-count-label">Unidades que ingresan</span><input id="restock-count" type="number" min="1" step="1" required></label><label id="restock-units-label">Unidades dentro de cada paquete<input id="restock-units" type="number" min="1" step="1" required></label></div></fieldset>
+<fieldset><legend>2. Registra los precios de esta compra</legend><div class="report-controls"><label><span id="restock-cost-label">Nuevo costo por unidad (S/)</span><input id="restock-cost" type="number" min="0" step="0.01" placeholder="Lo que pagaste ahora" required></label><label><span id="restock-discount-label">Descuento de compra</span><input id="restock-discount" type="number" min="0" step="0.01" required></label><label>Nuevo precio de venta por unidad (S/)<input id="restock-price" type="number" min="0.01" step="0.01" placeholder="Precio que cobrarás" required></label></div><button id="restock-keep-price" class="btn ghost" type="button">Mantener precio de venta actual</button>
+<details><summary>Ayúdame a calcular el precio de venta</summary><label>Margen deseado sobre la venta (%)<input id="restock-margin" type="number" min="0" max="99.99" step="0.01" value="25" required></label><button id="restock-use-price" class="btn ghost" type="button">Usar precio sugerido</button><p>El margen sugerido considera esta compra. No incluye gastos del negocio.</p></details></fieldset>
+<fieldset><legend>3. Revisa y guarda</legend><p id="restock-preview" class="help-note" role="status"></p><p>Se sumará la compra al mismo producto. Los precios anteriores quedarán en el historial.</p></fieldset><p id="restock-status" role="status" aria-live="polite"></p><div class="report-controls"><button class="btn" type="submit">Guardar compra y nuevos precios</button><button class="btn ghost" id="restock-close" type="button">Cancelar</button></div></form></dialog>
 <dialog id="users-dialog"><button class="btn ghost" id="users-close" type="button">Cerrar</button><h2>Usuarios y permisos</h2><p>El administrador gestiona la plataforma. El vendedor accede a Caja y Catálogo.</p><div class="clean-table-container"><table class="clean-table"><thead><tr><th>Nombre</th><th>Usuario</th><th>Perfil</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="users-list"></tbody></table></div>
 <form id="user-form" class="panel"><h3>Crear o editar usuario</h3><input id="user-id" type="hidden"><label>Nombre<input id="user-name" required maxlength="100"></label><label>Usuario<input id="user-login" required pattern="[A-Za-z0-9._-]+" maxlength="60"></label><label>Perfil<select id="user-role"><option value="seller">Vendedor</option><option value="admin">Administrador</option></select></label><label>Contraseña (vacía conserva la actual)<input id="user-password" type="password" autocomplete="new-password"></label><label><input id="user-enabled" type="checkbox" checked> Activo</label><div><button class="btn">Guardar usuario</button> <button id="user-new" type="button" class="btn ghost">Nuevo</button></div></form>
 <form id="policy-form" class="panel"><h3>Descuento máximo por perfil</h3><label>Administrador (%)<input id="limit-admin" type="number" min="0" max="100" step="0.01" required></label><label>Vendedor (%)<input id="limit-seller" type="number" min="0" max="100" step="0.01" required></label><button class="btn">Guardar límites</button></form><p id="users-status" role="status"></p></dialog>
@@ -850,7 +866,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
       </button>
       
       <button type="button" class="btn ghost small" id="btn-open-custom-prod">
-        ➕ Nuevo Producto Propio
+        ➕ Registrar producto nuevo
       </button>
       <button type="button" class="btn ghost small" id="btn-theme-toggle" title="Cambiar modo claro/oscuro">
         🌙 Tema
@@ -865,10 +881,10 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
         📦 Inventario
       </button>
       <button class="tab" role="tab" data-tab="pos" aria-selected="false">
-        🛒 Caja (POS)
+        🛒 Vender
       </button>
       <button class="tab" role="tab" data-tab="kardex" aria-selected="false">
-        📋 Kardex
+        📋 Entradas y salidas
       </button>
       <button class="tab" role="tab" data-tab="cat" aria-selected="false">
         📖 Catálogo
@@ -883,6 +899,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
     </nav>
   </div>
 
+  <section class="task-guide" aria-label="Acciones habituales"><div><strong>¿Qué necesitas hacer?</strong><p>Elige una tarea para empezar.</p></div><button id="guide-sell" class="btn">Registrar una venta</button><button id="guide-restock" class="btn soft" data-admin-guide>Reponer un producto existente</button><button id="guide-prices" class="btn ghost" data-admin-guide>Ver evolución de precios</button></section>
   <p id="discount-policy-note" class="sub-t"></p>
   <!-- ==================== VISTA 1: INVENTARIO ==================== -->
   <div class="view" id="v-inv">
@@ -990,7 +1007,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
             <select id="el-insumo-select" style="flex:2.2;">
               <option value="">Seleccionar insumo del inventario...</option>
             </select>
-            <input type="number" id="el-insumo-qty" placeholder="Cant." style="flex:0.8;" min="0.1" step="0.5" value="1">
+            <input type="number" id="el-insumo-qty" placeholder="Cant." style="flex:0.8;" min="0.000001" step="any" value="1">
             <button type="button" class="btn soft" id="btn-add-insumo" title="Añadir insumo a la receta">+</button>
           </div>
         </div>
@@ -1041,7 +1058,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
           <tr>
             <th>Producto / SKU</th>
             <th>Categoría / Tipo</th>
-            <th>Costo Unid.</th>
+            <th>Costo de compra</th>
             <th>Precio Venta</th>
             <th>Margen Unid.</th>
             <th>Stock Disponible</th>
@@ -1261,7 +1278,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
   <div class="view" id="v-events" hidden><section class="panel"><h2>Eventos de venta</h2><p>Crea ferias, kermesses, campeonatos u otras actividades. Cada venta conserva el evento seleccionado. Las existencias se comparten con el local.</p><form id="event-form"><input id="event-id" type="hidden"><div class="report-controls"><label>Nombre del evento<input id="event-name" maxlength="120" required placeholder="Feria de verano"></label><label>Tipo de actividad<input id="event-activity" list="event-types" maxlength="80" required placeholder="Feria"><datalist id="event-types"><option value="Feria"><option value="Kermesse"><option value="Campeonato"><option value="Festival"><option value="Actividad escolar"><option value="Evento privado"></datalist></label><label>Fecha de inicio<input id="event-start" type="date" required></label><label>Fecha de fin<input id="event-end" type="date" required></label><label>Lugar<input id="event-location" maxlength="200"></label><label>Observaciones<input id="event-notes" maxlength="500"></label></div><p id="event-duration"></p><label><input id="event-active" type="checkbox" checked> Habilitado para vender dentro de sus fechas</label><div class="report-controls"><button class="btn">Guardar evento</button><button id="event-new" class="btn ghost" type="button">Nuevo evento</button></div><p id="event-status" role="status"></p></form><div class="clean-table-container"><table class="clean-table"><thead><tr><th>Evento</th><th>Actividad</th><th>Fechas</th><th>Duración</th><th>Lugar</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="events-list"></tbody></table></div></section></div>
 <div class="view" id="v-rep" hidden>
 <section class="panel" style="margin-bottom:24px"><h2>Ventas y correcciones</h2><p>Una venta equivocada se anula: se revierte el importe y se devuelven las existencias, conservando el registro. Solo administradores.</p><label>Buscar por ticket, cliente o vendedor<input id="sale-search" placeholder="Escribe para buscar una venta"></label><p id="sale-manager-status" role="status"></p><div class="clean-table-container"><table class="clean-table"><thead><tr><th>Fecha</th><th>Ticket</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="sale-manager"></tbody></table></div></section>
-<section class="panel" style="margin-bottom:24px"><h2>Reportes en pantalla</h2><p>Selecciona el reporte y el periodo: la tabla aparece aquí. Descargar o imprimir es opcional.</p><div class="report-controls"><label>Reporte<select id="report-type"><option value="stock">Existencias actuales</option><option value="profit">Rentabilidad acumulada</option><option value="sales">Ventas por ticket</option><option value="daily">Ventas por día</option><option value="eventSummary">Ventas por evento</option><option value="movements">Movimientos</option><option value="production">Preparaciones</option></select></label><label>Origen de ventas<select id="report-event"><option value="all">Todas las ventas</option><option value="daily">Solo venta diaria</option></select></label><label>Periodo<select id="report-period"><option value="all">Todo el historial</option><option value="today">Hoy</option><option value="week">Últimos 7 días</option><option value="month">Este mes</option><option value="custom">Personalizado</option></select></label><label>Desde<input id="report-from" type="date"></label><label>Hasta<input id="report-to" type="date"></label><button id="report-generate" class="btn">Actualizar vista</button></div><div class="report-controls"><button id="report-save" class="btn soft">Guardar reporte</button><button id="report-excel" class="btn ghost">Descargar Excel</button><button id="report-pdf" class="btn ghost">Descargar PDF</button><button id="report-print" class="btn ghost">Imprimir / guardar PDF</button><select id="saved-reports" aria-label="Reportes guardados"></select></div><p class="sub-t">Guardar conserva una copia fija en la nube. Excel y PDF descargan el reporte mostrado. Ventas por ticket incluye solo tickets conservados; el historial anterior puede estar incompleto.</p><div id="report-print-area"><h2 id="report-title"></h2><p id="report-meta"></p><div class="clean-table-container"><table id="report-table" class="clean-table"></table></div><p id="report-empty">No hay registros para este reporte.</p></div></section>
+<section class="panel" style="margin-bottom:24px"><h2>Reportes en pantalla</h2><p>Selecciona el reporte y el periodo: la tabla aparece aquí. Descargar o imprimir es opcional.</p><div class="report-controls"><label>Reporte<select id="report-type"><option value="stock">Existencias actuales</option><option value="profit">Rentabilidad acumulada</option><option value="sales">Ventas por ticket</option><option value="daily">Ventas por día</option><option value="eventSummary">Ventas por evento</option><option value="movements">Movimientos</option><option value="production">Preparaciones</option><option value="prices">Historial de precios</option></select></label><label id="report-product-label" hidden>Producto<select id="report-product"><option value="all">Todos los productos</option></select></label><label>Origen de ventas<select id="report-event"><option value="all">Todas las ventas</option><option value="daily">Solo venta diaria</option></select></label><label>Periodo<select id="report-period"><option value="all">Todo el historial</option><option value="today">Hoy</option><option value="week">Últimos 7 días</option><option value="month">Este mes</option><option value="custom">Personalizado</option></select></label><label>Desde<input id="report-from" type="date"></label><label>Hasta<input id="report-to" type="date"></label><button id="report-generate" class="btn">Actualizar vista</button></div><div class="report-controls"><button id="report-save" class="btn soft">Guardar reporte</button><button id="report-excel" class="btn ghost">Descargar Excel</button><button id="report-pdf" class="btn ghost">Descargar PDF</button><button id="report-print" class="btn ghost">Imprimir / guardar PDF</button><select id="saved-reports" aria-label="Reportes guardados"></select></div><p class="sub-t">Guardar conserva una copia fija en la nube. Excel y PDF descargan el reporte mostrado. Ventas por ticket incluye solo tickets conservados; el historial anterior puede estar incompleto.</p><div id="report-print-area"><section id="price-analytics" hidden><h3>Evolución de precios</h3><div id="price-metrics" class="summary"></div><p id="price-explanation"></p><div style="height:260px"><canvas id="price-chart" aria-label="Evolución del costo de compra y precio de venta"></canvas></div></section><h2 id="report-title"></h2><p id="report-meta"></p><div class="clean-table-container"><table id="report-table" class="clean-table"></table></div><p id="report-empty">No hay registros para este reporte.</p></div></section>
     <div class="panels-grid">
       <div class="panel">
         <div class="panel-header">📊 Exportación de Reportes Ejecutivos</div>
@@ -1327,8 +1344,19 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
         <input type="number" id="mp-min-stock" value="5" min="1">
       </div>
     </div>
+    <section id="mp-consumption" class="panel">
+      <h4>¿Cómo se utiliza este producto?</h4>
+      <p id="mp-classification-hint" class="sub-t"></p>
+      <label>Clasificación de consumo<select id="mp-consumption-mode"><option value="">Selecciona cómo se usa</option><option value="unit">Por unidad / cantidad de receta — pan, carne, bebidas</option><option value="portions">Envase para varias porciones — cremas, salsas, papas al hilo</option><option value="measure">Por peso o volumen — gramos / mililitros por porción</option></select></label>
+      <div class="row-inputs-3"><label>Presentación<input id="mp-presentation" placeholder="Bolsa, botella, envase…" maxlength="80"></label><label>Contenido del envase<input id="mp-content" placeholder="1 kg, 500 ml…" maxlength="80"></label><label>Detalle del producto<input id="mp-detail" placeholder="Marca, sabor o indicaciones" maxlength="300"></label></div>
+      <input id="mp-deduct-sale" type="checkbox" hidden>
+      <label id="mp-portions-label">Un envase rinde (porciones)<input id="mp-portions" type="number" min="0.01" step="any" placeholder="Ej. 40"></label>
+      <div id="mp-measure-fields" class="row-inputs-3" hidden><label>Contenido de un envase<input id="mp-content-amount" type="number" min="0.000001" step="any" placeholder="Ej. 1"></label><label>Unidad del envase<select id="mp-content-unit"><option value="kg">kg</option><option value="g">g</option><option value="l">l</option><option value="ml">ml</option></select></label><label>Cantidad usada en cada hamburguesa<input id="mp-dose-amount" type="number" min="0.000001" step="any" placeholder="Según tu preparación"><span id="mp-dose-unit">g por porción</span></label></div>
+      <p id="mp-yield-preview" role="status" style="padding:14px;background:#e6f6ee;border-radius:12px;font-weight:600"></p>
+      <p class="sub-t">Registra el stock en envases o bolsas. Si una bolsa rinde 40 porciones, cada plato vendido usa 1/40 de bolsa. Se aplica a las recetas que incluyan este insumo; no se descuenta al preparar. La venta directa del envase sigue descontando una unidad completa.</p>
+    </section>
     <section class="panel"><label for="mp-image-file">Imagen del producto (JPG, PNG o WebP)</label><input id="mp-image-file" type="file" accept="image/jpeg,image/png,image/webp"><img id="mp-image-preview" alt="Vista previa del producto" style="width:130px;height:130px;object-fit:contain;border:1px solid var(--line);border-radius:12px"><p id="mp-image-status" role="status"></p><button id="mp-image-remove" class="btn ghost" type="button">Quitar imagen</button><p class="sub-t">Se optimiza la foto y se guarda en la nube al guardar el producto. Máximo 10 MB de entrada.</p></section>
-    <section id="mp-recipe" hidden class="panel"><label>La receta completa rinde (porciones)<input id="mp-yield" type="number" min="1" step="1"></label><label>Precio de venta por porción (S/)<input id="mp-recipe-price" type="number" min="0.01" step="0.01"></label><h4>Ingredientes por receta completa</h4><p class="sub-t">1 envase para una receta de 24 porciones es válido. Si el envase alcanza para 48, elige «Un envase rinde X porciones» e indica 48: al preparar 24 se usará medio envase. También puedes ingresar cantidades como 0.25.</p><div id="mp-ingredients"></div><p id="mp-ready"></p><label>Porciones que vas a preparar ahora<input id="mp-prepare-qty" type="number" min="1" step="1" value="1"></label><section class="panel"><h4>¿Es suficiente para la preparación?</h4><div id="mp-sufficiency"></div><p id="mp-sufficiency-status" role="status"></p></section><button id="mp-prepare" class="btn soft" type="button">Registrar preparación</button><p class="sub-t">Guarda primero cualquier cambio de receta. La preparación usa la receta guardada, descuenta sus ingredientes y añade porciones listas. La venta descuenta solo esas porciones.</p></section>
+    <section id="mp-recipe" hidden class="panel"><label>La receta completa rinde (porciones)<input id="mp-yield" type="number" min="1" step="1"></label><label>Precio de venta por porción (S/)<input id="mp-recipe-price" type="number" min="0.01" step="0.01"></label><h4>Ingredientes por receta completa</h4><p class="sub-t">1 envase para una receta de 24 porciones es válido. Si el envase alcanza para 48, elige «Un envase rinde X porciones» e indica 48: al preparar 24 se usará medio envase. También puedes ingresar cantidades como 0.25.</p><div id="mp-ingredients"></div><p id="mp-ready"></p><label>Porciones que vas a preparar ahora<input id="mp-prepare-qty" type="number" min="1" step="1" value="1"></label><section class="panel"><h4>¿Es suficiente para la preparación?</h4><div id="mp-sufficiency"></div><p id="mp-sufficiency-status" role="status"></p></section><button id="mp-prepare" class="btn soft" type="button">Registrar preparación</button><p class="sub-t">Este botón guarda los cambios de receta y registra la preparación en una sola operación. La venta descuenta las porciones listas y los insumos configurados para descontarse al vender.</p></section>
     <div class="row-inputs-3" id="mp-stock-fields">
       <div class="input-group">
         <label for="mp-qty">Unid. Compradas</label>
@@ -1416,6 +1444,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
 
 <div id="toast-container" class="toast-container"></div>
 
+<script src="prices.js"></script>
 <script src="cloud.js"></script>
 <script>
 (async function () {
@@ -1598,10 +1627,10 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
   let saving=false;
   function captureState(){return {items,kardex,events:JSON.parse(lsGet('smartbod-events-v1','[]')),receipts:JSON.parse(lsGet('smartbod-receipts-v1','[]')),savedReports:JSON.parse(lsGet('smartbod-saved-reports-v1','[]')),negocio:neg,telefono:negTel};}
   function applyCloud(result){cloudRevision=result.revision;hydrate(result.state);items=result.state.items;kardex=result.state.kardex;neg=result.state.negocio;negTel=result.state.telefono;currentPolicy=result.policy;activeUser=result.user;renderApp();accountUI();renderEvents();}
-  async function save(){
+  async function save(options={}){
     if(saving)throw Error('Espera a que termine el guardado');
     saving=true;document.getElementById('app').inert=true;document.getElementById('cloud-status').textContent='Guardando en la nube…';
-    try{const result=await Cloud.api('save',{revision:cloudRevision,state:captureState()});applyCloud(result);document.getElementById('cloud-status').textContent='Guardado en la nube';return true;}
+    try{const result=await Cloud.api('save',{revision:cloudRevision,state:captureState(),restore:options.restore===true});applyCloud(result);document.getElementById('cloud-status').textContent='Guardado en la nube';return true;}
     catch(e){document.getElementById('cloud-status').textContent='No guardado: '+e.message;alert(e.message+' Los cambios no confirmados se descartarán al recargar.');location.reload();return false;}
     finally{saving=false;document.getElementById('app').inert=false;}
   }
@@ -1632,7 +1661,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
         const consumido = (usoGlobal && usoGlobal[ins.id]) ? usoGlobal[ins.id] : 0;
         const disp = Math.max(0, num(ins.unidadesCompradas) - (num(ins.vendidos) + consumido));
         const possible = Math.floor(disp / req);
-        if (possible < minPortions) minPortions = possible;
+        if (!ins.deductOnSale && possible < minPortions) minPortions = possible;
       }
     });
     return isFinite(minPortions) ? minPortions*Math.max(1,num(document.getElementById('el-yield').value)) : 0;
@@ -1660,7 +1689,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
       });
       costoReceta/=Math.max(1,num(p.recipeYield)||1);
       const maxPortions = num(p.preparedStock);
-      if(maxPortions>0)costoReceta=num(p.preparedValue)/maxPortions;
+      if(maxPortions>0)costoReceta=num(p.preparedValue)/maxPortions+(p.ingredientes||[]).reduce((sum,ing)=>{const ins=items.find(x=>x.id===ing.idInsumo);return sum+(ins?.deductOnSale&&num(ins.unidadesCompradas)>0?num(ins.costoTotal)/num(ins.unidadesCompradas)/num(ins.portionsPerUnit):0);},0);
       const margenPct = precio > 0 ? ((precio - costoReceta) / precio) * 100 : 0;
       return {
         cu: costoReceta,
@@ -1671,7 +1700,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
         inversion: 0,
         valorStock: 0,
         margenPct,
-        estado: "Elaborado"
+        estado: maxPortions<=0?"Agotado":(maxPortions<=(num(p.minStock)||5)?"Stock bajo":"Ok")
       };
     }
 
@@ -1889,10 +1918,10 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
       const ins = items.find(i => i.id === ing.idInsumo);
       if (ins) {
         const cu = num(ins.unidadesCompradas) > 0 ? num(ins.costoTotal) / num(ins.unidadesCompradas) : 0;
-        totalRecipeCost += cu * num(ing.cantidad);
+        totalRecipeCost += cu * (ins.deductOnSale?Math.max(1,num(document.getElementById('el-yield').value))/num(ins.portionsPerUnit):num(ing.cantidad));
         const disp = calc(ins, uso).stock;
         const possible = Math.floor(num(disp) / Math.max(0.01, num(ing.cantidad)));
-        if (possible < minPortions) minPortions = possible;
+        if (!ins.deductOnSale && possible < minPortions) minPortions = possible;
       }
     });
 
@@ -1903,7 +1932,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
     const utilEl = document.getElementById('el-util-val');
     utilEl.textContent = money(util);
     utilEl.style.color = util >= 0 ? 'var(--good)' : 'var(--bad)';
-    document.getElementById('el-max-portions').textContent = isFinite(minPortions) ? minPortions*Math.max(1,num(document.getElementById('el-yield').value)) : 0;
+    document.getElementById('el-max-portions').textContent = isFinite(minPortions) ? minPortions*Math.max(1,num(document.getElementById('el-yield').value)) : 'Según cantidad a preparar (insumos al vender)';
   }
 
   document.getElementById('el-yield').addEventListener('input',updateRecipeLivePreview);
@@ -1929,11 +1958,11 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
     }
     tempIngredients.forEach((ing, idx) => {
       const insumo = items.find(i => i.id === ing.idInsumo);
-      const cu = insumo && num(insumo.unidadesCompradas) > 0 ? (num(insumo.costoTotal) / num(insumo.unidadesCompradas)) * num(ing.cantidad) : 0;
+      const cu = insumo && num(insumo.unidadesCompradas) > 0 ? (num(insumo.costoTotal) / num(insumo.unidadesCompradas)) * (insumo.deductOnSale?Math.max(1,num(document.getElementById('el-yield').value))/num(insumo.portionsPerUnit):num(ing.cantidad)) : 0;
       const div = document.createElement('div');
       div.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:var(--surface); padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-size:12.5px;";
       div.innerHTML = `
-        <span><b>${ing.cantidad}x</b> ${insumo ? insumo.nombre : 'Desconocido'} <span style="color:var(--muted);">(${money(cu)})</span></span>
+        <span><b>${insumo?.deductOnSale?'1 envase rinde '+num(insumo.portionsPerUnit)+' porciones · Al vender':ing.cantidad+'x'}</b> ${insumo ? esc(insumo.nombre) : 'Desconocido'} <span style="color:var(--muted);">(${money(cu)})</span></span>
         <button type="button" class="btn danger small btn-rm-ing" data-idx="${idx}" style="padding:2px 7px;">✕</button>
       `;
       list.appendChild(div);
@@ -1941,6 +1970,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
     updateRecipeLivePreview();
   }
 
+  document.getElementById('el-insumo-select').addEventListener('change',()=>{const ins=items.find(p=>p.id===document.getElementById('el-insumo-select').value),field=document.getElementById('el-insumo-qty');field.disabled=!!ins?.deductOnSale;field.value=1;field.title=ins?.deductOnSale?'Cantidad automática según el rendimiento del insumo':'Cantidad para toda la receta';});
   document.getElementById('btn-add-insumo').addEventListener('click', () => {
     const sel = document.getElementById('el-insumo-select');
     const qty = num(document.getElementById('el-insumo-qty').value);
@@ -1949,11 +1979,12 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
     }
     const existing = tempIngredients.find(x => x.idInsumo === sel.value);
     if (existing) {
-      existing.cantidad = num(existing.cantidad) + qty;
+      if(!items.find(p=>p.id===sel.value)?.deductOnSale)existing.cantidad = num(existing.cantidad) + qty;
     } else {
       tempIngredients.push({ id: uuid(), idInsumo: sel.value, cantidad: qty });
     }
     sel.value = '';
+    document.getElementById('el-insumo-qty').disabled=false;
     document.getElementById('el-insumo-qty').value = 1;
     renderTempIngredients();
   });
@@ -2009,6 +2040,9 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
     document.getElementById('mp-cat').value = editItem && editItem.cat ? editItem.cat : 'Abarrotes';
     document.getElementById('mp-min-stock').value = editItem && editItem.minStock ? editItem.minStock : 5;
 
+    document.getElementById('mp-consumption').hidden=editItem?.tipo==='elaborado';
+    document.getElementById('mp-presentation').value=editItem?.presentation||'';document.getElementById('mp-content').value=editItem?.contentDescription||'';document.getElementById('mp-detail').value=editItem?.productDetail||'';document.getElementById('mp-deduct-sale').checked=!!editItem?.deductOnSale;document.getElementById('mp-portions').value=editItem?.portionsPerUnit||'';
+    document.getElementById('mp-consumption-mode').value=editItem?.consumptionMode||(editItem?.deductOnSale?'portions':'');document.getElementById('mp-content-amount').value=editItem?.contentAmount||'';document.getElementById('mp-content-unit').value=editItem?.contentUnit||'kg';document.getElementById('mp-dose-amount').value=editItem?.doseAmount||'';
     document.getElementById('mp-recipe').hidden=editItem?.tipo!=='elaborado';
     document.getElementById('mp-cat').disabled=editItem?.tipo==='elaborado';
     if(![...document.getElementById('mp-cat').options].some(o=>o.value==='Elaborado'))document.getElementById('mp-cat').add(new Option('Elaborado','Elaborado'));
@@ -2020,7 +2054,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
         const row=document.createElement('div');row.className='ingredient-setting';const name=document.createElement('strong');name.textContent=items.find(x=>x.id===ing.idInsumo)?.nombre||'Insumo';row.append(name);
         const mode=document.createElement('select');mode.dataset.ingredientMode=index;mode.add(new Option('Cantidad para toda la receta','batch'));mode.add(new Option('Un envase rinde X porciones','coverage'));mode.value=ing.measureMode==='coverage'?'coverage':'batch';mode.setAttribute('aria-label','Forma de medir '+name.textContent);row.append(mode);
         const label=document.createElement('label');const text=document.createElement('span');const input=document.createElement('input');input.type='number';input.min='0.000001';input.step='any';input.value=ing.measureMode==='coverage'?ing.servingsPerUnit:ing.cantidad;input.dataset.ingredientIndex=index;
-        const update=()=>{text.textContent=mode.value==='coverage'?'Porciones por envase':'Unidades/envases para la receta';checkPreparation();};mode.onchange=update;input.oninput=()=>checkPreparation();text.textContent=mode.value==='coverage'?'Porciones por envase':'Unidades/envases para la receta';label.append(text,input);row.append(label);list.append(row);
+        const update=()=>{text.textContent=mode.value==='coverage'?'Porciones por envase':'Unidades/envases para la receta';checkPreparation();};mode.onchange=update;input.oninput=()=>checkPreparation();text.textContent=mode.value==='coverage'?'Porciones por envase':'Unidades/envases para la receta';const source=items.find(x=>x.id===ing.idInsumo);if(source?.deductOnSale){mode.value='coverage';mode.disabled=true;input.value=source.portionsPerUnit;input.disabled=true;text.textContent='Porciones por envase · se descuenta al vender (configurado en el insumo)';}label.append(text,input);row.append(label);list.append(row);
       });
       checkPreparation();
     }
@@ -2033,9 +2067,26 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
       document.getElementById('mp-cost').value = editItem ? num(editItem.costoTotal) : 36.00;
       document.getElementById('mp-price').value = editItem ? num(editItem.precio) : 4.50;
     }
+    updateConsumptionPreview();
     modalProduct.hidden = false;
   }
 
+  function consumptionDetails(){
+    const mode=document.getElementById('mp-consumption-mode').value,unit=document.getElementById('mp-content-unit').value;
+    const details={consumptionMode:mode,presentation:document.getElementById('mp-presentation').value.trim(),contentDescription:document.getElementById('mp-content').value.trim(),productDetail:document.getElementById('mp-detail').value.trim(),deductOnSale:mode==='portions'||mode==='measure',portionsPerUnit:num(document.getElementById('mp-portions').value),contentAmount:num(document.getElementById('mp-content-amount').value),contentUnit:unit,doseAmount:num(document.getElementById('mp-dose-amount').value),doseUnit:['g','kg'].includes(unit)?'g':'ml'};
+    if(mode==='measure'){details.portionsPerUnit=details.doseAmount>0?details.contentAmount*(['kg','l'].includes(unit)?1000:1)/details.doseAmount:0;details.contentDescription=details.contentAmount+' '+unit;}
+    return details;
+  }
+  function updateConsumptionPreview(){
+    const d=consumptionDetails(),unitMode=d.consumptionMode==='unit',measured=d.consumptionMode==='measure';
+    document.getElementById('mp-portions-label').hidden=unitMode||!d.consumptionMode;document.getElementById('mp-portions').disabled=measured;
+    document.getElementById('mp-measure-fields').hidden=!measured;document.getElementById('mp-dose-unit').textContent=d.doseUnit+' por porción';document.getElementById('mp-deduct-sale').checked=d.deductOnSale;
+    if(measured)document.getElementById('mp-portions').value=Number.isFinite(d.portionsPerUnit)&&d.portionsPerUnit>0?Number(d.portionsPerUnit.toFixed(6)):'';
+    document.getElementById('mp-classification-hint').textContent='Cremas y bolsas grandes no equivalen a una hamburguesa. Indica su rendimiento real o la dosis por porción. No se asigna un rendimiento automático por el nombre.';
+    const quantity=num(document.getElementById('mp-qty').value),cost=num(document.getElementById('mp-cost').value),perPack=quantity>0?cost/quantity:0;
+    document.getElementById('mp-yield-preview').textContent=!d.consumptionMode?'Selecciona la clasificación antes de guardar.':unitMode?'Se usa la cantidad indicada en la receta al preparar. Venta directa: una unidad por unidad vendida.':d.portionsPerUnit>=1&&Number.isFinite(d.portionsPerUnit)?'1 envase = '+Number(d.portionsPerUnit.toFixed(4))+' porciones · Costo por porción: '+money(perPack/d.portionsPerUnit)+' · 24 ventas usan '+Number((24/d.portionsPerUnit).toFixed(4))+' envases (costo '+money(24*perPack/d.portionsPerUnit)+'). Se descuenta al vender.':'Completa un rendimiento válido. En peso/volumen, la dosis no puede superar el contenido del envase.';
+  }
+  ['mp-consumption-mode','mp-portions','mp-content-amount','mp-content-unit','mp-dose-amount','mp-qty','mp-cost'].forEach(id=>document.getElementById(id).addEventListener('input',updateConsumptionPreview));
   document.getElementById('mp-image-remove').onclick=()=>{productImage='';document.getElementById('mp-image-file').value='';document.getElementById('mp-image-preview').src=getCategoryVisual('Abarrotes','Producto');};
   document.getElementById('mp-image-file').onchange=async e=>{
     const file=e.target.files[0];if(!file)return;
@@ -2062,6 +2113,10 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
     const qty = Math.max(0, num(document.getElementById('mp-qty').value));
     const cost = Math.max(0, num(document.getElementById('mp-cost').value));
     const editingRecipe=items.find(p=>p.id===id)?.tipo==='elaborado';
+    const details=consumptionDetails();
+    if(!editingRecipe&&!details.consumptionMode)return showToast('Clasificación pendiente','Selecciona cómo se utiliza este producto: unidades, porciones o peso/volumen.','error');
+    if(!editingRecipe&&details.deductOnSale&&(!Number.isFinite(details.portionsPerUnit)||details.portionsPerUnit<=0||(details.consumptionMode==='measure'&&(details.contentAmount<=0||details.doseAmount<=0||details.portionsPerUnit<1))))return showToast('Rendimiento inválido','Revisa cuántas porciones rinde el envase o su contenido y dosis.','error');
+    const previousMode=items.find(p=>p.id===id);if(previousMode&&!!previousMode.deductOnSale!==details.deductOnSale&&items.some(p=>p.tipo==='elaborado'&&num(p.preparedStock)>0&&p.ingredientes.some(i=>i.idInsumo===id)))return showToast('Hay preparaciones pendientes','Vende las porciones ya preparadas antes de cambiar el momento de descuento de este insumo. Así evitamos descontarlo dos veces.','error');
     const price = num(document.getElementById(editingRecipe?'mp-recipe-price':'mp-price').value);
     const recipeYield=num(document.getElementById('mp-yield').value);
     const recipeEntries=[...document.querySelectorAll('[data-ingredient-index]')].map((input,index)=>({value:num(input.value),mode:document.querySelector('[data-ingredient-mode="'+index+'"]').value}));
@@ -2091,6 +2146,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
         if(editingRecipe){target.recipeYield=recipeYield;target.ingredientes.forEach((ing,i)=>{ing.cantidad=recipeAmounts[i];ing.measureMode=recipeEntries[i].mode;ing.servingsPerUnit=recipeEntries[i].mode==='coverage'?recipeEntries[i].value:null;});}
         target.imgUrl = productImage || getCategoryVisual(target.cat, nombre);
         if (target.tipo !== 'elaborado') {
+          Object.assign(target,details);
           target.unidadesCompradas = qty;
           target.costoTotal = cost;
           target.precio = price;
@@ -2101,6 +2157,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
       const newProd = {
         id: uuid(),
         tipo: 'producto',
+        ...details,
         sku,
         cat,
         nombre,
@@ -2189,7 +2246,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
       ingTot += c.ingreso;
       ganTot += c.ganancia;
       unidVendidas += num(p.vendidos);
-      if (p.tipo !== 'elaborado') {
+      {
         if (c.estado === 'Stock bajo') countLow++;
         if (c.estado === 'Agotado') countOut++;
       }
@@ -2227,7 +2284,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
         const recipeSummary = isElab
           ? (p.ingredientes || []).map(ing => {
               const ins = items.find(x => x.id === ing.idInsumo);
-              return ins ? `${ing.cantidad}x ${ins.nombre.split(' ')[0]}` : '';
+              return ins ? (ins.deductOnSale?`${esc(ins.nombre)}: 1 envase / ${num(ins.portionsPerUnit)} ventas`:`${Number(num(ing.cantidad).toFixed(4))}x ${esc(ins.nombre.split(' ')[0])}`) : '';
             }).filter(Boolean).join(', ')
           : '';
 
@@ -2238,22 +2295,23 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
               <img src="${p.imgUrl}" class="thumb" alt="${esc(p.nombre)}">
               <div>
                 <span class="item-name">${esc(p.nombre)}</span>
-                <span class="item-sku">SKU: ${esc(p.sku)}</span><div class="sub-t">${recipeSummary ? 'Receta: ' + recipeSummary : ''}${isElab ? ' · Rinde ' + (num(p.recipeYield)||1) + ' porciones' : ''}</div>
+                <span class="item-sku">SKU: ${esc(p.sku)}</span><div class="sub-t">${recipeSummary ? 'Receta: ' + recipeSummary : ''}${isElab ? ' · Rinde ' + (num(p.recipeYield)||1) + ' porciones' : ''}${!isElab ? esc([p.presentation,p.contentDescription,p.productDetail].filter(Boolean).join(' · ')) : ''}${p.deductOnSale ? '<br>Envase fraccionable · Rinde '+num(p.portionsPerUnit)+' porciones/envase · Quedan '+Math.floor(c.stock*num(p.portionsPerUnit)+1e-9)+' porciones · Descuento al vender' : ''}</div>
               </div>
             </div>
           </td>
           <td><span class="badge ${badgeClass}">${isElab ? '🍔 Plato/Combo' : (p.cat || 'Insumo')}</span></td>
-          <td>${money(c.cu)}</td>
+          <td><strong>${money(p.lastPurchaseCost??c.cu)}</strong><div class="sub-t">${p.lastPurchaseCost==null?'Costo promedio registrado':'Última compra · Promedio: '+money(c.cu)}</div></td>
           <td><strong>${money(num(p.precio))}</strong></td>
           <td><span style="font-weight:600; color:${c.margenPct >= 25 ? 'var(--good)' : 'var(--warn)'}">${c.margenPct.toFixed(1)}%</span></td>
           <td>
             <span class="badge ${stockBadge}">
-              ${isElab ? `${c.stock} porciones` : `${c.stock} unid. (${c.estado})`}
+              ${isElab ? `${c.stock} porciones` : `${Number(c.stock.toFixed(4))} unid. (${c.estado})`}
             </span>
           </td>
           <td><b>${num(p.vendidos)}</b></td>
           <td style="color:${c.ganancia < 0 ? 'var(--bad)' : 'var(--good)'}; font-weight:700;">${money(c.ganancia)}</td>
           <td style="text-align:right; white-space:nowrap;">
+            ${isElab ? `<button type="button" class="btn small btn-quick-production" data-id="${p.id}">+ Preparar</button>` : ''}
             ${!isElab ? `<button type="button" class="btn soft small btn-restock" data-id="${p.id}">+ Reponer stock</button>` : ''}
             <button type="button" class="btn ghost small btn-edit-item" data-id="${p.id}" title="Editar producto">Editar</button>
             <button type="button" class="btn danger small btn-del-item" data-id="${p.id}" title="Eliminar producto">🗑️</button>
@@ -2290,6 +2348,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
   }
 
   document.getElementById('inventory-tbody').addEventListener('click', e => {
+    const prepareBtn=e.target.closest('.btn-quick-production');if(prepareBtn){const product=items.find(p=>p.id===prepareBtn.dataset.id);if(product)openQuickProduction(product);return;}
     const restockBtn=e.target.closest('.btn-restock');if(restockBtn){const product=items.find(p=>p.id===restockBtn.dataset.id);if(product)openRestock(product);return;}
     const editBtn = e.target.closest('.btn-edit-item');
     if (editBtn) {
@@ -2954,7 +3013,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
           kardex = Array.isArray(data.kardex) ? data.kardex : [];
           if (data.negocio) { neg = data.negocio; negInput.value = neg; lsSet(NEG_KEY, neg); }
           if (data.telefono) { negTel = data.telefono; negTelInput.value = negTel; lsSet(NEG_TEL_KEY, negTel); }
-          if(await save()) location.reload();
+          if(await save({restore:true})) location.reload();
         } else {
           showToast("Archivo inválido", "El archivo JSON no tiene el formato de SMARTBOD.", "error");
         }
@@ -3010,6 +3069,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
     el('account-label').textContent=activeUser ? activeUser.name+' · '+(admin?'Administrador':'Vendedor'):'';
     el('manage-users').hidden=!admin;
     ['negocio','negocio-tel','save-business'].forEach(id=>el(id).disabled=!admin);
+    document.querySelectorAll('[data-admin-guide]').forEach(b=>b.hidden=!admin);
     document.querySelectorAll('[data-tab]').forEach(b=>b.hidden=!admin && !['pos','cat'].includes(b.dataset.tab));
     ['btn-load-demo','chip-low-stock'].forEach(id=>{if(el(id))el(id).hidden=!admin;});
     el('discount-policy-note').textContent='Descuento autorizado: hasta '+policy()[activeUser?.role||'seller']+'% del subtotal';
@@ -3042,20 +3102,35 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
   function checkPreparation(){
     const p=items.find(x=>x.id===document.getElementById('mp-id').value);if(!p||p.tipo!=='elaborado')return;
     const qty=num(document.getElementById('mp-prepare-qty').value),yieldValue=num(document.getElementById('mp-yield').value);let valid=Number.isInteger(qty)&&qty>0&&Number.isInteger(yieldValue)&&yieldValue>0,dirty=yieldValue!==(p.recipeYield||1);const needs={};
-    [...document.querySelectorAll('[data-ingredient-index]')].forEach((input,index)=>{const ing=p.ingredientes[index],value=num(input.value),mode=document.querySelector('[data-ingredient-mode="'+index+'"]').value;const amount=mode==='coverage'?yieldValue/value:value;if(value<=0||!Number.isFinite(amount))valid=false;needs[ing.idInsumo]=(needs[ing.idInsumo]||0)+amount*qty/yieldValue;dirty ||= Math.abs(amount-num(ing.cantidad))>1e-9;});
+    [...document.querySelectorAll('[data-ingredient-index]')].forEach((input,index)=>{const ing=p.ingredientes[index];if(items.find(x=>x.id===ing.idInsumo)?.deductOnSale)return;const value=num(input.value),mode=document.querySelector('[data-ingredient-mode="'+index+'"]').value;const amount=mode==='coverage'?yieldValue/value:value;if(value<=0||!Number.isFinite(amount))valid=false;needs[ing.idInsumo]=(needs[ing.idInsumo]||0)+amount*qty/yieldValue;dirty ||= Math.abs(amount-num(ing.cantidad))>1e-9;});
     const body=document.getElementById('mp-sufficiency');body.replaceChildren();const usage=getConsumoElaborados();
     for(const [id,need] of Object.entries(needs)){const ins=items.find(x=>x.id===id),available=ins?calc(ins,usage).stock:0,enough=Number.isFinite(need)&&need<=available+1e-9;if(!enough)valid=false;const line=document.createElement('p');line.textContent=(ins?.nombre||'Insumo')+': requiere '+(Number.isFinite(need)?Number(need.toFixed(4)):'—')+' · disponible '+Number(available.toFixed(4))+' · '+(enough?'Sí, alcanza':'No alcanza');line.style.color=enough?'var(--good)':'var(--bad)';body.append(line);}
-    document.getElementById('mp-sufficiency-status').textContent=dirty?'Guarda primero los cambios de rendimiento o ingredientes.':valid?'Sí, hay existencias suficientes para preparar '+qty+' porciones.':'Revisa las cantidades o repón el insumo que falta.';
-    document.getElementById('mp-prepare').disabled=dirty||!valid||saving;
+    document.getElementById('mp-sufficiency-status').textContent=dirty&&valid?'La receta se guardará y las unidades se prepararán juntas.':valid?'Sí, hay existencias suficientes para preparar '+qty+' porciones.':'Revisa las cantidades o repón el insumo que falta.';
+    document.getElementById('mp-prepare').disabled=!valid||saving;
+    document.getElementById('mp-prepare').textContent=dirty?'Guardar receta y agregar al stock de venta':'Agregar al stock de venta';
   }
   document.getElementById('mp-prepare-qty').oninput=checkPreparation;document.getElementById('mp-yield').oninput=checkPreparation;
+  function showPreparedStock(id){const p=items.find(p=>p.id===id);if(!p)return;document.getElementById('inv-status-filter').value='ALL';document.getElementById('inv-search').value=p.sku;activeInvCat='ALL';document.querySelectorAll('#inv-cat-pills .pill').forEach(b=>b.classList.toggle('active',b.dataset.cat==='ALL'));document.getElementById('pos-search').value='';activePosCat='ALL';document.querySelectorAll('#pos-cat-pills .pill').forEach(b=>b.classList.toggle('active',b.dataset.poscat==='ALL'));renderApp();}
   let preparationAttempt=null;
+  function preparePayload(id,qty,patch){const signature=JSON.stringify({id,qty,patch});if(preparationAttempt?.signature!==signature)preparationAttempt={signature,requestId:crypto.randomUUID()};return {id,qty,requestId:preparationAttempt.requestId,...(patch?{recipePatch:patch,revision:cloudRevision}:{})};}
+  function productionRecipePatch(){const p=items.find(x=>x.id===el('mp-id').value),yieldValue=num(el('mp-yield').value);return {recipeYield:yieldValue,precio:num(el('mp-recipe-price').value),ingredientes:[...document.querySelectorAll('[data-ingredient-index]')].map((input,index)=>{const mode=document.querySelector('[data-ingredient-mode="'+index+'"]').value,value=num(input.value);return {idInsumo:p.ingredientes[index].idInsumo,cantidad:mode==='coverage'?yieldValue/value:value,measureMode:mode,servingsPerUnit:mode==='coverage'?value:null};})};}
   el('mp-prepare').onclick=async()=>{
-    const id=el('mp-id').value,qty=num(el('mp-prepare-qty').value);if(saving)return;
-    const signature=id+':'+qty;if(preparationAttempt?.signature!==signature)preparationAttempt={signature,requestId:crypto.randomUUID()};
-    if(!confirm('Se descontarán los ingredientes de la receta GUARDADA para preparar '+qty+' porciones. ¿Continuar?'))return;
-    saving=true;el('mp-prepare').disabled=true;
-    try{const result=await Cloud.api('prepare',{production:{id,qty,requestId:preparationAttempt.requestId}});applyCloud(result);preparationAttempt=null;openProductModal(items.find(p=>p.id===id));showToast('Preparación registrada','Las porciones ya están disponibles en Caja.');}catch(e){showToast('Preparación no confirmada',e.message,'error');}finally{saving=false;checkPreparation();}
+    if(saving)return;const id=el('mp-id').value,qty=num(el('mp-prepare-qty').value),request=preparePayload(id,qty,productionRecipePatch());saving=true;el('mp-prepare').disabled=true;
+    try{const result=await Cloud.api('prepare',{production:request});preparationAttempt=null;applyCloud(result);showPreparedStock(id);modalProduct.hidden=true;const ready=num(items.find(p=>p.id===id)?.preparedStock);showToast('Stock de venta actualizado',qty+' unidades preparadas. Disponibles: '+ready);el('cloud-status').textContent='Preparación confirmada · '+ready+' unidades listas para vender';}
+    catch(e){el('mp-sufficiency-status').textContent=e.message;showToast('No se confirmó la preparación',e.message,'error');}finally{saving=false;el('mp-prepare').disabled=false;}
+  };
+  function openQuickProduction(p){
+    el('quick-production-id').value=p.id;el('quick-production-title').textContent='Preparar: '+p.nombre;el('quick-production-qty').value=p.recipeYield||1;el('quick-production-status').textContent='';preparationAttempt=null;quickProductionPreview();el('quick-production').showModal();
+  }
+  function quickProductionPreview(){const p=items.find(x=>x.id===el('quick-production-id').value);if(!p)return;const qty=num(el('quick-production-qty').value),ready=num(p.preparedStock),needs={},use=getConsumoElaborados();let valid=Number.isInteger(qty)&&qty>0;const missing=[];el('quick-production-before').textContent='Stock listo para vender: '+ready;el('quick-production-after').textContent='Después de preparar: '+(valid?ready+qty:'—')+' unidades';
+    for(const ing of p.ingredientes||[]){if(items.find(x=>x.id===ing.idInsumo)?.deductOnSale)continue;const amount=ing.measureMode==='coverage'?qty/num(ing.servingsPerUnit):num(ing.cantidad)*qty/(p.recipeYield||1);needs[ing.idInsumo]=(needs[ing.idInsumo]||0)+amount;}
+    const body=el('quick-production-needs');body.replaceChildren();for(const [id,amount] of Object.entries(needs)){const ins=items.find(x=>x.id===id),available=ins?calc(ins,use).stock:0,enough=Number.isFinite(amount)&&amount<=available+1e-9;if(!enough){valid=false;missing.push((ins?.nombre||'Insumo')+' (requiere '+amount.toFixed(3)+', disponible '+available.toFixed(3)+')');}const line=document.createElement('p');line.textContent=(ins?.nombre||'Insumo')+': '+Number(amount.toFixed(4))+' de '+Number(available.toFixed(4))+' disponibles';body.append(line);}
+    el('quick-production-status').textContent=missing.length?'Falta stock: '+missing.join('; '):valid?'Los ingredientes de preparación alcanzan. Los insumos por venta se comprobarán y descontarán al cobrar. Confirma para añadir las unidades a Caja.':'Ingresa una cantidad entera mayor a cero.';el('quick-production-submit').disabled=!valid||saving;
+  }
+  el('quick-production-qty').oninput=quickProductionPreview;el('quick-production-close').onclick=()=>el('quick-production').close();
+  el('quick-production-form').onsubmit=async e=>{e.preventDefault();if(saving)return;const id=el('quick-production-id').value,qty=num(el('quick-production-qty').value),request=preparePayload(id,qty);saving=true;el('quick-production-submit').disabled=true;el('quick-production-status').textContent='Guardando preparación…';
+    try{const result=await Cloud.api('prepare',{production:request});preparationAttempt=null;applyCloud(result);showPreparedStock(id);const ready=num(items.find(p=>p.id===id)?.preparedStock);el('quick-production-before').textContent='Stock confirmado en la nube: '+ready+' unidades';el('quick-production-after').textContent='Disponible en Inventario y Caja';el('quick-production-status').textContent='Preparación registrada correctamente. Puedes cerrar esta ventana y vender.';el('quick-production-qty').value='';el('cloud-status').textContent='Stock actualizado: '+ready+' unidades listas para vender';}
+    catch(err){el('quick-production-status').textContent='No confirmado: '+err.message+' Puedes reintentar la misma operación.';el('quick-production-submit').disabled=false;}finally{saving=false;}
   };
   function renderSaleManager(){
     const query=el('sale-search').value.toLowerCase(),body=el('sale-manager');body.replaceChildren();
@@ -3076,7 +3151,7 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
     const origin=el('report-event').value;
     const selectedReceipts=JSON.parse(lsGet('smartbod-receipts-v1','[]')).filter(r=>inRange(r.isoDate||r.date)&&(origin==='all'||(origin==='daily'?!r.eventId:r.eventId===origin)));
     const usage=getConsumoElaborados();let headers,rows,title;
-    if(type==='stock'){title='Existencias actuales';headers=['SKU','Producto','Stock','Costo unitario S/','Precio S/'];rows=items.map(p=>{const c=calc(p,usage);return[p.sku,p.nombre,c.stock,+c.cu.toFixed(2),num(p.precio)];});}
+    if(type==='stock'){title='Existencias actuales';headers=['SKU','Producto','Stock','Última compra S/','Costo promedio / preparado S/','Precio de venta S/'];rows=items.map(p=>{const c=calc(p,usage);return[p.sku,p.nombre,c.stock,p.lastPurchaseCost??'Sin historial',+c.cu.toFixed(2),num(p.precio)];});}
     if(type==='profit'){title='Rentabilidad acumulada';headers=['SKU','Producto','Ingresos S/','Costo vendido S/','Margen bruto S/'];rows=items.map(p=>{const c=calc(p,usage);return[p.sku,p.nombre,+c.ingreso.toFixed(2),+(c.ingreso-c.ganancia).toFixed(2),+c.ganancia.toFixed(2)];});}
     if(type==='sales'){title='Ventas por ticket';headers=['Fecha','Ticket','Vendedor','Pago','Descuento S/','Total original S/','Estado','Importe vigente S/','Origen / Evento'];rows=selectedReceipts.map(r=>[r.isoDate?new Date(r.isoDate).toLocaleString('es-PE',{timeZone:'America/Lima'}):r.date,r.ticketNum,r.operator||'Sin registro',r.payMethod,num(r.discount),num(r.total),r.status==='voided'?'Anulada':'Vigente',r.status==='voided'?0:num(r.total),r.eventSnapshot?.name||'Venta diaria / local']);}
     if(type==='daily'||type==='eventSummary'){
@@ -3086,11 +3161,12 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
     }
     if(type==='movements'){title='Movimientos de inventario';headers=['Fecha','SKU','Producto','Tipo','Cantidad','Importe S/'];rows=kardex.filter(k=>inRange(k.date)).map(k=>[new Date(k.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),k.sku,k.name,k.type,num(k.qty),num(k.amount)]);}
     if(type==='production'){title='Preparaciones registradas';headers=['Fecha','SKU','Producto','Porciones preparadas','Costo total S/'];rows=kardex.filter(k=>k.type==='PROD_IN'&&inRange(k.date)).map(k=>[new Date(k.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),k.sku,k.name,num(k.qty),num(k.amount)]);}
+    if(type==='prices'){const history=PriceAnalytics.rows(items,{productId:el('report-product').value,from,to});return {title:'Historial de precios',headers:['Fecha','SKU','Producto','Movimiento','Unidades','Compra neta por unidad S/','Venta por unidad S/','Cambio compra %','Cambio venta %','Responsable'],rows:history.map(h=>[new Date(h.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),h.sku,h.productName,h.source,h.qty,h.unitCost==null?'—':Number(h.unitCost.toFixed(4)),h.salePrice,PriceAnalytics.change(h.previousPurchaseCost,h.unitCost)?.toFixed(2)??'—',PriceAnalytics.change(h.previousSalePrice,h.salePrice)?.toFixed(2)??'—',h.operator]),priceRows:history,priceProduct:el('report-product').value,created:new Date().toISOString(),period:(from||'Inicio')+' a '+(to||'Hoy')};}
     return {title,headers,rows,created:new Date().toISOString(),period:['sales','daily','eventSummary','movements','production'].includes(type)?`${from||'Inicio'} a ${to||'Hoy'}${['sales','daily','eventSummary'].includes(type)?' · '+el('report-event').selectedOptions[0].textContent:''}`:'Las fechas no se aplican: existencias actuales / rentabilidad acumulada'};
   }
-  function showReport(r){currentReport=r;el('report-title').textContent=r.title;el('report-meta').textContent=`${r.period} · ${r.rows.length} registros · Generado ${new Date(r.created).toLocaleString('es-PE')}`;const table=el('report-table');table.replaceChildren();const thead=document.createElement('thead'),tr=document.createElement('tr');r.headers.forEach(v=>{const c=document.createElement('th');c.textContent=v;tr.append(c);});thead.append(tr);table.append(thead);const body=document.createElement('tbody');r.rows.forEach(row=>{const tr=document.createElement('tr');row.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td);});body.append(tr);});table.append(body);el('report-empty').hidden=r.rows.length>0;}
+  function showReport(r){currentReport=r;showPriceAnalytics(r);el('report-title').textContent=r.title;el('report-meta').textContent=`${r.period} · ${r.rows.length} registros · Generado ${new Date(r.created).toLocaleString('es-PE')}`;const table=el('report-table');table.replaceChildren();const thead=document.createElement('thead'),tr=document.createElement('tr');r.headers.forEach(v=>{const c=document.createElement('th');c.textContent=v;tr.append(c);});thead.append(tr);table.append(thead);const body=document.createElement('tbody');r.rows.forEach(row=>{const tr=document.createElement('tr');row.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td);});body.append(tr);});table.append(body);el('report-empty').hidden=r.rows.length>0;}
   el('report-generate').onclick=()=>{try{showReport(reportData());}catch(e){showToast('Reporte',e.message,'error');}};
-  el('report-type').onchange=()=>{const range=['sales','daily','eventSummary','movements','production'].includes(el('report-type').value);el('report-from').disabled=false;el('report-to').disabled=false;el('report-generate').click();};
+  el('report-type').onchange=()=>{el('report-product-label').hidden=el('report-type').value!=='prices';refreshPriceProducts();el('report-event').disabled=['prices','stock','profit','production','movements'].includes(el('report-type').value);el('report-from').disabled=['stock','profit'].includes(el('report-type').value);el('report-to').disabled=el('report-from').disabled;el('report-generate').click();};
   el('report-excel').onclick=()=>{if(!currentReport)return;if(!window.XLSX)return showToast('Excel','No se pudo cargar la biblioteca. Revisa tu conexión.','error');const r=currentReport,wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([[r.title],[r.period],r.headers,...r.rows]),'Reporte');XLSX.writeFile(wb,'SMARTBOD_reporte.xlsx');};
   el('report-pdf').onclick=()=>{if(!currentReport)return;if(!window.jspdf)return showToast('PDF','No se pudo cargar la biblioteca. Revisa tu conexión.','error');const r=currentReport,doc=new window.jspdf.jsPDF({orientation:'landscape'});doc.setFontSize(18);doc.text('SMARTBOD | '+r.title,14,18);doc.setFontSize(10);doc.text(r.period,14,27);doc.autoTable({startY:34,head:[r.headers],body:r.rows,headStyles:{fillColor:[8,127,107]}});doc.save('SMARTBOD_reporte.pdf');};
   el('report-print').onclick=()=>{if(!currentReport)return;document.body.classList.add('printing-report');window.print();document.body.classList.remove('printing-report');};
@@ -3164,18 +3240,39 @@ body:has(.login-page:not([hidden])){padding:0;background:#fcf9f4;color:#071e17}.
   let restockAttempt=null;
   function openRestock(product){
     el('restock-id').value=product.id;el('restock-heading').textContent='Reponer: '+product.nombre;el('restock-sku').textContent='SKU: '+product.sku;
-    el('restock-stock').textContent='Stock actual: '+calc(product,getConsumoElaborados()).stock+' unidades';
-    el('restock-mode').value='units';el('restock-count').value=1;el('restock-units').value=1;el('restock-cost').value=calc(product,getConsumoElaborados()).cu.toFixed(2);el('restock-discount').value=0;el('restock-price').value=product.precio;el('restock-margin').value=25;el('restock-status').textContent='';restockAttempt=null;restockPreview();el('restock-dialog').showModal();
+    el('restock-stock').textContent='Stock actual: '+Number(calc(product,getConsumoElaborados()).stock.toFixed(4))+' unidades / envases';
+    el('restock-previous').textContent='Último costo de compra registrado: '+(product.lastPurchaseCost==null?'Aún no hay historial':money(product.lastPurchaseCost))+' · Precio de venta actual: '+money(product.precio);
+    el('restock-mode').value='units';el('restock-count').value=1;el('restock-units').value=1;el('restock-cost').value='';el('restock-discount').value=0;el('restock-price').value='';el('restock-margin').value=25;el('restock-status').textContent='';restockAttempt=null;restockPreview();el('restock-dialog').showModal();el('restock-count').focus();
   }
   function restockPreview(){
-    const byUnit=el('restock-mode').value==='units';el('restock-units').disabled=byUnit;if(byUnit)el('restock-units').value=1;
-    el('restock-count-label').textContent=byUnit?'Unidades que ingresan':'Cantidad de paquetes';el('restock-cost-label').textContent=byUnit?'Costo por unidad (S/)':'Costo por paquete (S/)';el('restock-discount-label').textContent=byUnit?'Descuento por unidad (S/)':'Descuento por paquete (S/)';
-    try{const result=packageMath(...['restock-count','restock-units','restock-cost','restock-discount','restock-margin'].map(id=>Number(el(id).value)));el('restock-preview').textContent=`Ingresan ${result.qty} unidades · Compra neta ${money(result.total)} · Costo unitario ${money(result.unit)} · Precio sugerido ${money(result.price)}`;return result;}catch(e){el('restock-preview').textContent=e.message;return null;}
+    const byUnit=el('restock-mode').value==='units';el('restock-units').disabled=byUnit;el('restock-units-label').hidden=byUnit;if(byUnit)el('restock-units').value=1;
+    el('restock-count-label').textContent=byUnit?'Unidades que ingresan':'Cantidad de paquetes';el('restock-cost-label').textContent=byUnit?'Nuevo costo por unidad / envase (S/)':'Nuevo costo por paquete (S/)';el('restock-discount-label').textContent=byUnit?'Descuento por unidad (S/)':'Descuento por paquete (S/)';
+    if(el('restock-cost').value===''){el('restock-preview').textContent='Ingresa el costo de esta compra. Puede ser diferente al anterior.';return null;}
+    try{const result=packageMath(...['restock-count','restock-units','restock-cost','restock-discount','restock-margin'].map(id=>Number(el(id).value)));el('restock-preview').textContent=`Ingresan ${result.qty} unidades · Compra neta ${money(result.total)} · Costo unitario ${money(result.unit)} · Nuevo precio de venta: ${el('restock-price').value?money(el('restock-price').value):'por completar'} · Stock después: ${Number((calc(items.find(p=>p.id===el('restock-id').value),getConsumoElaborados()).stock+result.qty).toFixed(4))}`;return result;}catch(e){el('restock-preview').textContent=e.message;return null;}
   }
-  ['restock-mode','restock-count','restock-units','restock-cost','restock-discount','restock-margin'].forEach(id=>el(id).oninput=restockPreview);
-  el('restock-use-price').onclick=()=>{const r=restockPreview();if(r)el('restock-price').value=r.price;};
+  ['restock-mode','restock-count','restock-units','restock-cost','restock-discount','restock-margin','restock-price'].forEach(id=>el(id).oninput=restockPreview);
+  el('restock-use-price').onclick=()=>{const r=restockPreview();if(r){el('restock-price').value=r.price;restockPreview();}};
+  el('restock-keep-price').onclick=()=>{el('restock-price').value=items.find(p=>p.id===el('restock-id').value).precio;restockPreview();};
   el('restock-close').onclick=()=>el('restock-dialog').close();
-  el('restock-form').onsubmit=async e=>{e.preventDefault();if(!restockPreview()||saving)return;const input={id:el('restock-id').value,packages:Number(el('restock-count').value),units:Number(el('restock-units').value),cost:Number(el('restock-cost').value),discount:Number(el('restock-discount').value),price:Number(el('restock-price').value)};const signature=JSON.stringify(input);if(restockAttempt?.signature!==signature)restockAttempt={signature,requestId:crypto.randomUUID()};saving=true;e.submitter.disabled=true;try{const result=await Cloud.api('restock',{restock:{...input,requestId:restockAttempt.requestId}});applyCloud(result);el('restock-dialog').close();restockAttempt=null;showToast('Stock repuesto','Se sumó la compra al mismo producto, sin duplicarlo.');}catch(err){el('restock-status').textContent=err.message;}finally{saving=false;e.submitter.disabled=false;}};
+  el('restock-form').onsubmit=async e=>{e.preventDefault();if(!restockPreview()||saving)return;const input={id:el('restock-id').value,packages:Number(el('restock-count').value),units:Number(el('restock-units').value),cost:Number(el('restock-cost').value),discount:Number(el('restock-discount').value),price:Number(el('restock-price').value)};const signature=JSON.stringify(input);if(restockAttempt?.signature!==signature)restockAttempt={signature,requestId:crypto.randomUUID()};saving=true;e.submitter.disabled=true;try{const result=await Cloud.api('restock',{restock:{...input,requestId:restockAttempt.requestId}});applyCloud(result);el('restock-dialog').close();restockAttempt=null;showToast('Stock repuesto','Compra guardada. Stock, precio de venta e historial actualizados.');}catch(err){el('restock-status').textContent=err.message;}finally{saving=false;e.submitter.disabled=false;}};
+
+
+  let priceChart=null;
+  function refreshPriceProducts(){const selected=el('report-product').value;el('report-product').replaceChildren(new Option('Todos los productos','all'));items.filter(p=>p.tipo==='producto').forEach(p=>el('report-product').add(new Option(p.sku+' · '+p.nombre,p.id)));if([...el('report-product').options].some(o=>o.value===selected))el('report-product').value=selected;}
+  function showPriceAnalytics(report){
+    el('price-analytics').hidden=!report.priceRows;if(priceChart){priceChart.destroy();priceChart=null;}if(!report.priceRows)return;
+    const rows=report.priceRows,one=report.priceProduct!=='all',stats=PriceAnalytics.summary(rows),box=el('price-metrics');box.replaceChildren();
+    const values=[['Compras registradas',stats.purchases],['Importe comprado',money(stats.total)]];
+    if(one)values.push(['Menor costo',stats.min==null?'Sin datos':money(stats.min)],['Mayor costo',stats.max==null?'Sin datos':money(stats.max)],['Costo medio por unidad',stats.weightedCost==null?'Sin datos':money(stats.weightedCost)],['Variación compra',stats.purchaseChange==null?'Sin comparación':stats.purchaseChange.toFixed(2)+'%'],['Variación venta',stats.saleChange==null?'Sin comparación':stats.saleChange.toFixed(2)+'%']);
+    values.forEach(([title,value])=>{const card=document.createElement('div');card.className='sum-card';const label=document.createElement('p'),v=document.createElement('strong');label.textContent=title;v.textContent=value;card.append(label,v);box.append(card);});
+    el('price-explanation').textContent='Solo datos registrados desde esta actualización. El costo de compra es neto por unidad/envase; el promedio se pondera por unidades compradas. Las variaciones de las tarjetas comparan el primer y último registro del periodo. '+(one?'La tabla muestra además el cambio contra el precio anterior a cada registro.':'Selecciona un producto para comparar precios y ver el gráfico.');
+    el('price-chart').parentElement.hidden=!one||!rows.length||!window.Chart;
+    if(one&&rows.length&&window.Chart)priceChart=new Chart(el('price-chart'),{type:'line',data:{labels:rows.map(r=>new Date(r.date).toLocaleString('es-PE',{timeZone:'America/Lima'})),datasets:[{label:'Compra neta por unidad S/',data:rows.map(r=>r.unitCost),borderColor:'#087f6b',spanGaps:true},{label:'Venta por unidad S/',data:rows.map(r=>r.salePrice),borderColor:'#2563eb'}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}},plugins:{legend:{position:'bottom'}}}});
+  }
+  el('report-product').onchange=()=>el('report-generate').click();
+  el('guide-sell').onclick=()=>switchTab('pos');
+  el('guide-restock').onclick=()=>{switchTab('inv');el('inv-search').value='';el('inv-status-filter').value='ALL';activeInvCat='ALL';renderApp();el('inv-search').scrollIntoView({block:'center',behavior:'smooth'});el('inv-search').focus();showToast('Busca el producto','Escribe su nombre o SKU y pulsa + Reponer stock.');};
+  el('guide-prices').onclick=()=>{el('report-type').value='prices';el('report-type').onchange();switchTab('rep');};
 
   savedOptions();el('report-type').onchange();el('auth-screen').hidden=true;el('app').hidden=false;accountUI();switchTab(activeUser.role==='admin'?'inv':'pos');
 
