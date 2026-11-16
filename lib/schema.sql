@@ -4,3 +4,5 @@ CREATE TABLE IF NOT EXISTS sb_store(id int PRIMARY KEY CHECK(id=1),revision int 
 INSERT INTO sb_store(id,data) VALUES(1,'{"items":[],"kardex":[],"receipts":[],"savedReports":[],"negocio":"SMARTBOD","telefono":""}') ON CONFLICT DO NOTHING;
 CREATE TABLE IF NOT EXISTS sb_attempts(key text PRIMARY KEY,count int NOT NULL,until_time timestamptz NOT NULL);
 CREATE TABLE IF NOT EXISTS sb_audit(id bigserial PRIMARY KEY,at timestamptz NOT NULL DEFAULT now(),user_id text,action text NOT NULL,revision int);
+
+CREATE TABLE IF NOT EXISTS sb_images(id text PRIMARY KEY,content bytea NOT NULL,mime text NOT NULL,created timestamptz NOT NULL DEFAULT now());

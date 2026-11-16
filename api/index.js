@@ -2,7 +2,7 @@ import pg from 'pg';
 import {randomBytes,randomUUID,createHash,scrypt as scryptCallback,timingSafeEqual} from 'node:crypto';
 import {promisify} from 'node:util';
 import {readFile} from 'node:fs/promises';
-import {empty,fail,normalize,sell,publicState} from '../lib/domain.js';
+import {empty,fail,normalize,sell,prepare,voidSale,upsertEvent,publicState} from '../lib/domain.js';
 const scrypt=promisify(scryptCallback);let pool,ready;
 const digest=s=>createHash('sha256').update(s).digest('hex');
 const safeUser=u=>({id:u.id,username:u.username,name:u.name,role:u.role,enabled:u.enabled});
@@ -19,8 +19,9 @@ async function seed(){await transaction(async c=>{await c.query('SELECT id FROM 
 export default async function handler(req,res){
  res.setHeader('Cache-Control','no-store');
  try{
- if(req.method!=='POST')fail('Método no permitido',405);
- if(req.headers['x-smartbod']!=='1')fail('Solicitud no permitida',403);
+ const imageId=req.method==='GET'?new URL(req.url,'https://localhost').searchParams.get('image'):null;
+ if(req.method!=='POST'&&!imageId)fail('Método no permitido',405);
+ if(!imageId&&req.headers['x-smartbod']!=='1')fail('Solicitud no permitida',403);
  const origin=req.headers.origin;const host=req.headers['x-forwarded-host']||req.headers.host;
  if(origin&&new URL(origin).host!==host)fail('Origen no permitido',403);
  if(Buffer.byteLength(JSON.stringify(req.body||{}))>3000000)fail('Archivo demasiado grande',413);
@@ -34,6 +35,7 @@ export default async function handler(req,res){
   const t=randomBytes(32).toString('hex');await pool.query("INSERT INTO sb_sessions VALUES($1,$2,now()+interval '8 hours')",[digest(t),u.id]);await pool.query('DELETE FROM sb_attempts WHERE key=$1',[key]);cookie(t);return res.json({user:safeUser(u)});
  }
  const {rows}=await pool.query('SELECT u.* FROM sb_users u JOIN sb_sessions s ON s.user_id=u.id WHERE s.token=$1 AND s.expires>now() AND u.enabled',[digest(token)]);const user=rows[0];if(!user)fail('Inicia sesión para continuar',401);
+ if(imageId){const {rows:[image]}=await pool.query('SELECT content,mime FROM sb_images WHERE id=$1',[imageId]);if(!image)fail('Imagen no encontrada',404);res.setHeader('Content-Type',image.mime);return res.send(image.content);}
  if(action==='logout'){await pool.query('DELETE FROM sb_sessions WHERE token=$1',[digest(token)]);cookie('');return res.json({ok:true});}
  const result=await transaction(async c=>{
   // Serialize profile changes and stock writes with sales; permissions are re-read inside lock.
@@ -52,8 +54,12 @@ export default async function handler(req,res){
   }
   else if(action==='policy'){admin();policy=b.policy;if(!policy||!['admin','seller'].every(k=>typeof policy[k]==='number'&&policy[k]>=0&&policy[k]<=100))fail('Límites inválidos');await c.query('UPDATE sb_store SET policy=$1 WHERE id=1',[policy]);}
   else if(action==='save'){
-   admin();if(b.revision!==revision)fail('Otro usuario actualizó los datos. Recarga antes de guardar.',409);data=normalize(b.state);revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);
+   admin();if(b.revision!==revision)fail('Otro usuario actualizó los datos. Recarga antes de guardar.',409);data=normalize({...b.state,events:b.state.events??store.data.events??[]});revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);
   }
+  else if(action==='event'){admin();if(b.revision!==revision)fail('Los datos cambiaron. Actualiza antes de guardar el evento.',409);data=upsertEvent(data,b.event,safeUser(fresh));revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);}
+  else if(action==='void'){admin();data=voidSale(data,b.void,safeUser(fresh));revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);}
+  else if(action==='imageUpload'){admin();if(typeof b.image!=='string'||b.image.length>210000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.image))fail('Imagen inválida');const bytes=Buffer.from(b.image.split(',')[1],'base64');if(bytes.length>150000||bytes[0]!==255||bytes[1]!==216||bytes[2]!==255)fail('Imagen inválida o demasiado grande');const id=randomUUID();await c.query('INSERT INTO sb_images(id,content,mime) VALUES($1,$2,$3)',[id,bytes,'image/jpeg']);return {url:'/api/index?image='+id};}
+  else if(action==='prepare'){admin();data=prepare(data,b.production,safeUser(fresh));revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);}
   else if(action==='sale'){
    const sale=sell(data,b.sale,safeUser(fresh),policy);data=sale.state;receipt=sale.receipt;revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);
   }else fail('Operación desconocida',404);

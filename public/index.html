@@ -809,6 +809,8 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
 
 .auth-screen{min-height:90vh;display:grid;place-items:center}.auth-screen form{width:min(440px,95vw);padding:34px;gap:20px}.auth-screen label,dialog label{display:grid;gap:6px}dialog{width:min(850px,95vw);max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:20px;padding:28px;background:var(--surface);color:var(--ink)}dialog::backdrop{background:#0f172a99}dialog .panel{margin-top:16px}.report-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:12px 0}.report-controls label{display:grid;gap:5px}
 @media print{body.printing-report *{visibility:hidden}body.printing-report #report-print-area,body.printing-report #report-print-area *{visibility:visible}body.printing-report #report-print-area{position:absolute;left:0;top:0;width:100%;color:black;background:white}body.printing-report .clean-table-container{overflow:visible}body.printing-report table{width:100%}body.printing-report tr{break-inside:avoid}}
+
+.item-sku{display:inline-block!important;font-size:14px!important;font-weight:800!important;color:var(--ink)!important;background:var(--accent-soft);border:1px solid var(--accent);padding:5px 9px;border-radius:7px;letter-spacing:.04em;margin:5px 0}#mp-sku{font-weight:800;font-size:18px;border:2px solid var(--accent)}#report-print-area{margin-top:18px;border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--surface)}#report-table{min-width:600px}#mp-ingredients label{display:grid;grid-template-columns:1fr 110px;gap:10px;align-items:center;margin:8px 0}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20fill%3D%22none%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2218%22%20fill%3D%22%23064e3b%22%2F%3E%3Cpath%20d%3D%22M45%2019H25a9%209%200%200%200%200%2018h14a5%205%200%200%201%200%2010H19%22%20stroke%3D%22%23fff%22%20stroke-width%3D%227%22%20stroke-linecap%3D%22square%22%2F%3E%3Cpath%20d%3D%22M19%2045h20a9%209%200%200%200%200-18H25a5%205%200%200%201%200-10h20%22%20stroke%3D%22%2334d399%22%20stroke-width%3D%223%22%2F%3E%3Cpath%20d%3D%22m43%2012%206%206-6%206%22%20stroke%3D%22%2334d399%22%20stroke-width%3D%223%22%20stroke-linejoin%3D%22miter%22%2F%3E%3C%2Fsvg%3E">
 <script src="vendor/pdf-lib.min.js"></script>
@@ -864,6 +866,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
       <button class="tab" role="tab" data-tab="est" aria-selected="false">
         📊 Estadísticas
       </button>
+      <button class="tab" role="tab" data-tab="events" aria-selected="false">Eventos</button>
       <button class="tab" role="tab" data-tab="rep" aria-selected="false">
         📄 Reportes
       </button>
@@ -873,7 +876,6 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
   <p id="discount-policy-note" class="sub-t"></p>
   <!-- ==================== VISTA 1: INVENTARIO ==================== -->
   <div class="view" id="v-inv">
-    <section class="panel" style="margin-bottom:20px"><h2>Importar y descargar inventario</h2><p>Edita los productos desde el botón Editar de cada fila. La importación suma compras y actualiza el precio de venta de los SKU existentes; no reemplaza las existencias.</p><div class="report-controls"><button id="inventory-template" class="btn soft">Plantilla Excel</button><a class="btn ghost" href="plantilla_compras.pdf" download>Plantilla PDF rellenable</a><button id="inventory-excel" class="btn ghost">Descargar inventario Excel</button><button id="inventory-pdf" class="btn ghost">Descargar inventario PDF</button></div><label>Cargar plantilla (.xls, .xlsx o PDF rellenable)<input id="inventory-file" type="file" accept=".xls,.xlsx,.pdf"></label><p class="sub-t">PDF: solo la plantilla SMARTBOD con campos conservados. No admite facturas libres ni documentos escaneados. Excel: hoja Carga. Revisa la vista previa antes de confirmar.</p><p id="inventory-import-status" role="status"></p><div class="clean-table-container"><table id="inventory-preview" class="clean-table"></table></div><button id="inventory-confirm" class="btn" disabled>Confirmar ingreso al inventario</button></section>
     <!-- KPI Summary -->
     <section class="summary" id="dash-summary" style="margin-bottom: 20px;">
       <div class="sum-card">
@@ -973,7 +975,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
 
         <div style="border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface-2);">
           <label>Insumos Requeridos por Porción</label>
-          <div id="el-ingredients-list" style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px; max-height:130px; overflow-y:auto;"></div>
+          <label>Esta receta rinde (porciones)<input id="el-yield" type="number" min="1" step="1" value="1"></label><p class="sub-t">Ejemplo: si ingresas ingredientes para 24 hamburguesas, indica 24. Guardar la receta no descuenta insumos: registra después la preparación.</p><div id="el-ingredients-list" style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px; max-height:130px; overflow-y:auto;"></div>
           <div style="display:flex; gap:8px; align-items:center;">
             <select id="el-insumo-select" style="flex:2.2;">
               <option value="">Seleccionar insumo del inventario...</option>
@@ -985,7 +987,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
 
         <div id="el-profit-preview" style="font-size:12px; color:var(--muted); display:flex; justify-content:space-between;">
           <span>Utilidad estimada: <b id="el-util-val">S/ 0.00</b></span>
-          <span>Porciones disponibles hoy: <b id="el-max-portions">0</b></span>
+          <span>Porciones que podrías preparar: <b id="el-max-portions">0</b></span>
         </div>
 
         <button type="button" class="btn" id="btn-save-elab">Guardar Producto Elaborado</button>
@@ -1041,6 +1043,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
         <tbody id="inventory-tbody"></tbody>
       </table>
     </div>
+    <section class="panel" style="margin-bottom:20px"><h2>Importar y descargar inventario</h2><p>Edita los productos desde el botón Editar de cada fila. La importación suma compras y actualiza el precio de venta de los SKU existentes; no reemplaza las existencias.</p><div class="report-controls"><button id="inventory-template" class="btn soft">Plantilla Excel</button><a class="btn ghost" href="plantilla_compras.pdf" download>Plantilla PDF rellenable</a><button id="inventory-excel" class="btn ghost">Descargar inventario Excel</button><button id="inventory-pdf" class="btn ghost">Descargar inventario PDF</button></div><label>Cargar plantilla (.xls, .xlsx o PDF rellenable)<input id="inventory-file" type="file" accept=".xls,.xlsx,.pdf"></label><p class="sub-t">PDF: solo la plantilla SMARTBOD con campos conservados. No admite facturas libres ni documentos escaneados. Excel: hoja Carga. Revisa la vista previa antes de confirmar.</p><p id="inventory-import-status" role="status"></p><div class="clean-table-container"><table id="inventory-preview" class="clean-table"></table></div><button id="inventory-confirm" class="btn" disabled>Confirmar ingreso al inventario</button></section>
   </div>
 
   <!-- ==================== VISTA 2: CAJA (POS) ==================== -->
@@ -1072,7 +1075,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
         <div class="cart-checkout-box">
           <div class="row-inputs">
             <div class="input-group">
-              <label for="pos-client">Cliente / DNI (Opcional)</label>
+              <label for="pos-event">Destino de la venta</label><select id="pos-event"><option value="">Venta diaria / local</option></select><p class="sub-t">Solo aparecen eventos habilitados para hoy (hora de Lima).</p><label for="pos-client">Cliente / DNI (Opcional)</label>
               <input type="text" id="pos-client" placeholder="Cliente General">
             </div>
             <div class="input-group">
@@ -1245,8 +1248,10 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
   </div>
 
   <!-- ==================== VISTA 6: REPORTES & BACKUP ==================== -->
-  <div class="view" id="v-rep" hidden>
-<section class="panel" style="margin-bottom:24px"><h2>Centro de reportes</h2><div class="report-controls"><label>Reporte<select id="report-type"><option value="stock">Existencias actuales</option><option value="profit">Rentabilidad acumulada</option><option value="sales">Ventas por ticket</option><option value="movements">Movimientos</option></select></label><label>Periodo<select id="report-period"><option value="all">Todo el historial</option><option value="today">Hoy</option><option value="week">Últimos 7 días</option><option value="month">Este mes</option><option value="custom">Personalizado</option></select></label><label>Desde<input id="report-from" type="date"></label><label>Hasta<input id="report-to" type="date"></label><button id="report-generate" class="btn">Actualizar vista</button></div><div class="report-controls"><button id="report-save" class="btn soft">Guardar reporte</button><button id="report-excel" class="btn ghost">Descargar Excel</button><button id="report-pdf" class="btn ghost">Descargar PDF</button><button id="report-print" class="btn ghost">Imprimir / guardar PDF</button><select id="saved-reports" aria-label="Reportes guardados"></select></div><p class="sub-t">Guardar conserva una copia fija en la nube. Excel y PDF descargan el reporte mostrado. Ventas por ticket incluye solo tickets conservados; el historial anterior puede estar incompleto.</p><div id="report-print-area"><h2 id="report-title"></h2><p id="report-meta"></p><div class="clean-table-container"><table id="report-table" class="clean-table"></table></div><p id="report-empty">No hay registros para este reporte.</p></div></section>
+  <div class="view" id="v-events" hidden><section class="panel"><h2>Eventos de venta</h2><p>Crea ferias, kermesses, campeonatos u otras actividades. Cada venta conserva el evento seleccionado. Las existencias se comparten con el local.</p><form id="event-form"><input id="event-id" type="hidden"><div class="report-controls"><label>Nombre del evento<input id="event-name" maxlength="120" required placeholder="Feria de verano"></label><label>Tipo de actividad<input id="event-activity" list="event-types" maxlength="80" required placeholder="Feria"><datalist id="event-types"><option value="Feria"><option value="Kermesse"><option value="Campeonato"><option value="Festival"><option value="Actividad escolar"><option value="Evento privado"></datalist></label><label>Fecha de inicio<input id="event-start" type="date" required></label><label>Fecha de fin<input id="event-end" type="date" required></label><label>Lugar<input id="event-location" maxlength="200"></label><label>Observaciones<input id="event-notes" maxlength="500"></label></div><p id="event-duration"></p><label><input id="event-active" type="checkbox" checked> Habilitado para vender dentro de sus fechas</label><div class="report-controls"><button class="btn">Guardar evento</button><button id="event-new" class="btn ghost" type="button">Nuevo evento</button></div><p id="event-status" role="status"></p></form><div class="clean-table-container"><table class="clean-table"><thead><tr><th>Evento</th><th>Actividad</th><th>Fechas</th><th>Duración</th><th>Lugar</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="events-list"></tbody></table></div></section></div>
+<div class="view" id="v-rep" hidden>
+<section class="panel" style="margin-bottom:24px"><h2>Ventas y correcciones</h2><p>Una venta equivocada se anula: se revierte el importe y se devuelven las existencias, conservando el registro. Solo administradores.</p><label>Buscar por ticket, cliente o vendedor<input id="sale-search" placeholder="Escribe para buscar una venta"></label><p id="sale-manager-status" role="status"></p><div class="clean-table-container"><table class="clean-table"><thead><tr><th>Fecha</th><th>Ticket</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="sale-manager"></tbody></table></div></section>
+<section class="panel" style="margin-bottom:24px"><h2>Reportes en pantalla</h2><p>Selecciona el reporte y el periodo: la tabla aparece aquí. Descargar o imprimir es opcional.</p><div class="report-controls"><label>Reporte<select id="report-type"><option value="stock">Existencias actuales</option><option value="profit">Rentabilidad acumulada</option><option value="sales">Ventas por ticket</option><option value="daily">Ventas por día</option><option value="eventSummary">Ventas por evento</option><option value="movements">Movimientos</option><option value="production">Preparaciones</option></select></label><label>Origen de ventas<select id="report-event"><option value="all">Todas las ventas</option><option value="daily">Solo venta diaria</option></select></label><label>Periodo<select id="report-period"><option value="all">Todo el historial</option><option value="today">Hoy</option><option value="week">Últimos 7 días</option><option value="month">Este mes</option><option value="custom">Personalizado</option></select></label><label>Desde<input id="report-from" type="date"></label><label>Hasta<input id="report-to" type="date"></label><button id="report-generate" class="btn">Actualizar vista</button></div><div class="report-controls"><button id="report-save" class="btn soft">Guardar reporte</button><button id="report-excel" class="btn ghost">Descargar Excel</button><button id="report-pdf" class="btn ghost">Descargar PDF</button><button id="report-print" class="btn ghost">Imprimir / guardar PDF</button><select id="saved-reports" aria-label="Reportes guardados"></select></div><p class="sub-t">Guardar conserva una copia fija en la nube. Excel y PDF descargan el reporte mostrado. Ventas por ticket incluye solo tickets conservados; el historial anterior puede estar incompleto.</p><div id="report-print-area"><h2 id="report-title"></h2><p id="report-meta"></p><div class="clean-table-container"><table id="report-table" class="clean-table"></table></div><p id="report-empty">No hay registros para este reporte.</p></div></section>
     <div class="panels-grid">
       <div class="panel">
         <div class="panel-header">📊 Exportación de Reportes Ejecutivos</div>
@@ -1312,6 +1317,8 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
         <input type="number" id="mp-min-stock" value="5" min="1">
       </div>
     </div>
+    <section class="panel"><label for="mp-image-file">Imagen del producto (JPG, PNG o WebP)</label><input id="mp-image-file" type="file" accept="image/jpeg,image/png,image/webp"><img id="mp-image-preview" alt="Vista previa del producto" style="width:130px;height:130px;object-fit:contain;border:1px solid var(--line);border-radius:12px"><p id="mp-image-status" role="status"></p><button id="mp-image-remove" class="btn ghost" type="button">Quitar imagen</button><p class="sub-t">Se optimiza la foto y se guarda en la nube al guardar el producto. Máximo 10 MB de entrada.</p></section>
+    <section id="mp-recipe" hidden class="panel"><label>La receta completa rinde (porciones)<input id="mp-yield" type="number" min="1" step="1"></label><label>Precio de venta por porción (S/)<input id="mp-recipe-price" type="number" min="0.01" step="0.01"></label><h4>Ingredientes por receta completa</h4><div id="mp-ingredients"></div><p id="mp-ready"></p><label>Porciones que vas a preparar ahora<input id="mp-prepare-qty" type="number" min="1" step="1" value="1"></label><button id="mp-prepare" class="btn soft" type="button">Registrar preparación</button><p class="sub-t">Guarda primero cualquier cambio de receta. La preparación usa la receta guardada, descuenta sus ingredientes y añade porciones listas. La venta descuenta solo esas porciones.</p></section>
     <div class="row-inputs-3" id="mp-stock-fields">
       <div class="input-group">
         <label for="mp-qty">Unid. Compradas</label>
@@ -1414,6 +1421,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
   function lsGet(key,fallback){return memory.has(key)?memory.get(key):fallback;}
   function lsSet(key,value){memory.set(key,value);}
   function hydrate(state){
+    lsSet('smartbod-events-v1',JSON.stringify(state.events||[]));
     lsSet(LS_KEY,JSON.stringify(state.items));lsSet(KARDEX_KEY,JSON.stringify(state.kardex));
     lsSet(NEG_KEY,state.negocio||'SMARTBOD');lsSet(NEG_TEL_KEY,state.telefono||'');
     lsSet('smartbod-receipts-v1',JSON.stringify(state.receipts||[]));lsSet('smartbod-saved-reports-v1',JSON.stringify(state.savedReports||[]));
@@ -1578,8 +1586,8 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
   });
 
   let saving=false;
-  function captureState(){return {items,kardex,receipts:JSON.parse(lsGet('smartbod-receipts-v1','[]')),savedReports:JSON.parse(lsGet('smartbod-saved-reports-v1','[]')),negocio:neg,telefono:negTel};}
-  function applyCloud(result){cloudRevision=result.revision;hydrate(result.state);items=result.state.items;kardex=result.state.kardex;neg=result.state.negocio;negTel=result.state.telefono;currentPolicy=result.policy;activeUser=result.user;renderApp();accountUI();}
+  function captureState(){return {items,kardex,events:JSON.parse(lsGet('smartbod-events-v1','[]')),receipts:JSON.parse(lsGet('smartbod-receipts-v1','[]')),savedReports:JSON.parse(lsGet('smartbod-saved-reports-v1','[]')),negocio:neg,telefono:negTel};}
+  function applyCloud(result){cloudRevision=result.revision;hydrate(result.state);items=result.state.items;kardex=result.state.kardex;neg=result.state.negocio;negTel=result.state.telefono;currentPolicy=result.policy;activeUser=result.user;renderApp();accountUI();renderEvents();}
   async function save(){
     if(saving)throw Error('Espera a que termine el guardado');
     saving=true;document.getElementById('app').inert=true;document.getElementById('cloud-status').textContent='Guardando en la nube…';
@@ -1617,7 +1625,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
         if (possible < minPortions) minPortions = possible;
       }
     });
-    return isFinite(minPortions) ? minPortions : 0;
+    return isFinite(minPortions) ? minPortions*Math.max(1,num(document.getElementById('el-yield').value)) : 0;
   }
 
   function calc(p, usoGlobal) {
@@ -1640,7 +1648,9 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
           costoReceta += cuIns * num(ing.cantidad);
         }
       });
-      const maxPortions = calcMaxPortions(p, usoGlobal);
+      costoReceta/=Math.max(1,num(p.recipeYield)||1);
+      const maxPortions = num(p.preparedStock);
+      if(maxPortions>0)costoReceta=num(p.preparedValue)/maxPortions;
       const margenPct = precio > 0 ? ((precio - costoReceta) / precio) * 100 : 0;
       return {
         cu: costoReceta,
@@ -1877,14 +1887,16 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
     });
 
     const price = num(document.getElementById('el-price').value);
+    totalRecipeCost/=Math.max(1,num(document.getElementById('el-yield').value));
     const util = price - totalRecipeCost;
-    document.getElementById('recipe-live-cost').textContent = `Costo Receta: ${money(totalRecipeCost)}`;
+    document.getElementById('recipe-live-cost').textContent = `Costo por porción: ${money(totalRecipeCost)}`;
     const utilEl = document.getElementById('el-util-val');
     utilEl.textContent = money(util);
     utilEl.style.color = util >= 0 ? 'var(--good)' : 'var(--bad)';
-    document.getElementById('el-max-portions').textContent = isFinite(minPortions) ? minPortions : 0;
+    document.getElementById('el-max-portions').textContent = isFinite(minPortions) ? minPortions*Math.max(1,num(document.getElementById('el-yield').value)) : 0;
   }
 
+  document.getElementById('el-yield').addEventListener('input',updateRecipeLivePreview);
   document.getElementById('el-price').addEventListener('input', updateRecipeLivePreview);
 
   function renderIngredientsSelector() {
@@ -1960,12 +1972,13 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
       imgUrl: getCategoryVisual('Elaborado', name),
       precio: price,
       vendidos: 0,
+      recipeYield: Math.max(1,num(document.getElementById('el-yield').value)), preparedStock:0,preparedValue:0,frozenConsumption:true,
       ingredientes: [...tempIngredients]
     };
     items.push(newItem);
     logMovement(newItem, 'IN', 1, 'Creación de receta elaborada');
 
-    showToast("Receta Creada", `${name} ya está disponible para vender en Caja POS.`);
+    showToast("Receta Creada", `${name}: registra las porciones preparadas antes de vender.`);
     document.getElementById('el-name').value = '';
     document.getElementById('el-price').value = '';
     tempIngredients = [];
@@ -1976,7 +1989,9 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
   // ==================== MODAL: PRODUCTO PROPIO / EDITAR ====================
   const modalProduct = document.getElementById('modal-product');
 
+  let productImage='',imageLoading=false;
   function openProductModal(editItem = null) {
+    productImage=editItem?.imgUrl||'';document.getElementById('mp-image-preview').src=productImage||getCategoryVisual('Abarrotes','Producto');document.getElementById('mp-image-file').value='';document.getElementById('mp-image-status').textContent='';
     document.getElementById('mp-id').value = editItem ? editItem.id : '';
     document.getElementById('modal-prod-title').textContent = editItem ? `✏️ Editar: ${editItem.nombre}` : '➕ Nuevo Producto Personalizado';
     document.getElementById('mp-name').value = editItem ? editItem.nombre : '';
@@ -1984,6 +1999,15 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
     document.getElementById('mp-cat').value = editItem && editItem.cat ? editItem.cat : 'Abarrotes';
     document.getElementById('mp-min-stock').value = editItem && editItem.minStock ? editItem.minStock : 5;
 
+    document.getElementById('mp-recipe').hidden=editItem?.tipo!=='elaborado';
+    document.getElementById('mp-cat').disabled=editItem?.tipo==='elaborado';
+    if(![...document.getElementById('mp-cat').options].some(o=>o.value==='Elaborado'))document.getElementById('mp-cat').add(new Option('Elaborado','Elaborado'));
+    if(editItem?.tipo==='elaborado'){
+      document.getElementById('mp-cat').value='Elaborado';
+      document.getElementById('mp-yield').value=editItem.recipeYield||1;document.getElementById('mp-recipe-price').value=editItem.precio;document.getElementById('mp-price').value=editItem.precio;document.getElementById('mp-ready').textContent='Porciones listas para vender: '+num(editItem.preparedStock);
+      const list=document.getElementById('mp-ingredients');list.replaceChildren();
+      (editItem.ingredientes||[]).forEach((ing,index)=>{const label=document.createElement('label');label.textContent=items.find(x=>x.id===ing.idInsumo)?.nombre||'Insumo';const input=document.createElement('input');input.type='number';input.min='0.000001';input.step='any';input.value=ing.cantidad;input.dataset.ingredientIndex=index;label.append(input);list.append(label);});
+    }
     const stockFields = document.getElementById('mp-stock-fields');
     if (editItem && editItem.tipo === 'elaborado') {
       stockFields.style.display = 'none';
@@ -1996,12 +2020,24 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
     modalProduct.hidden = false;
   }
 
+  document.getElementById('mp-image-remove').onclick=()=>{productImage='';document.getElementById('mp-image-file').value='';document.getElementById('mp-image-preview').src=getCategoryVisual('Abarrotes','Producto');};
+  document.getElementById('mp-image-file').onchange=async e=>{
+    const file=e.target.files[0];if(!file)return;
+    imageLoading=true;document.getElementById('btn-save-prod-modal').disabled=true;
+    try{
+      if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>10*1024*1024)throw Error('Selecciona JPG, PNG o WebP de hasta 10 MB.');
+      const bitmap=await createImageBitmap(file);const scale=Math.min(1,640/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));const ctx=canvas.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+      let quality=.85,url=canvas.toDataURL('image/jpeg',quality);while(url.length>195000&&quality>.25){quality-=.1;url=canvas.toDataURL('image/jpeg',quality);}if(url.length>195000)throw Error('La imagen no se pudo optimizar; utiliza una imagen más sencilla.');
+      productImage=url;document.getElementById('mp-image-preview').src=url;document.getElementById('mp-image-status').textContent='Imagen lista. Pulsa Guardar producto para conservarla.';
+    }catch(err){document.getElementById('mp-image-status').textContent=err.message;}finally{imageLoading=false;document.getElementById('btn-save-prod-modal').disabled=false;}
+  };
   document.getElementById('btn-open-custom-prod').addEventListener('click', () => openProductModal(null));
   document.getElementById('btn-quick-custom').addEventListener('click', () => openProductModal(null));
   document.getElementById('btn-close-prod-modal').addEventListener('click', () => { modalProduct.hidden = true; });
   document.getElementById('btn-cancel-prod-modal').addEventListener('click', () => { modalProduct.hidden = true; });
 
-  document.getElementById('btn-save-prod-modal').addEventListener('click', () => {
+  document.getElementById('btn-save-prod-modal').addEventListener('click', async () => {
+    if(imageLoading||saving)return;
     const id = document.getElementById('mp-id').value;
     const nombre = document.getElementById('mp-name').value.trim();
     const sku = document.getElementById('mp-sku').value.trim().toUpperCase();
@@ -2009,7 +2045,11 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
     const minStock = Math.max(1, num(document.getElementById('mp-min-stock').value));
     const qty = Math.max(0, num(document.getElementById('mp-qty').value));
     const cost = Math.max(0, num(document.getElementById('mp-cost').value));
-    const price = num(document.getElementById('mp-price').value);
+    const editingRecipe=items.find(p=>p.id===id)?.tipo==='elaborado';
+    const price = num(document.getElementById(editingRecipe?'mp-recipe-price':'mp-price').value);
+    const recipeYield=num(document.getElementById('mp-yield').value);
+    const recipeAmounts=[...document.querySelectorAll('[data-ingredient-index]')].map(i=>num(i.value));
+    if(editingRecipe && (!Number.isInteger(recipeYield)||recipeYield<1||recipeAmounts.some(q=>q<=0)))return showToast('Receta inválida','Revisa rendimiento e ingredientes.','error');
 
     if (!nombre || !sku) {
       return showToast("Error", "Completa el nombre y el código SKU.", "error");
@@ -2017,6 +2057,10 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
 
     if(items.some(p=>p.sku===sku && p.id!==id)) return showToast('SKU duplicado','Utiliza un código único.','error');
     if(price<=0) return showToast('Precio inválido','El precio debe ser mayor a cero.','error');
+    if(productImage.startsWith('data:image/jpeg;base64,')){
+      const button=document.getElementById('btn-save-prod-modal');button.disabled=true;imageLoading=true;
+      try{productImage=(await Cloud.api('imageUpload',{image:productImage})).url;}catch(e){showToast('Imagen no guardada',e.message,'error');return;}finally{button.disabled=false;imageLoading=false;}
+    }
     if (id) {
       const previous=items.find(p=>p.id===id);
       if(previous && previous.tipo!=='elaborado' && qty < num(previous.vendidos)+num(previous.consumed)) return showToast('Cantidad inválida','No puede ser menor que las salidas acumuladas.','error');
@@ -2026,7 +2070,9 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
         target.sku = sku;
         target.cat = target.tipo === 'elaborado' ? 'Elaborado' : cat;
         target.minStock = minStock;
-        target.imgUrl = getCategoryVisual(target.cat, nombre);
+        target.precio=price;
+        if(editingRecipe){target.recipeYield=recipeYield;target.ingredientes.forEach((ing,i)=>ing.cantidad=recipeAmounts[i]);}
+        target.imgUrl = productImage || getCategoryVisual(target.cat, nombre);
         if (target.tipo !== 'elaborado') {
           target.unidadesCompradas = qty;
           target.costoTotal = cost;
@@ -2041,7 +2087,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
         sku,
         cat,
         nombre,
-        imgUrl: getCategoryVisual(cat, nombre),
+        imgUrl: productImage || getCategoryVisual(cat, nombre),
         unidadesCompradas: qty,
         costoTotal: cost,
         precio: price > 0 ? price : 1.00,
@@ -2175,7 +2221,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
               <img src="${p.imgUrl}" class="thumb" alt="${esc(p.nombre)}">
               <div>
                 <span class="item-name">${esc(p.nombre)}</span>
-                <span class="item-sku">${esc(p.sku)} ${recipeSummary ? '· Receta: ' + recipeSummary : ''}</span>
+                <span class="item-sku">SKU: ${esc(p.sku)}</span><div class="sub-t">${recipeSummary ? 'Receta: ' + recipeSummary : ''}${isElab ? ' · Rinde ' + (num(p.recipeYield)||1) + ' porciones' : ''}</div>
               </div>
             </div>
           </td>
@@ -2236,7 +2282,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
     if (delBtn) {
       const item = items.find(i => i.id === delBtn.dataset.id);
       if (!item) return;
-      if(num(item.vendidos)>0 || num(item.consumed)>0 || items.some(p=>(p.ingredientes||[]).some(i=>i.idInsumo===item.id))) return showToast('Producto vinculado','No se puede eliminar un producto vendido o utilizado en recetas.','warn');
+      if(num(item.preparedStock)>0 || num(item.vendidos)>0 || num(item.consumed)>0 || items.some(p=>(p.ingredientes||[]).some(i=>i.idInsumo===item.id))) return showToast('Producto vinculado','No se puede eliminar un producto vendido o utilizado en recetas.','warn');
       askConfirm(
         "Eliminar Producto",
         `¿Estás seguro de eliminar "${esc(item.nombre)}" del inventario?`,
@@ -2433,7 +2479,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
   let saleAttempt=null;
   document.getElementById('btn-process-sale').addEventListener('click',async()=>{
     if(!cart.length||saving)return;
-    const input={lines:cart.map(c=>({id:c.item.id,qty:c.qty})),discount:num(document.getElementById('pos-discount').value),cash:num(document.getElementById('pos-cash-received').value),payMethod:selectedPayMethod,client:document.getElementById('pos-client').value};
+    const input={eventId:document.getElementById('pos-event').value||null,lines:cart.map(c=>({id:c.item.id,qty:c.qty})),discount:num(document.getElementById('pos-discount').value),cash:num(document.getElementById('pos-cash-received').value),payMethod:selectedPayMethod,client:document.getElementById('pos-client').value};
     const signature=JSON.stringify(input);if(!saleAttempt||saleAttempt.signature!==signature)saleAttempt={signature,id:crypto.randomUUID()};
     saving=true;document.getElementById('app').inert=true;
     try{
@@ -2461,7 +2507,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
         <div style="font-size:11px;">${r.date}</div>
       </div>
       <div style="margin-bottom:8px; font-size:11.5px;">
-        <div><b>Cliente:</b> ${esc(r.client)}</div>
+        <div><b>Origen:</b> ${esc(r.eventSnapshot?.name||'Venta diaria / local')}</div><div><b>Cliente:</b> ${esc(r.client)}</div>
         <div><b>Pago:</b> ${esc(r.payMethod)}</div>
       </div>
       <div style="border-top:1px dashed #94a3b8; border-bottom:1px dashed #94a3b8; padding:8px 0; margin:8px 0;">
@@ -2540,7 +2586,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
     filtered.forEach(k => {
       const d = new Date(k.date);
       const badgeClass = k.type === 'IN' ? 'stock-ok' : (k.type === 'ADJ' ? 'stock-low' : 'stock-out');
-      const label = k.type === 'IN' ? 'Entrada' : (k.type === 'ADJ' ? 'Ajuste' : 'Salida / Venta');
+      const label = ({IN:'Entrada',OUT:'Venta',ADJ:'Ajuste',VOID:'Anulación',PROD_IN:'Preparación',PROD_OUT:'Consumo de receta'})[k.type]||k.type;
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${d.toLocaleDateString('es-PE')} ${d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</td>
@@ -2691,7 +2737,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
 
     // 4. Ventas por Método de Pago
     const payTotals = { 'Efectivo': 0, 'Yape': 0, 'Plin': 0, 'Tarjeta': 0 };
-    kardex.filter(k => k.type === 'OUT').forEach(k => {
+    kardex.filter(k => k.type === 'OUT'||k.type === 'VOID').forEach(k => {
       const method = k.payMethod && payTotals[k.payMethod] !== undefined ? k.payMethod : 'Efectivo';
       payTotals[method] += num(k.amount);
     });
@@ -2856,6 +2902,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
       negocio: neg,
       telefono: negTel,
       savedReports:JSON.parse(lsGet('smartbod-saved-reports-v1','[]')),
+      events:JSON.parse(lsGet("smartbod-events-v1","[]")),
       receipts:JSON.parse(lsGet("smartbod-receipts-v1","[]")),
       items,
       kardex
@@ -2883,6 +2930,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
           if(!confirm('Se reemplazarán los datos actuales. ¿Ya exportaste un respaldo?')) return;
           lsSet('smartbod-receipts-v1',JSON.stringify(Array.isArray(data.receipts)?data.receipts:[]));
           lsSet('smartbod-saved-reports-v1',JSON.stringify(Array.isArray(data.savedReports)?data.savedReports:[]));
+          lsSet('smartbod-events-v1',JSON.stringify(Array.isArray(data.events)?data.events:[]));
           items = data.items;
           kardex = Array.isArray(data.kardex) ? data.kardex : [];
           if (data.negocio) { neg = data.negocio; negInput.value = neg; lsSet(NEG_KEY, neg); }
@@ -2916,12 +2964,13 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
   // ==================== TABS NAVIGATION ====================
   function switchTab(tabKey) {
     if(!activeUser || (activeUser.role!=='admin' && !['pos','cat'].includes(tabKey)))return;
-    ["inv", "pos", "kardex", "cat", "est", "rep"].forEach(k => {
+    ["inv", "pos", "kardex", "cat", "est", "rep", "events"].forEach(k => {
       document.getElementById("v-" + k).hidden = (k !== tabKey);
     });
     document.querySelectorAll(".tab").forEach(t => {
       t.setAttribute("aria-selected", t.dataset.tab === tabKey ? "true" : "false");
     });
+    if(tabKey==='rep'){document.getElementById('report-generate').click();renderSaleManager();}
     if (tabKey === 'est') {
       renderStats(getConsumoElaborados());
     }
@@ -2949,7 +2998,7 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
   async function lock(){try{await Cloud.api('logout');location.reload();}catch(e){alert('No se pudo cerrar sesión: '+e.message);}}
   document.addEventListener('click',e=>{
     if(!e.target.closest('#app'))return;
-    const restricted=e.target.closest('#v-inv,#v-kardex,#v-est,#v-rep,#manage-users,#btn-load-demo,#chip-low-stock');
+    const restricted=e.target.closest('#v-inv,#v-kardex,#v-est,#v-rep,#v-events,#manage-users,#btn-load-demo,#chip-low-stock');
     if(!activeUser || (activeUser.role!=='admin' && restricted)){e.preventDefault();e.stopImmediatePropagation();}
   },true);
   el('logout').onclick=lock;
@@ -2971,21 +3020,48 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
   };
   el('policy-form').onsubmit=async e=>{e.preventDefault();try{const r=await Cloud.api('policy',{policy:{admin:Number(el('limit-admin').value),seller:Number(el('limit-seller').value)}});currentPolicy=r.policy;accountUI();el('users-status').textContent='Límites guardados en el servidor.';}catch(err){el('users-status').textContent=err.message;}};
 
+  let preparationAttempt=null;
+  el('mp-prepare').onclick=async()=>{
+    const id=el('mp-id').value,qty=num(el('mp-prepare-qty').value);if(saving)return;
+    const signature=id+':'+qty;if(preparationAttempt?.signature!==signature)preparationAttempt={signature,requestId:crypto.randomUUID()};
+    if(!confirm('Se descontarán los ingredientes de la receta GUARDADA para preparar '+qty+' porciones. ¿Continuar?'))return;
+    saving=true;el('mp-prepare').disabled=true;
+    try{const result=await Cloud.api('prepare',{production:{id,qty,requestId:preparationAttempt.requestId}});applyCloud(result);preparationAttempt=null;openProductModal(items.find(p=>p.id===id));showToast('Preparación registrada','Las porciones ya están disponibles en Caja.');}catch(e){showToast('Preparación no confirmada',e.message,'error');}finally{saving=false;el('mp-prepare').disabled=false;}
+  };
+  function renderSaleManager(){
+    const query=el('sale-search').value.toLowerCase(),body=el('sale-manager');body.replaceChildren();
+    const receipts=JSON.parse(lsGet('smartbod-receipts-v1','[]')).filter(r=>[r.ticketNum,r.client,r.operator].join(' ').toLowerCase().includes(query));
+    el('sale-manager-status').textContent=receipts.length+' ventas encontradas';
+    receipts.forEach(r=>{const tr=document.createElement('tr');[r.date,r.ticketNum,r.client,money(r.total),r.status==='voided'?'Anulada: '+r.voidReason:'Vigente'].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td);});const td=document.createElement('td');const button=document.createElement('button');button.className='btn danger small';button.textContent='Anular venta';button.disabled=r.status==='voided';button.onclick=async()=>{
+      const reason=prompt('Motivo de la anulación (mínimo 5 caracteres):');if(reason===null)return;
+      if(!confirm('Se anulará '+r.ticketNum+' y se devolverán las existencias. Confirma que es una venta errónea y que los productos siguen disponibles. Si hubo un cobro, devuelve el dinero por separado.'))return;
+      button.disabled=true;try{const result=await Cloud.api('void',{void:{ticketNum:r.ticketNum,reason}});applyCloud(result);renderSaleManager();el('report-generate').click();showToast('Venta anulada','Stock e importes corregidos en la nube.');}catch(e){showToast('No se pudo anular',e.message,'error');button.disabled=false;}
+    };td.append(button);tr.append(td);body.append(tr);});
+  }
+  el('sale-search').oninput=renderSaleManager;
   let currentReport=null;
   function reportData(){
     const type=el('report-type').value,from=el('report-from').value,to=el('report-to').value;
     if(from&&to&&from>to)throw Error('La fecha inicial debe ser anterior a la final.');
     const inRange=date=>{if(!from&&!to)return true;const parsed=new Date(date);if(!Number.isFinite(parsed.getTime()))return false;const d=limaDay(parsed);return (!from||d>=from)&&(!to||d<=to);};
+    const origin=el('report-event').value;
+    const selectedReceipts=JSON.parse(lsGet('smartbod-receipts-v1','[]')).filter(r=>inRange(r.isoDate||r.date)&&(origin==='all'||(origin==='daily'?!r.eventId:r.eventId===origin)));
     const usage=getConsumoElaborados();let headers,rows,title;
     if(type==='stock'){title='Existencias actuales';headers=['SKU','Producto','Stock','Costo unitario S/','Precio S/'];rows=items.map(p=>{const c=calc(p,usage);return[p.sku,p.nombre,c.stock,+c.cu.toFixed(2),num(p.precio)];});}
     if(type==='profit'){title='Rentabilidad acumulada';headers=['SKU','Producto','Ingresos S/','Costo vendido S/','Margen bruto S/'];rows=items.map(p=>{const c=calc(p,usage);return[p.sku,p.nombre,+c.ingreso.toFixed(2),+(c.ingreso-c.ganancia).toFixed(2),+c.ganancia.toFixed(2)];});}
-    if(type==='sales'){title='Ventas por ticket';headers=['Fecha','Ticket','Vendedor','Pago','Descuento S/','Total S/'];rows=JSON.parse(lsGet('smartbod-receipts-v1','[]')).filter(r=>inRange(r.isoDate||r.date)).map(r=>[r.isoDate?new Date(r.isoDate).toLocaleString('es-PE',{timeZone:'America/Lima'}):r.date,r.ticketNum,r.operator||'Sin registro',r.payMethod,num(r.discount),num(r.total)]);}
+    if(type==='sales'){title='Ventas por ticket';headers=['Fecha','Ticket','Vendedor','Pago','Descuento S/','Total original S/','Estado','Importe vigente S/','Origen / Evento'];rows=selectedReceipts.map(r=>[r.isoDate?new Date(r.isoDate).toLocaleString('es-PE',{timeZone:'America/Lima'}):r.date,r.ticketNum,r.operator||'Sin registro',r.payMethod,num(r.discount),num(r.total),r.status==='voided'?'Anulada':'Vigente',r.status==='voided'?0:num(r.total),r.eventSnapshot?.name||'Venta diaria / local']);}
+    if(type==='daily'||type==='eventSummary'){
+      title=type==='daily'?'Ventas por día':'Ventas por evento';headers=['Fecha / Evento','Tickets vigentes','Tickets anulados','Descuentos vigentes S/','Ventas vigentes S/'];
+      const groups=new Map();selectedReceipts.forEach(r=>{let day=r.businessDate;if(!day){const d=new Date(r.isoDate||r.date);day=Number.isFinite(d.getTime())?limaDay(d):'Fecha histórica no disponible';}const key=type==='daily'?day:(r.eventId||'daily');if(!groups.has(key))groups.set(key,[type==='daily'?day:(r.eventSnapshot?.name||'Venta diaria / local'),0,0,0,0]);const row=groups.get(key);if(r.status==='voided')row[2]++;else{row[1]++;row[3]+=Math.round(num(r.discount)*100);row[4]+=Math.round(num(r.total)*100);}});
+      rows=[...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([,r])=>[r[0],r[1],r[2],r[3]/100,r[4]/100]);
+    }
     if(type==='movements'){title='Movimientos de inventario';headers=['Fecha','SKU','Producto','Tipo','Cantidad','Importe S/'];rows=kardex.filter(k=>inRange(k.date)).map(k=>[new Date(k.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),k.sku,k.name,k.type,num(k.qty),num(k.amount)]);}
-    return {title,headers,rows,created:new Date().toISOString(),period:['sales','movements'].includes(type)?`${from||'Inicio'} a ${to||'Hoy'}`:'Las fechas no se aplican: existencias actuales / rentabilidad acumulada'};
+    if(type==='production'){title='Preparaciones registradas';headers=['Fecha','SKU','Producto','Porciones preparadas','Costo total S/'];rows=kardex.filter(k=>k.type==='PROD_IN'&&inRange(k.date)).map(k=>[new Date(k.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),k.sku,k.name,num(k.qty),num(k.amount)]);}
+    return {title,headers,rows,created:new Date().toISOString(),period:['sales','daily','eventSummary','movements','production'].includes(type)?`${from||'Inicio'} a ${to||'Hoy'}${['sales','daily','eventSummary'].includes(type)?' · '+el('report-event').selectedOptions[0].textContent:''}`:'Las fechas no se aplican: existencias actuales / rentabilidad acumulada'};
   }
   function showReport(r){currentReport=r;el('report-title').textContent=r.title;el('report-meta').textContent=`${r.period} · ${r.rows.length} registros · Generado ${new Date(r.created).toLocaleString('es-PE')}`;const table=el('report-table');table.replaceChildren();const thead=document.createElement('thead'),tr=document.createElement('tr');r.headers.forEach(v=>{const c=document.createElement('th');c.textContent=v;tr.append(c);});thead.append(tr);table.append(thead);const body=document.createElement('tbody');r.rows.forEach(row=>{const tr=document.createElement('tr');row.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td);});body.append(tr);});table.append(body);el('report-empty').hidden=r.rows.length>0;}
   el('report-generate').onclick=()=>{try{showReport(reportData());}catch(e){showToast('Reporte',e.message,'error');}};
-  el('report-type').onchange=()=>{const range=['sales','movements'].includes(el('report-type').value);el('report-from').disabled=false;el('report-to').disabled=false;el('report-generate').click();};
+  el('report-type').onchange=()=>{const range=['sales','daily','eventSummary','movements','production'].includes(el('report-type').value);el('report-from').disabled=false;el('report-to').disabled=false;el('report-generate').click();};
   el('report-excel').onclick=()=>{if(!currentReport)return;if(!window.XLSX)return showToast('Excel','No se pudo cargar la biblioteca. Revisa tu conexión.','error');const r=currentReport,wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([[r.title],[r.period],r.headers,...r.rows]),'Reporte');XLSX.writeFile(wb,'SMARTBOD_reporte.xlsx');};
   el('report-pdf').onclick=()=>{if(!currentReport)return;if(!window.jspdf)return showToast('PDF','No se pudo cargar la biblioteca. Revisa tu conexión.','error');const r=currentReport,doc=new window.jspdf.jsPDF({orientation:'landscape'});doc.setFontSize(18);doc.text('SMARTBOD | '+r.title,14,18);doc.setFontSize(10);doc.text(r.period,14,27);doc.autoTable({startY:34,head:[r.headers],body:r.rows,headStyles:{fillColor:[8,127,107]}});doc.save('SMARTBOD_reporte.pdf');};
   el('report-print').onclick=()=>{if(!currentReport)return;document.body.classList.add('printing-report');window.print();document.body.classList.remove('printing-report');};
@@ -3037,6 +3113,24 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.05em}tbody tr:hover{b
   const limaDay=d=>{const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Lima',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);const val=k=>parts.find(p=>p.type===k).value;return `${val('year')}-${val('month')}-${val('day')}`;};
   el('report-period').onchange=()=>{const now=new Date(),end=limaDay(now);let start=end;const mode=el('report-period').value;if(mode==='all'){el('report-from').value='';el('report-to').value='';}else if(mode!=='custom'){if(mode==='month')start=end.slice(0,7)+'01';if(mode==='week')start=limaDay(new Date(now.getTime()-6*86400000));el('report-from').value=start;el('report-to').value=end;}el('report-generate').click();};
   ['report-from','report-to'].forEach(id=>el(id).onchange=()=>{el('report-period').value='custom';el('report-generate').click();});
+
+  const events=()=>JSON.parse(lsGet('smartbod-events-v1','[]'));
+  function renderEvents(){
+    const current=el('pos-event').value,filter=el('report-event').value,today=limaDay(new Date());
+    el('pos-event').replaceChildren(new Option('Venta diaria / local',''));
+    events().filter(e=>e.active&&e.startDate<=today&&e.endDate>=today).forEach(e=>el('pos-event').add(new Option(e.name+' · '+e.activity,e.id)));
+    if([...el('pos-event').options].some(o=>o.value===current))el('pos-event').value=current;
+    el('report-event').replaceChildren(new Option('Todas las ventas','all'),new Option('Solo venta diaria','daily'));
+    const known=new Map(events().map(e=>[e.id,e.name]));JSON.parse(lsGet('smartbod-receipts-v1','[]')).forEach(r=>{if(r.eventId&&!known.has(r.eventId))known.set(r.eventId,r.eventSnapshot?.name||'Evento histórico');});
+    known.forEach((name,id)=>el('report-event').add(new Option(name,id)));if([...el('report-event').options].some(o=>o.value===filter))el('report-event').value=filter;
+    const body=el('events-list');body.replaceChildren();events().sort((a,b)=>b.startDate.localeCompare(a.startDate)).forEach(e=>{const tr=document.createElement('tr');[e.name,e.activity,e.startDate+' → '+e.endDate,e.days+' días',e.location,e.active?'Habilitado':'Cerrado'].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td);});const td=document.createElement('td'),btn=document.createElement('button');btn.className='btn ghost small';btn.textContent='Editar';btn.onclick=()=>{el('event-id').value=e.id;el('event-name').value=e.name;el('event-activity').value=e.activity;el('event-start').value=e.startDate;el('event-end').value=e.endDate;el('event-location').value=e.location;el('event-notes').value=e.notes;el('event-active').checked=e.active;eventDuration();};td.append(btn);tr.append(td);body.append(tr);});
+  }
+  function eventDuration(){const a=el('event-start').value,b=el('event-end').value;el('event-duration').textContent=a&&b&&a<=b?'Duración: '+(Math.round((Date.parse(b)-Date.parse(a))/86400000)+1)+' días (incluye inicio y fin)':'Selecciona un rango de fechas válido.';}
+  el('event-start').onchange=eventDuration;el('event-end').onchange=eventDuration;
+  el('event-new').onclick=()=>{el('event-form').reset();el('event-id').value='';eventDuration();};
+  el('event-form').onsubmit=async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{const result=await Cloud.api('event',{revision:cloudRevision,event:{id:el('event-id').value||undefined,name:el('event-name').value,activity:el('event-activity').value,startDate:el('event-start').value,endDate:el('event-end').value,location:el('event-location').value,notes:el('event-notes').value,active:el('event-active').checked}});applyCloud(result);renderEvents();el('event-new').click();el('event-status').textContent='Evento guardado en la nube.';}catch(err){el('event-status').textContent=err.message;}finally{button.disabled=false;}};
+  el('report-event').onchange=()=>el('report-generate').click();
+  renderEvents();eventDuration();
 
   savedOptions();el('report-type').onchange();el('auth-screen').hidden=true;el('app').hidden=false;accountUI();switchTab(activeUser.role==='admin'?'inv':'pos');
 
