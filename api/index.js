@@ -2,7 +2,7 @@ import pg from 'pg';
 import {randomBytes,randomUUID,createHash,scrypt as scryptCallback,timingSafeEqual} from 'node:crypto';
 import {promisify} from 'node:util';
 import {readFile} from 'node:fs/promises';
-import {empty,fail,normalize,sell,prepare,voidSale,upsertEvent,publicState} from '../lib/domain.js';
+import {empty,fail,normalize,sell,prepare,voidSale,upsertEvent,restock,publicState} from '../lib/domain.js';
 const scrypt=promisify(scryptCallback);let pool,ready;
 const digest=s=>createHash('sha256').update(s).digest('hex');
 const safeUser=u=>({id:u.id,username:u.username,name:u.name,role:u.role,enabled:u.enabled});
@@ -56,6 +56,7 @@ export default async function handler(req,res){
   else if(action==='save'){
    admin();if(b.revision!==revision)fail('Otro usuario actualizó los datos. Recarga antes de guardar.',409);data=normalize({...b.state,events:b.state.events??store.data.events??[]});revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);
   }
+  else if(action==='restock'){admin();data=restock(data,b.restock,safeUser(fresh));revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);}
   else if(action==='event'){admin();if(b.revision!==revision)fail('Los datos cambiaron. Actualiza antes de guardar el evento.',409);data=upsertEvent(data,b.event,safeUser(fresh));revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);}
   else if(action==='void'){admin();data=voidSale(data,b.void,safeUser(fresh));revision++;await c.query('UPDATE sb_store SET data=$1,revision=$2 WHERE id=1',[data,revision]);}
   else if(action==='imageUpload'){admin();if(typeof b.image!=='string'||b.image.length>210000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.image))fail('Imagen inválida');const bytes=Buffer.from(b.image.split(',')[1],'base64');if(bytes.length>150000||bytes[0]!==255||bytes[1]!==216||bytes[2]!==255)fail('Imagen inválida o demasiado grande');const id=randomUUID();await c.query('INSERT INTO sb_images(id,content,mime) VALUES($1,$2,$3)',[id,bytes,'image/jpeg']);return {url:'/api/index?image='+id};}
