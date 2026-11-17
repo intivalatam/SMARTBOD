@@ -1561,10 +1561,8 @@
       if(!box.children.length)card('Producción','Aún no hay recetas activas');
     }
     if(can('purchase')){
-      for(const p of items.filter(i=>i.inventoryKind==='consumable'&&!i.archived&&i.unidadesCompradas-i.vendidos-i.consumed<=i.minStock)){
-        card('Por reponer',p.nombre,()=>window.Smartbod.openSupplyPurchase(p.id));
-      }
-      if(!box.children.length)card('Almacén','Materiales por encima del mínimo');
+      const low=items.filter(i=>i.inventoryKind==='consumable'&&!i.archived&&i.unidadesCompradas-i.vendidos-i.consumed<=i.minStock);
+      card('Empaques por reponer',low.length+' materiales',()=>window.Smartbod.openLowSupplies());
     }
   }
   function accountUI(){

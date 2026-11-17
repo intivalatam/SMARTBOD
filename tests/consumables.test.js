@@ -40,3 +40,14 @@ test('dos paquetes de cien vasos permiten descontar unidades individuales',()=>{
  assert.equal(stock(state.items[0]),190);
  assert.equal(state.items[0].inventoryValue,22.8);
 });
+test('un saldo histórico de 50 paquetes admite definir contenido y descontar piezas',()=>{
+ let state=op(empty(),{kind:'supplyCreate',name:'Bolsas',unit:'paquete',minStock:1});
+ const id=state.items[0].id;
+ state=op(state,{kind:'supplyPurchase',id,qty:50,total:100});
+ state=op(state,{kind:'supplySettings',id,name:'Bolsas',minStock:1,packContents:100});
+ assert.equal(stock(state.items[0]),50);
+ state=op(state,{kind:'supplyUse',id,mode:'use',entryUnit:'piece',qty:25,expectedStock:50,reason:'Uso del turno'});
+ assert.equal(stock(state.items[0]),49.75);
+ assert.equal(state.items[0].inventoryValue,99.5);
+ assert.throws(()=>op(state,{kind:'supplySettings',id,name:'Bolsas',minStock:1,packContents:50}),/presentación/);
+});

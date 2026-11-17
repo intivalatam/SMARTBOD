@@ -25,3 +25,5 @@ Las compras aumentan el valor disponible. El uso manual y los ajustes de conteo 
 Los conteos, compras y asignaciones se auditan; los reintentos usan el identificador de operación para no duplicar movimientos. El módulo comparte la persistencia y transacciones del inventario; no crea ni modifica datos de negocio durante el despliegue.
 
 Es un control de inventario y costos operativos, no un libro contable tributario. No se implementan alertas por correo, múltiples almacenes ni asignación por pedido completo en esta entrega. Los materiales previamente registrados como mercancía no se convierten automáticamente.
+
+En Registrar material o Editar, indica cuántas piezas o pares contiene el paquete. Los materiales antiguos muestran «Por definir» hasta registrar su contenido real. Para un material controlado por paquete, 50 paquetes de 100 son 5 000 piezas. En Descontar puedes elegir piezas sueltas. Las existencias, los mínimos y las asignaciones anteriores mantienen su unidad de control. Si cambia el tamaño físico de un paquete con saldo o asignaciones, crea una presentación distinta para evitar reinterpretar el inventario anterior.
