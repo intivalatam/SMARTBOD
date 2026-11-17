@@ -8,4 +8,7 @@ $('pos-search').value='H-001';$('pos-search').dispatchEvent(new w.KeyboardEvent(
 $('pos-search').value='Hamburguesa artesanal';$('pos-add-search').click();assert.match($('cart-total-val').textContent,/20[.,]00/);
 $('pos-search').value='no existe este sku';$('pos-add-search').click();assert.match($('pos-search-status').textContent,/No se encontró/);assert.match($('cart-total-val').textContent,/20[.,]00/);
 for(let i=0;i<30;i++){$('pos-search').value='H-001';$('pos-add-search').click();}assert.match($('cart-total-val').textContent,/240[.,]00/);assert.match($('pos-search-status').textContent,/stock suficiente/);
-console.log('DOM: receta, sobrantes, ticket izquierdo, búsqueda SKU/nombre, Enter y límite de stock OK');dom.window.close();
+assert.deepEqual([...w.document.querySelector('.workspace-shortcuts').children].map(b=>b.id),['guide-sell','guide-restock','btn-open-custom-prod','chip-low-stock']);
+assert.ok(w.document.querySelector('.workspace-sidebar .tabs'));assert.ok(w.document.querySelector('.workspace-sidebar #logout'));assert.ok(w.document.querySelector('.workspace-sidebar #guide-prices'));assert.ok(w.document.querySelector('.workspace-footer #connection-status'));assert.ok(w.document.querySelector('.workspace-footer #cloud-status'));assert.ok(w.document.querySelector('.workspace-footer #install-app'));
+$('guide-sell').click();assert.equal($('v-pos').hidden,false);assert.equal($('v-inv').hidden,true);
+console.log('DOM: recetas, ticket, búsqueda, stock, navegación lateral y pie de página OK');dom.window.close();

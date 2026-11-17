@@ -1,6 +1,4 @@
-<!doctype html>
-<html lang="es" data-theme="light">
-<head>
+<!DOCTYPE html><html lang="es" data-theme="light"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>SMARTBOD</title>
@@ -9,8 +7,8 @@
 <link rel="apple-touch-icon" href="/assets/icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SMARTBOD">
-<script src="/pwa.js" defer></script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<script src="/pwa.js" defer=""></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
 <script src="/vendor/xlsx.full.min.js"></script>
 <script src="/vendor/jspdf.umd.min.js"></script>
 <script src="/vendor/jspdf.plugin.autotable.min.js"></script>
@@ -20,31 +18,28 @@
 <script src="vendor/pdf-lib.min.js"></script>
 <link rel="stylesheet" href="/workspace.css">
 <link rel="stylesheet" href="/sales-layout.css">
-</head>
+<link rel="stylesheet" href="/navigation-layout.css"></head>
 <body>
-<div class="install-bar"><span id="connection-status" role="status" aria-live="polite"></span><button id="install-app" class="btn ghost" type="button">Instalar en mi teléfono</button></div>
+
 <dialog id="install-help"><h2>SMARTBOD en tu teléfono</h2><p>Se instala desde el navegador como aplicación web. Usa la misma cuenta y los mismos datos.</p><ol><li><strong>iPhone:</strong> abre esta dirección en Safari, pulsa Compartir y elige Añadir a pantalla de inicio. Activa Abrir como app web si aparece.</li><li><strong>Android:</strong> abre el menú del navegador y busca Instalar aplicación o Añadir a pantalla de inicio.</li><li><strong>Huawei:</strong> abre el menú de tu navegador y busca Añadir a pantalla de inicio. Según el sistema y navegador puede instalar una app web o crear un acceso directo; si no aparece, puedes seguir usando la web.</li></ol><p>Necesitas conexión para guardar compras y ventas. No se instala mediante App Store, Google Play ni AppGallery.</p><button id="install-help-close" type="button" class="btn">Entendido</button></dialog>
 <section id="auth-screen" class="auth-screen login-page">
-<header class="login-top"><a class="login-brand" href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#064e3b"/><path d="M45 19H25a9 9 0 0 0 0 18h14a5 5 0 0 1 0 10H19" stroke="#fff" stroke-width="7" stroke-linecap="square"/><path d="M19 45h20a9 9 0 0 0 0-18H25a5 5 0 0 1 0-10h20" stroke="#34d399" stroke-width="3"/><path d="m43 12 6 6-6 6" stroke="#34d399" stroke-width="3" stroke-linejoin="miter"/></svg><span>SMARTBOD</span></a><span>Gestión para tu negocio</span></header>
+<header class="login-top"><a class="login-brand" href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#064e3b"></rect><path d="M45 19H25a9 9 0 0 0 0 18h14a5 5 0 0 1 0 10H19" stroke="#fff" stroke-width="7" stroke-linecap="square"></path><path d="M19 45h20a9 9 0 0 0 0-18H25a5 5 0 0 1 0-10h20" stroke="#34d399" stroke-width="3"></path><path d="m43 12 6 6-6 6" stroke="#34d399" stroke-width="3" stroke-linejoin="miter"></path></svg><span>SMARTBOD</span></a><span>Gestión para tu negocio</span></header>
 <main class="login-layout"><div class="login-story"><h1>Tu negocio organizado.<br>Cada venta cuenta.</h1><div class="login-accent"></div><p class="login-lead">Gestiona tus ventas, controla tu inventario y organiza tus eventos desde un solo lugar.</p><div class="login-scene"><img src="assets/login-reference.png" alt="Ventas del día, control de inventario y ventas en eventos: tienda, punto de venta y puesto de feria" fetchpriority="high"></div><p class="login-caption">En tu local, en ferias y donde crezca tu negocio.</p></div>
-<form id="auth-form" class="login-card"><div class="login-card-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#064e3b"/><path d="M45 19H25a9 9 0 0 0 0 18h14a5 5 0 0 1 0 10H19" stroke="#fff" stroke-width="7" stroke-linecap="square"/><path d="M19 45h20a9 9 0 0 0 0-18H25a5 5 0 0 1 0-10h20" stroke="#34d399" stroke-width="3"/><path d="m43 12 6 6-6 6" stroke="#34d399" stroke-width="3" stroke-linejoin="miter"/></svg></div><h2 id="auth-heading">Bienvenido a SMARTBOD</h2><p class="login-card-sub">Ingresa para gestionar tu negocio.</p><label for="auth-user">Usuario</label><div class="login-input"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/></svg></span><input id="auth-user" autocomplete="username" required maxlength="80" placeholder="Ingresa tu usuario"></div><label for="auth-password">Contraseña</label><div class="login-input"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="12" rx="3"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg></span><input id="auth-password" type="password" autocomplete="current-password" required placeholder="Ingresa tu contraseña"><button id="auth-toggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false">Ver</button></div><button class="login-submit" type="submit">Ingresar <span aria-hidden="true">→</span></button><p id="auth-status" role="status" aria-live="polite"></p><p class="login-security">Las cuentas son administradas por tu organización.</p></form></main>
+<form id="auth-form" class="login-card"><div class="login-card-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#064e3b"></rect><path d="M45 19H25a9 9 0 0 0 0 18h14a5 5 0 0 1 0 10H19" stroke="#fff" stroke-width="7" stroke-linecap="square"></path><path d="M19 45h20a9 9 0 0 0 0-18H25a5 5 0 0 1 0-10h20" stroke="#34d399" stroke-width="3"></path><path d="m43 12 6 6-6 6" stroke="#34d399" stroke-width="3" stroke-linejoin="miter"></path></svg></div><h2 id="auth-heading">Bienvenido a SMARTBOD</h2><p class="login-card-sub">Ingresa para gestionar tu negocio.</p><label for="auth-user">Usuario</label><div class="login-input"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"></circle><path d="M4 22v-3a8 8 0 0 1 16 0v3"></path></svg></span><input id="auth-user" autocomplete="username" required="" maxlength="80" placeholder="Ingresa tu usuario"></div><label for="auth-password">Contraseña</label><div class="login-input"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="12" rx="3"></rect><path d="M8 10V6a4 4 0 0 1 8 0v4"></path></svg></span><input id="auth-password" type="password" autocomplete="current-password" required="" placeholder="Ingresa tu contraseña"><button id="auth-toggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false">Ver</button></div><button class="login-submit" type="submit">Ingresar <span aria-hidden="true">→</span></button><p id="auth-status" role="status" aria-live="polite"></p><p class="login-security">Las cuentas son administradas por tu organización.</p></form></main>
 <footer class="login-footer">SMARTBOD · Ventas, inventario y eventos</footer></section>
-<dialog id="quick-production"><form id="quick-production-form"><h2 id="quick-production-title">Preparar para vender</h2><input id="quick-production-id" type="hidden"><p id="quick-production-before" class="production-total"></p><label>¿Cuántas unidades preparaste?<input id="quick-production-qty" type="number" min="1" step="1" required style="font-size:28px;font-weight:800"></label><p id="quick-production-after" class="production-total"></p><details><summary>Ver ingredientes que se descontarán</summary><div id="quick-production-needs"></div></details><p id="quick-production-status" role="status" aria-live="polite"></p><div class="report-controls"><button id="quick-production-submit" class="btn" type="submit">Agregar al stock de venta</button><button id="quick-production-close" class="btn ghost" type="button">Cerrar</button></div></form></dialog>
+<dialog id="quick-production"><form id="quick-production-form"><h2 id="quick-production-title">Preparar para vender</h2><input id="quick-production-id" type="hidden"><p id="quick-production-before" class="production-total"></p><label>¿Cuántas unidades preparaste?<input id="quick-production-qty" type="number" min="1" step="1" required="" style="font-size:28px;font-weight:800"></label><p id="quick-production-after" class="production-total"></p><details><summary>Ver ingredientes que se descontarán</summary><div id="quick-production-needs"></div></details><p id="quick-production-status" role="status" aria-live="polite"></p><div class="report-controls"><button id="quick-production-submit" class="btn" type="submit">Agregar al stock de venta</button><button id="quick-production-close" class="btn ghost" type="button">Cerrar</button></div></form></dialog>
 <dialog id="restock-dialog"><form id="restock-form"><h2 id="restock-heading">Reponer producto</h2><p id="restock-sku" class="item-sku"></p><p id="restock-stock"></p><p id="restock-previous" class="help-note"></p><input id="restock-id" type="hidden">
-<div class="report-controls"><label>Proveedor<input id="restock-supplier" maxlength="150"></label><label>Documento<input id="restock-document" maxlength="100"></label><label>Fecha<input id="restock-date" type="date"></label><label>Gastos de compra (S/)<input id="restock-extra" type="number" min="0" step="0.01" value="0"></label></div><fieldset><legend>1. ¿Cuánto compraste?</legend><div class="report-controls"><label>La compra viene<select id="restock-mode"><option value="units">En unidades o envases</option><option value="packages">En paquetes de varias unidades</option></select></label><label><span id="restock-count-label">Unidades que ingresan</span><input id="restock-count" type="number" min="1" step="1" required></label><label id="restock-units-label">Unidades dentro de cada paquete<input id="restock-units" type="number" min="1" step="1" required></label></div></fieldset>
-<fieldset><legend>2. Registra los precios de esta compra</legend><div class="report-controls"><label><span id="restock-cost-label">Nuevo costo por unidad (S/)</span><input id="restock-cost" type="number" min="0" step="0.01" placeholder="Lo que pagaste ahora" required></label><label><span id="restock-discount-label">Descuento de compra</span><input id="restock-discount" type="number" min="0" step="0.01" required></label><label>Nuevo precio de venta por unidad (S/)<input id="restock-price" type="number" min="0.01" step="0.01" placeholder="Precio que cobrarás" required></label></div><button id="restock-keep-price" class="btn ghost" type="button">Mantener precio de venta actual</button>
-<details><summary>Ayúdame a calcular el precio de venta</summary><label>Margen deseado sobre la venta (%)<input id="restock-margin" type="number" min="0" max="99.99" step="0.01" value="25" required></label><button id="restock-use-price" class="btn ghost" type="button">Usar precio sugerido</button><p>El margen sugerido considera esta compra. No incluye gastos del negocio.</p></details></fieldset>
+<div class="report-controls"><label>Proveedor<input id="restock-supplier" maxlength="150"></label><label>Documento<input id="restock-document" maxlength="100"></label><label>Fecha<input id="restock-date" type="date"></label><label>Gastos de compra (S/)<input id="restock-extra" type="number" min="0" step="0.01" value="0"></label></div><fieldset><legend>1. ¿Cuánto compraste?</legend><div class="report-controls"><label>La compra viene<select id="restock-mode"><option value="units">En unidades o envases</option><option value="packages">En paquetes de varias unidades</option></select></label><label><span id="restock-count-label">Unidades que ingresan</span><input id="restock-count" type="number" min="1" step="1" required=""></label><label id="restock-units-label">Unidades dentro de cada paquete<input id="restock-units" type="number" min="1" step="1" required=""></label></div></fieldset>
+<fieldset><legend>2. Registra los precios de esta compra</legend><div class="report-controls"><label><span id="restock-cost-label">Nuevo costo por unidad (S/)</span><input id="restock-cost" type="number" min="0" step="0.01" placeholder="Lo que pagaste ahora" required=""></label><label><span id="restock-discount-label">Descuento de compra</span><input id="restock-discount" type="number" min="0" step="0.01" required=""></label><label>Nuevo precio de venta por unidad (S/)<input id="restock-price" type="number" min="0.01" step="0.01" placeholder="Precio que cobrarás" required=""></label></div><button id="restock-keep-price" class="btn ghost" type="button">Mantener precio de venta actual</button>
+<details><summary>Ayúdame a calcular el precio de venta</summary><label>Margen deseado sobre la venta (%)<input id="restock-margin" type="number" min="0" max="99.99" step="0.01" value="25" required=""></label><button id="restock-use-price" class="btn ghost" type="button">Usar precio sugerido</button><p>El margen sugerido considera esta compra. No incluye gastos del negocio.</p></details></fieldset>
 <fieldset><legend>3. Revisa y guarda</legend><p id="restock-preview" class="help-note" role="status"></p><p>Se sumará la compra al mismo producto. Los precios anteriores quedarán en el historial.</p></fieldset><p id="restock-status" role="status" aria-live="polite"></p><div class="report-controls"><button class="btn" type="submit">Guardar compra y nuevos precios</button><button class="btn ghost" id="restock-close" type="button">Cancelar</button></div></form></dialog>
 <dialog id="users-dialog"><button class="btn ghost" id="users-close" type="button">Cerrar</button><h2>Usuarios y permisos</h2><p>El administrador gestiona la plataforma. El vendedor accede a Caja y Catálogo.</p><div class="clean-table-container"><table class="clean-table"><thead><tr><th>Nombre</th><th>Usuario</th><th>Perfil</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="users-list"></tbody></table></div>
-<form id="user-form" class="panel"><h3>Crear o editar usuario</h3><input id="user-id" type="hidden"><label>Nombre<input id="user-name" required maxlength="100"></label><label>Usuario<input id="user-login" required pattern="[A-Za-z0-9._-]+" maxlength="60"></label><label>Perfil<select id="user-role"><option value="seller">Vendedor</option><option value="admin">Administrador</option></select></label><label>Permisos de gestión<select id="user-profile"><option value="all">Administración completa</option><option value="warehouse">Almacén y compras</option><option value="production">Producción</option><option value="supervisor">Supervisión y caja</option></select></label><label>Contraseña (vacía conserva la actual)<input id="user-password" type="password" autocomplete="new-password"></label><label><input id="user-enabled" type="checkbox" checked> Activo</label><div><button class="btn">Guardar usuario</button> <button id="user-new" type="button" class="btn ghost">Nuevo</button></div></form>
-<form id="policy-form" class="panel"><h3>Descuento máximo por perfil</h3><label>Administrador (%)<input id="limit-admin" type="number" min="0" max="100" step="0.01" required></label><label>Vendedor (%)<input id="limit-seller" type="number" min="0" max="100" step="0.01" required></label><button class="btn">Guardar límites</button></form><p id="users-status" role="status"></p></dialog>
+<form id="user-form" class="panel"><h3>Crear o editar usuario</h3><input id="user-id" type="hidden"><label>Nombre<input id="user-name" required="" maxlength="100"></label><label>Usuario<input id="user-login" required="" pattern="[A-Za-z0-9._-]+" maxlength="60"></label><label>Perfil<select id="user-role"><option value="seller">Vendedor</option><option value="admin">Administrador</option></select></label><label>Permisos de gestión<select id="user-profile"><option value="all">Administración completa</option><option value="warehouse">Almacén y compras</option><option value="production">Producción</option><option value="supervisor">Supervisión y caja</option></select></label><label>Contraseña (vacía conserva la actual)<input id="user-password" type="password" autocomplete="new-password"></label><label><input id="user-enabled" type="checkbox" checked=""> Activo</label><div><button class="btn">Guardar usuario</button> <button id="user-new" type="button" class="btn ghost">Nuevo</button></div></form>
+<form id="policy-form" class="panel"><h3>Descuento máximo por perfil</h3><label>Administrador (%)<input id="limit-admin" type="number" min="0" max="100" step="0.01" required=""></label><label>Vendedor (%)<input id="limit-seller" type="number" min="0" max="100" step="0.01" required=""></label><button class="btn">Guardar límites</button></form><p id="users-status" role="status"></p></dialog>
 
-<div class="wrap" id="app" hidden>
-  <div class="local-notice"><span><b>Tu espacio de trabajo</b> · Inventario, recetas y ventas</span><span><span id="cloud-status">Conectado a la nube</span></span></div>
-  <!-- HEADER -->
-  <header class="app-header">
+<div class="wrap" id="app" hidden=""><aside class="workspace-sidebar" aria-label="Menú principal"><header class="app-header">
     <div class="brand-row">
-      <div class="brand-logo" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#064e3b"/><path d="M45 19H25a9 9 0 0 0 0 18h14a5 5 0 0 1 0 10H19" stroke="#fff" stroke-width="7" stroke-linecap="square"/><path d="M19 45h20a9 9 0 0 0 0-18H25a5 5 0 0 1 0-10h20" stroke="#34d399" stroke-width="3"/><path d="m43 12 6 6-6 6" stroke="#34d399" stroke-width="3" stroke-linejoin="miter"/></svg></div>
+      <div class="brand-logo" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#064e3b"></rect><path d="M45 19H25a9 9 0 0 0 0 18h14a5 5 0 0 1 0 10H19" stroke="#fff" stroke-width="7" stroke-linecap="square"></path><path d="M19 45h20a9 9 0 0 0 0-18H25a5 5 0 0 1 0-10h20" stroke="#34d399" stroke-width="3"></path><path d="m43 12 6 6-6 6" stroke="#34d399" stroke-width="3" stroke-linejoin="miter"></path></svg></div>
       <div>
         <h1>
           <span class="brand-wordmark">SMARTBOD</span>
@@ -52,23 +47,9 @@
         <p class="sub-t" id="header-biz-name">SMARTBOD</p>
       </div>
     </div>
-    <div class="header-actions"><button id="cloud-refresh" class="btn ghost">Actualizar datos</button><span id="account-label" class="status-chip"></span><button id="manage-users" class="btn ghost">Usuarios y permisos</button><button id="logout" class="btn ghost">Salir</button>
-      <button type="button" class="status-chip alert" id="chip-low-stock" title="Ver productos con stock crítico">
-        ⚠️ <span id="low-stock-count">0</span> Alertas de Stock
-      </button>
-      
-      <button type="button" class="btn ghost small" id="btn-open-custom-prod">
-        ➕ Registrar producto nuevo
-      </button>
-      <button type="button" class="btn ghost small" id="btn-theme-toggle" title="Cambiar modo claro/oscuro">
-        🌙 Tema
-      </button>
-    </div>
-  </header>
-
-  <!-- TABS NAVIGATION -->
-  <div class="tabs-bar">
-    <nav class="tabs" role="tablist">
+    
+  </header><div class="tabs-bar">
+    <nav class="tabs" role="tablist" aria-orientation="vertical">
       <button class="tab" role="tab" data-tab="inv" aria-selected="true">
         📦 Inventario
       </button>
@@ -89,9 +70,22 @@
         📄 Reportes
       </button>
     </nav>
-  </div>
+  </div><div class="header-actions"><button id="cloud-refresh" class="btn ghost">Actualizar datos</button><span id="account-label" class="status-chip"></span><button id="manage-users" class="btn ghost">Usuarios y permisos</button><button id="logout" class="btn ghost">Salir</button>
+      
+      
+      
+      <button type="button" class="btn ghost small" id="btn-theme-toggle" title="Cambiar modo claro/oscuro">
+        🌙 Tema
+      </button>
+    <button id="guide-prices" class="btn ghost" data-admin-guide="">Evolución de precios</button></div></aside><main class="workspace-main"><section class="workspace-shortcuts" aria-label="Acciones principales"><button id="guide-sell" class="btn">Registrar Venta</button><button id="guide-restock" class="btn soft" data-admin-guide="">Reponer producto</button><button type="button" class="btn ghost small" id="btn-open-custom-prod" data-admin-guide="">Registrar producto</button><button type="button" class="status-chip alert" id="chip-low-stock" title="Ver productos con stock crítico">⚠️ Alerta de stock <span id="low-stock-count">0</span></button></section>
+  
+  <!-- HEADER -->
+  
 
-  <section class="task-guide" aria-label="Acciones habituales"><div><strong>¿Qué necesitas hacer?</strong><p>Elige una tarea para empezar.</p></div><button id="guide-sell" class="btn">Registrar una venta</button><button id="guide-restock" class="btn soft" data-admin-guide>Reponer un producto existente</button><button id="guide-prices" class="btn ghost" data-admin-guide>Ver evolución de precios</button></section>
+  <!-- TABS NAVIGATION -->
+  
+
+  
   <p id="discount-policy-note" class="sub-t"></p>
   <!-- ==================== VISTA 1: INVENTARIO ==================== -->
   <div class="view" id="v-inv">
@@ -131,7 +125,7 @@
         <div class="autocomplete-container">
           <label for="ac-input">Buscar en Catálogo Maestro o Inventario Actual</label>
           <input type="text" id="ac-input" placeholder="Escribe ej. Aceite, Arroz, Pan, Carne, Coca Cola..." autocomplete="off">
-          <div id="ac-list" class="autocomplete-list" hidden></div>
+          <div id="ac-list" class="autocomplete-list" hidden=""></div>
         </div>
 
         <div id="stock-form" style="display:none; flex-direction: column; gap: 12px; padding: 14px; background: var(--calc); border-radius: 10px; border: 1px solid var(--line);">
@@ -143,7 +137,7 @@
             </div>
           </div>
 
-          <details class="panel" open><summary><b>Compra por paquetes</b></summary><div class="report-controls"><label>Paquetes<input id="pack-count" type="number" min="1" step="1" value="1"></label><label>Unidades por paquete<input id="pack-units" type="number" min="1" step="1" value="12"></label><label>Costo por paquete (S/)<input id="pack-cost" type="number" min="0" step="0.01" value="60"></label><label>Descuento por paquete (S/)<input id="pack-discount" type="number" min="0" step="0.01" value="0"></label><label>Margen sobre venta (%)<input id="pack-margin" type="number" min="0" max="99.99" step="0.01" value="25"></label></div><p id="pack-result" role="status"></p><button id="pack-apply" class="btn soft" type="button">Aplicar cantidades, costo y precio sugerido</button><p class="sub-t">El descuento se resta a cada paquete. Precio = costo unitario / (1 − margen). Aplica los valores y luego pulsa Guardar ingreso.</p></details>
+          <details class="panel" open=""><summary><b>Compra por paquetes</b></summary><div class="report-controls"><label>Paquetes<input id="pack-count" type="number" min="1" step="1" value="1"></label><label>Unidades por paquete<input id="pack-units" type="number" min="1" step="1" value="12"></label><label>Costo por paquete (S/)<input id="pack-cost" type="number" min="0" step="0.01" value="60"></label><label>Descuento por paquete (S/)<input id="pack-discount" type="number" min="0" step="0.01" value="0"></label><label>Margen sobre venta (%)<input id="pack-margin" type="number" min="0" max="99.99" step="0.01" value="25"></label></div><p id="pack-result" role="status"></p><button id="pack-apply" class="btn soft" type="button">Aplicar cantidades, costo y precio sugerido</button><p class="sub-t">El descuento se resta a cada paquete. Precio = costo unitario / (1 − margen). Aplica los valores y luego pulsa Guardar ingreso.</p></details>
           <div class="row-inputs-3">
             <div class="input-group">
               <label for="sf-qty">Cantidad (+Unid.)</label>
@@ -260,11 +254,11 @@
         <tbody id="inventory-tbody"></tbody>
       </table>
     </div>
-    <section class="panel" style="margin-bottom:20px"><h2>Importar y descargar inventario</h2><p>Edita los productos desde el botón Editar de cada fila. La importación suma compras y actualiza el precio de venta de los SKU existentes; no reemplaza las existencias.</p><div class="report-controls"><button id="inventory-template" class="btn soft">Plantilla Excel</button><a class="btn ghost" href="plantilla_compras.pdf" download>Plantilla PDF rellenable</a><button id="inventory-excel" class="btn ghost">Descargar inventario Excel</button><button id="inventory-pdf" class="btn ghost">Descargar inventario PDF</button></div><label>Cargar plantilla (.xls, .xlsx o PDF rellenable)<input id="inventory-file" type="file" accept=".xls,.xlsx,.pdf"></label><p class="sub-t">PDF: solo la plantilla SMARTBOD con campos conservados. No admite facturas libres ni documentos escaneados. Excel: hoja Carga. Revisa la vista previa antes de confirmar.</p><p id="inventory-import-status" role="status"></p><div class="clean-table-container"><table id="inventory-preview" class="clean-table"></table></div><button id="inventory-confirm" class="btn" disabled>Confirmar ingreso al inventario</button></section>
+    <section class="panel" style="margin-bottom:20px"><h2>Importar y descargar inventario</h2><p>Edita los productos desde el botón Editar de cada fila. La importación suma compras y actualiza el precio de venta de los SKU existentes; no reemplaza las existencias.</p><div class="report-controls"><button id="inventory-template" class="btn soft">Plantilla Excel</button><a class="btn ghost" href="plantilla_compras.pdf" download="">Plantilla PDF rellenable</a><button id="inventory-excel" class="btn ghost">Descargar inventario Excel</button><button id="inventory-pdf" class="btn ghost">Descargar inventario PDF</button></div><label>Cargar plantilla (.xls, .xlsx o PDF rellenable)<input id="inventory-file" type="file" accept=".xls,.xlsx,.pdf"></label><p class="sub-t">PDF: solo la plantilla SMARTBOD con campos conservados. No admite facturas libres ni documentos escaneados. Excel: hoja Carga. Revisa la vista previa antes de confirmar.</p><p id="inventory-import-status" role="status"></p><div class="clean-table-container"><table id="inventory-preview" class="clean-table"></table></div><button id="inventory-confirm" class="btn" disabled="">Confirmar ingreso al inventario</button></section>
   </div>
 
   <!-- ==================== VISTA 2: CAJA (POS) ==================== -->
-  <div class="view" id="v-pos" hidden>
+  <div class="view" id="v-pos" hidden="">
     <div class="pos-layout">
       <!-- Ticket de Venta / Checkout -->
       <div class="pos-cart">
@@ -346,7 +340,7 @@
   </div>
 
   <!-- ==================== VISTA 3: KARDEX & HISTORIAL ==================== -->
-  <div class="view" id="v-kardex" hidden>
+  <div class="view" id="v-kardex" hidden="">
     <div class="toolbar" style="margin-bottom: 16px;">
       <div class="toolbar-group">
         <input type="text" id="kardex-search" placeholder="🔍 Buscar movimiento por producto, SKU o detalle..." style="max-width: 320px;">
@@ -381,12 +375,12 @@
   </div>
 
   <!-- ==================== VISTA 4: CATÁLOGO DIGITAL ==================== -->
-  <div class="view" id="v-cat" hidden><button id="save-business" class="btn ghost">Guardar datos del negocio</button>
+  <div class="view" id="v-cat" hidden=""><button id="save-business" class="btn ghost">Guardar datos del negocio</button>
     <div class="toolbar" style="margin-bottom: 18px;">
       <div class="toolbar-group">
         <div class="input-group" style="min-width: 240px;">
           <label for="negocio">Nombre Comercial del Negocio</label>
-          <input id="negocio" type="text" placeholder="Ej. Bodega & Sanguchería Don Pepe">
+          <input id="negocio" type="text" placeholder="Ej. Bodega &amp; Sanguchería Don Pepe">
         </div>
         <div class="input-group" style="min-width: 220px;">
           <label for="negocio-tel">Teléfono / WhatsApp Pedidos</label>
@@ -413,7 +407,7 @@
   </div>
 
   <!-- ==================== VISTA 5: ESTADÍSTICAS ==================== -->
-  <div class="view" id="v-est" hidden>
+  <div class="view" id="v-est" hidden="">
     <div class="panels-grid" style="margin-bottom: 20px;">
       <div class="panel">
         <div class="panel-header">
@@ -466,10 +460,10 @@
   </div>
 
   <!-- ==================== VISTA 6: REPORTES & BACKUP ==================== -->
-  <div class="view" id="v-events" hidden><section class="panel"><h2>Eventos de venta</h2><p>Crea ferias, kermesses, campeonatos u otras actividades. Cada venta conserva el evento seleccionado. Las existencias se comparten con el local.</p><form id="event-form"><input id="event-id" type="hidden"><div class="report-controls"><label>Nombre del evento<input id="event-name" maxlength="120" required placeholder="Feria de verano"></label><label>Tipo de actividad<input id="event-activity" list="event-types" maxlength="80" required placeholder="Feria"><datalist id="event-types"><option value="Feria"><option value="Kermesse"><option value="Campeonato"><option value="Festival"><option value="Actividad escolar"><option value="Evento privado"></datalist></label><label>Fecha de inicio<input id="event-start" type="date" required></label><label>Fecha de fin<input id="event-end" type="date" required></label><label>Lugar<input id="event-location" maxlength="200"></label><label>Observaciones<input id="event-notes" maxlength="500"></label></div><p id="event-duration"></p><label><input id="event-active" type="checkbox" checked> Habilitado para vender dentro de sus fechas</label><div class="report-controls"><button class="btn">Guardar evento</button><button id="event-new" class="btn ghost" type="button">Nuevo evento</button></div><p id="event-status" role="status"></p></form><div class="clean-table-container"><table class="clean-table"><thead><tr><th>Evento</th><th>Actividad</th><th>Fechas</th><th>Duración</th><th>Lugar</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="events-list"></tbody></table></div></section></div>
-<div class="view" id="v-rep" hidden>
+  <div class="view" id="v-events" hidden=""><section class="panel"><h2>Eventos de venta</h2><p>Crea ferias, kermesses, campeonatos u otras actividades. Cada venta conserva el evento seleccionado. Las existencias se comparten con el local.</p><form id="event-form"><input id="event-id" type="hidden"><div class="report-controls"><label>Nombre del evento<input id="event-name" maxlength="120" required="" placeholder="Feria de verano"></label><label>Tipo de actividad<input id="event-activity" list="event-types" maxlength="80" required="" placeholder="Feria"><datalist id="event-types"><option value="Feria"></option><option value="Kermesse"></option><option value="Campeonato"></option><option value="Festival"></option><option value="Actividad escolar"></option><option value="Evento privado"></option></datalist></label><label>Fecha de inicio<input id="event-start" type="date" required=""></label><label>Fecha de fin<input id="event-end" type="date" required=""></label><label>Lugar<input id="event-location" maxlength="200"></label><label>Observaciones<input id="event-notes" maxlength="500"></label></div><p id="event-duration"></p><label><input id="event-active" type="checkbox" checked=""> Habilitado para vender dentro de sus fechas</label><div class="report-controls"><button class="btn">Guardar evento</button><button id="event-new" class="btn ghost" type="button">Nuevo evento</button></div><p id="event-status" role="status"></p></form><div class="clean-table-container"><table class="clean-table"><thead><tr><th>Evento</th><th>Actividad</th><th>Fechas</th><th>Duración</th><th>Lugar</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="events-list"></tbody></table></div></section></div>
+<div class="view" id="v-rep" hidden="">
 <section class="panel" style="margin-bottom:24px"><h2>Ventas y correcciones</h2><p>Una venta equivocada se anula: se revierte el importe y se devuelven las existencias, conservando el registro. Solo administradores.</p><label>Buscar por ticket, cliente o vendedor<input id="sale-search" placeholder="Escribe para buscar una venta"></label><p id="sale-manager-status" role="status"></p><div class="clean-table-container"><table class="clean-table"><thead><tr><th>Fecha</th><th>Ticket</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="sale-manager"></tbody></table></div></section>
-<section class="panel" style="margin-bottom:24px"><h2>Reportes en pantalla</h2><p>Selecciona el reporte y el periodo: la tabla aparece aquí. Descargar o imprimir es opcional.</p><div class="report-controls"><label>Reporte<select id="report-type"><option value="stock">Existencias actuales</option><option value="profit">Margen bruto por periodo</option><option value="expenses">Gastos por periodo</option><option value="result">Resultado operativo registrado</option><option value="sales">Ventas por ticket</option><option value="daily">Ventas por día</option><option value="eventSummary">Ventas por evento</option><option value="movements">Movimientos</option><option value="production">Preparaciones</option><option value="prices">Historial de precios</option></select></label><label id="report-product-label" hidden>Producto<select id="report-product"><option value="all">Todos los productos</option></select></label><label>Origen de ventas<select id="report-event"><option value="all">Todas las ventas</option><option value="daily">Solo venta diaria</option></select></label><label>Periodo<select id="report-period"><option value="all">Todo el historial</option><option value="today">Hoy</option><option value="week">Últimos 7 días</option><option value="month">Este mes</option><option value="custom">Personalizado</option></select></label><label>Desde<input id="report-from" type="date"></label><label>Hasta<input id="report-to" type="date"></label><button id="report-generate" class="btn">Actualizar vista</button></div><div class="report-controls"><button id="report-save" class="btn soft">Guardar reporte</button><button id="report-excel" class="btn ghost">Descargar Excel</button><button id="report-pdf" class="btn ghost">Descargar PDF</button><button id="report-print" class="btn ghost">Imprimir / guardar PDF</button><select id="saved-reports" aria-label="Reportes guardados"></select></div><p class="sub-t">Guardar conserva una copia fija en la nube. Excel y PDF descargan el reporte mostrado. Ventas por ticket incluye solo tickets conservados; el historial anterior puede estar incompleto.</p><div id="report-print-area"><section id="price-analytics" hidden><h3>Evolución de precios</h3><div id="price-metrics" class="summary"></div><p id="price-explanation"></p><div style="height:260px"><canvas id="price-chart" aria-label="Evolución del costo de compra y precio de venta"></canvas></div></section><h2 id="report-title"></h2><p id="report-meta"></p><div class="clean-table-container"><table id="report-table" class="clean-table"></table></div><p id="report-empty">No hay registros para este reporte.</p></div></section>
+<section class="panel" style="margin-bottom:24px"><h2>Reportes en pantalla</h2><p>Selecciona el reporte y el periodo: la tabla aparece aquí. Descargar o imprimir es opcional.</p><div class="report-controls"><label>Reporte<select id="report-type"><option value="stock">Existencias actuales</option><option value="profit">Margen bruto por periodo</option><option value="expenses">Gastos por periodo</option><option value="result">Resultado operativo registrado</option><option value="sales">Ventas por ticket</option><option value="daily">Ventas por día</option><option value="eventSummary">Ventas por evento</option><option value="movements">Movimientos</option><option value="production">Preparaciones</option><option value="prices">Historial de precios</option></select></label><label id="report-product-label" hidden="">Producto<select id="report-product"><option value="all">Todos los productos</option></select></label><label>Origen de ventas<select id="report-event"><option value="all">Todas las ventas</option><option value="daily">Solo venta diaria</option></select></label><label>Periodo<select id="report-period"><option value="all">Todo el historial</option><option value="today">Hoy</option><option value="week">Últimos 7 días</option><option value="month">Este mes</option><option value="custom">Personalizado</option></select></label><label>Desde<input id="report-from" type="date"></label><label>Hasta<input id="report-to" type="date"></label><button id="report-generate" class="btn">Actualizar vista</button></div><div class="report-controls"><button id="report-save" class="btn soft">Guardar reporte</button><button id="report-excel" class="btn ghost">Descargar Excel</button><button id="report-pdf" class="btn ghost">Descargar PDF</button><button id="report-print" class="btn ghost">Imprimir / guardar PDF</button><select id="saved-reports" aria-label="Reportes guardados"></select></div><p class="sub-t">Guardar conserva una copia fija en la nube. Excel y PDF descargan el reporte mostrado. Ventas por ticket incluye solo tickets conservados; el historial anterior puede estar incompleto.</p><div id="report-print-area"><section id="price-analytics" hidden=""><h3>Evolución de precios</h3><div id="price-metrics" class="summary"></div><p id="price-explanation"></p><div style="height:260px"><canvas id="price-chart" aria-label="Evolución del costo de compra y precio de venta"></canvas></div></section><h2 id="report-title"></h2><p id="report-meta"></p><div class="clean-table-container"><table id="report-table" class="clean-table"></table></div><p id="report-empty">No hay registros para este reporte.</p></div></section>
     <div class="panels-grid">
       <div class="panel">
         <div class="panel-header">📊 Exportación de Reportes Ejecutivos</div>
@@ -499,10 +493,10 @@
       </div>
     </div>
   </div>
-</div>
+<footer class="workspace-footer" aria-label="Conexión e instalación"><div class="install-bar"><span id="connection-status" role="status" aria-live="polite"></span><button id="install-app" class="btn ghost" type="button">Instalar en mi teléfono</button></div><div class="local-notice"><span><b>Tu espacio de trabajo</b> · Inventario, recetas y ventas</span><span><span id="cloud-status">Conectado a la nube</span></span></div></footer></main></div>
 
 <!-- ==================== MODAL: CREAR / EDITAR PRODUCTO ==================== -->
-<div class="modal-backdrop" id="modal-product" hidden>
+<div class="modal-backdrop" id="modal-product" hidden="">
   <div class="modal-card">
     <div class="modal-header">
       <h3 id="modal-prod-title">➕ Nuevo Producto Personalizado</h3>
@@ -540,14 +534,14 @@
       <p id="mp-classification-hint" class="sub-t"></p>
       <label>Clasificación de consumo<select id="mp-consumption-mode"><option value="">Selecciona cómo se usa</option><option value="unit">Por unidad / cantidad de receta — pan, carne, bebidas</option><option value="portions">Envase para varias porciones — cremas, salsas, papas al hilo</option><option value="measure">Por peso o volumen — gramos / mililitros por porción</option></select></label>
       <div class="row-inputs-3"><label>Presentación<input id="mp-presentation" placeholder="Bolsa, botella, envase…" maxlength="80"></label><label>Contenido del envase<input id="mp-content" placeholder="1 kg, 500 ml…" maxlength="80"></label><label>Detalle del producto<input id="mp-detail" placeholder="Marca, sabor o indicaciones" maxlength="300"></label></div>
-      <input id="mp-deduct-sale" type="checkbox" hidden>
+      <input id="mp-deduct-sale" type="checkbox" hidden="">
       <label id="mp-portions-label">Un envase rinde (porciones)<input id="mp-portions" type="number" min="0.01" step="any" placeholder="Ej. 40"></label>
-      <div id="mp-measure-fields" class="row-inputs-3" hidden><label>Contenido de un envase<input id="mp-content-amount" type="number" min="0.000001" step="any" placeholder="Ej. 1"></label><label>Unidad del envase<select id="mp-content-unit"><option value="kg">kg</option><option value="g">g</option><option value="l">l</option><option value="ml">ml</option></select></label><label>Cantidad usada en cada hamburguesa<input id="mp-dose-amount" type="number" min="0.000001" step="any" placeholder="Según tu preparación"><span id="mp-dose-unit">g por porción</span></label></div>
+      <div id="mp-measure-fields" class="row-inputs-3" hidden=""><label>Contenido de un envase<input id="mp-content-amount" type="number" min="0.000001" step="any" placeholder="Ej. 1"></label><label>Unidad del envase<select id="mp-content-unit"><option value="kg">kg</option><option value="g">g</option><option value="l">l</option><option value="ml">ml</option></select></label><label>Cantidad usada en cada hamburguesa<input id="mp-dose-amount" type="number" min="0.000001" step="any" placeholder="Según tu preparación"><span id="mp-dose-unit">g por porción</span></label></div>
       <p id="mp-yield-preview" role="status" style="padding:14px;background:#e6f6ee;border-radius:12px;font-weight:600"></p>
       <p class="sub-t">Registra el stock en envases o bolsas. Si una bolsa rinde 40 porciones, cada plato vendido usa 1/40 de bolsa. En cada receta eliges la dosis y si se descuenta al preparar o al servir. La venta directa del envase sigue descontando una unidad completa.</p>
     </section>
     <section class="panel"><label for="mp-image-file">Imagen del producto (JPG, PNG o WebP)</label><input id="mp-image-file" type="file" accept="image/jpeg,image/png,image/webp"><img id="mp-image-preview" alt="Vista previa del producto" style="width:130px;height:130px;object-fit:contain;border:1px solid var(--line);border-radius:12px"><p id="mp-image-status" role="status"></p><button id="mp-image-remove" class="btn ghost" type="button">Quitar imagen</button><p class="sub-t">Se optimiza la foto y se guarda en la nube al guardar el producto. Máximo 10 MB de entrada.</p></section>
-    <section id="mp-recipe" hidden class="panel"><label>La receta completa rinde (porciones)<input id="mp-yield" type="number" min="1" step="1"></label><label>Precio de venta por porción (S/)<input id="mp-recipe-price" type="number" min="0.01" step="0.01"></label><h4>Ingredientes por receta completa</h4><p class="sub-t">1 envase para una receta de 24 porciones es válido. Si el envase alcanza para 48, elige «Un envase rinde X porciones» e indica 48: al preparar 24 se usará medio envase. También puedes ingresar cantidades como 0.25.</p><div id="mp-ingredients"></div><p id="mp-ready"></p><label>Porciones que vas a preparar ahora<input id="mp-prepare-qty" type="number" min="1" step="1" value="1"></label><section class="panel"><h4>¿Es suficiente para la preparación?</h4><div id="mp-sufficiency"></div><p id="mp-sufficiency-status" role="status"></p></section><button id="mp-prepare" class="btn soft" type="button">Registrar preparación</button><p class="sub-t">Este botón guarda los cambios de receta y registra la preparación en una sola operación. La venta descuenta las porciones listas y los insumos configurados para descontarse al vender.</p></section>
+    <section id="mp-recipe" hidden="" class="panel"><label>La receta completa rinde (porciones)<input id="mp-yield" type="number" min="1" step="1"></label><label>Precio de venta por porción (S/)<input id="mp-recipe-price" type="number" min="0.01" step="0.01"></label><h4>Ingredientes por receta completa</h4><p class="sub-t">1 envase para una receta de 24 porciones es válido. Si el envase alcanza para 48, elige «Un envase rinde X porciones» e indica 48: al preparar 24 se usará medio envase. También puedes ingresar cantidades como 0.25.</p><div id="mp-ingredients"></div><p id="mp-ready"></p><label>Porciones que vas a preparar ahora<input id="mp-prepare-qty" type="number" min="1" step="1" value="1"></label><section class="panel"><h4>¿Es suficiente para la preparación?</h4><div id="mp-sufficiency"></div><p id="mp-sufficiency-status" role="status"></p></section><button id="mp-prepare" class="btn soft" type="button">Registrar preparación</button><p class="sub-t">Este botón guarda los cambios de receta y registra la preparación en una sola operación. La venta descuenta las porciones listas y los insumos configurados para descontarse al vender.</p></section>
     <div class="row-inputs-3" id="mp-stock-fields">
       <div class="input-group">
         <label for="mp-qty">Unid. Compradas</label>
@@ -570,7 +564,7 @@
 </div>
 
 <!-- ==================== MODAL: AJUSTE DE STOCK / MERMA ==================== -->
-<div class="modal-backdrop" id="modal-adjust" hidden>
+<div class="modal-backdrop" id="modal-adjust" hidden="">
   <div class="modal-card">
     <div class="modal-header">
       <h3>⚖️ Registrar Ajuste de Inventario o Merma</h3>
@@ -605,7 +599,7 @@
 </div>
 
 <!-- ==================== MODAL: CONFIRMACIÓN (SIN ALERT/CONFIRM NATIVO) ==================== -->
-<div class="modal-backdrop" id="modal-confirm" hidden>
+<div class="modal-backdrop" id="modal-confirm" hidden="">
   <div class="modal-card" style="max-width: 420px;">
     <div class="modal-header">
       <h3 id="confirm-title">Confirmar Acción</h3>
@@ -619,7 +613,7 @@
 </div>
 
 <!-- ==================== MODAL: TICKET / COMPROBANTE DE VENTA ==================== -->
-<div class="modal-backdrop" id="modal-receipt" hidden>
+<div class="modal-backdrop" id="modal-receipt" hidden="">
   <div class="modal-card" style="max-width: 440px;">
     <div class="modal-header">
       <h3>🧾 Comprobante de Venta Emitido</h3>
@@ -637,6 +631,6 @@
 
 <script src="prices.js"></script>
 <script src="cloud.js"></script>
-<script src="/app.js" defer></script>
-</body>
-</html>
+<script src="/app.js" defer=""></script>
+
+</body></html>

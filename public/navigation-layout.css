@@ -1,0 +1,24 @@
+#app{display:grid;grid-template-columns:230px minmax(0,1fr);gap:24px;max-width:none;align-items:start;padding:16px}
+.workspace-sidebar{position:sticky;top:16px;max-height:calc(100dvh - 32px);overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px 12px;display:flex;flex-direction:column;gap:20px}
+.workspace-sidebar .app-header{display:block;margin:0;padding:0;border:0;background:none;box-shadow:none}
+.workspace-sidebar .brand-row{gap:10px}.workspace-sidebar .brand-logo{width:36px;height:36px}.workspace-sidebar h1{font-size:22px}.workspace-sidebar .sub-t{font-size:12px}
+.workspace-sidebar .tabs-bar{margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:none}
+.workspace-sidebar .tabs{display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:7px;overflow:visible}
+.workspace-sidebar .tab{width:100%;min-height:48px;text-align:left;justify-content:flex-start;white-space:normal;flex:none;padding:12px;font-size:15px}
+.workspace-sidebar .tab[aria-selected=true]{background:var(--accent);color:white;border-radius:10px}
+.workspace-sidebar .header-actions{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding-top:16px;border-top:1px solid var(--line)}
+.workspace-sidebar .header-actions>.btn{text-align:left;white-space:normal;justify-content:flex-start;font-size:14px;width:100%;margin:0}
+.workspace-sidebar #account-label{order:-1;white-space:normal;font-size:12px;text-align:left}
+.workspace-main{min-width:0;display:flex;flex-direction:column;min-height:calc(100dvh - 32px)}
+.workspace-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 24px;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:16px}
+.workspace-shortcuts>button{width:100%;min-height:54px;font-size:16px;white-space:normal;justify-content:center;margin:0;padding:10px}
+.workspace-shortcuts #low-stock-count{border-radius:99px;padding:2px 8px;background:var(--warn-bg);font-weight:800}
+.workspace-footer{margin-top:auto;padding-top:28px;color:var(--muted);font-size:13px}
+.workspace-footer .install-bar{padding:14px 18px;border:1px solid var(--line);border-radius:12px 12px 0 0;font-size:13px}
+.workspace-footer .local-notice{margin:0;padding:12px 18px;border-top:0;border-radius:0 0 12px 12px;font-size:12px}
+.workspace-footer #install-app{font-size:13px;min-height:42px}
+/* Preserve a usable ticket and catalogue when the sidebar reduces content width. */
+@media(min-width:1051px) and (max-width:1350px){.pos-layout{grid-template-columns:minmax(310px,350px) minmax(0,1fr)}.pos-search-row{flex-direction:column;align-items:stretch}.pos-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
+@media(max-width:1050px){#app{grid-template-columns:180px minmax(0,1fr);gap:14px;padding:10px}.workspace-sidebar{padding:14px 8px;top:10px}.workspace-sidebar .brand-logo{display:none}.workspace-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}.pos-layout{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:640px){#app{grid-template-columns:126px minmax(0,1fr);gap:8px;padding:6px}.workspace-sidebar{padding:12px 6px;top:6px}.workspace-sidebar h1{font-size:16px}.workspace-sidebar .tab,.workspace-sidebar .header-actions>.btn{font-size:12px;padding:10px 6px}.workspace-shortcuts{grid-template-columns:minmax(0,1fr);padding:10px;gap:8px}.workspace-shortcuts>button{font-size:14px}.workspace-footer .install-bar,.workspace-footer .local-notice{display:flex;flex-direction:column;align-items:flex-start;gap:10px}.pos-grid{grid-template-columns:minmax(0,1fr)}.cart-header,.cart-checkout-box{padding:12px}.cart-header{flex-wrap:wrap}.cart-header h2{font-size:22px}.row-inputs,.row-inputs-3{grid-template-columns:minmax(0,1fr)!important}.summary-grid{grid-template-columns:minmax(0,1fr)}.panel-header{flex-wrap:wrap}}
+@media print{.workspace-sidebar,.workspace-shortcuts,.workspace-footer{display:none!important}#app{display:block;padding:0}}
