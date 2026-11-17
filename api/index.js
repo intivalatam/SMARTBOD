@@ -1,3 +1,4 @@
+import {databaseUrl} from '../lib/environment.js';
 import {operate} from '../lib/operations.js';
 import {load,persist,diff} from '../lib/repository.js';
 import {allowed,actionScope,profiles} from '../lib/permissions.js';
@@ -12,8 +13,8 @@ const safeUser=u=>({id:u.id,username:u.username,name:u.name,role:u.role,enabled:
 async function hash(password){if(typeof password!=='string'||password.length<12||password.length>200)fail('La contraseña requiere entre 12 y 200 caracteres');const salt=randomBytes(16).toString('hex');return salt+':'+(await scrypt(password,salt,64)).toString('hex');}
 async function verify(password,encoded){if(typeof password!=='string'||password.length>200)return false;const [salt,h]=encoded.split(':');const candidate=await scrypt(password,salt,64);return timingSafeEqual(candidate,Buffer.from(h,'hex'));}
 async function init(){
- if(!process.env.DATABASE_URL)fail('Falta conectar DATABASE_URL en Vercel',503);
- if(!pool)pool=new pg.Pool({connectionString:process.env.DATABASE_URL,max:3,connectionTimeoutMillis:10000});
+ const connectionString=databaseUrl();
+ if(!pool)pool=new pg.Pool({connectionString,max:3,connectionTimeoutMillis:10000});
  if(!ready)ready=(async()=>{await pool.query(await readFile(new URL('../lib/schema.sql',import.meta.url),'utf8'));})();
  try{await ready;}catch(e){ready=null;throw e;}
 }
