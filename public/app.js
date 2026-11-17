@@ -915,7 +915,7 @@
     
 
     if (cart.length === 0) {
-      list.innerHTML = '<div class="empty-state" style="padding:24px 10px;">Haz clic en los productos de la izquierda para agregarlos al ticket.</div>';
+      list.innerHTML = '<div class="empty-state" style="padding:24px 10px;">Tu ticket está vacío. Busca un producto por nombre o SKU, o selecciónalo en el catálogo para comenzar.</div>';
     } else {
       cart.forEach((c, idx) => {
         const line = num(c.item.precio) * c.qty;
@@ -945,6 +945,18 @@
     updateCashChange();
   }
 
+  function addSearchToTicket(){
+    const input=document.getElementById('pos-search'),q=input.value.trim().toLowerCase(),status=document.getElementById('pos-search-status');
+    if(!q){status.textContent='Escribe un nombre o SKU antes de añadir.';input.focus();return;}
+    const products=items.filter(p=>!p.archived),exact=products.filter(p=>String(p.sku||'').toLowerCase()===q);
+    const matches=exact.length?exact:products.filter(p=>p.nombre.toLowerCase().includes(q)||String(p.sku||'').toLowerCase().includes(q));
+    if(matches.length!==1){status.textContent=matches.length?'Hay varias coincidencias. Selecciona la tarjeta del producto.':'No se encontró ese nombre o SKU.';activePosCat='ALL';document.querySelectorAll('#pos-cat-pills .pill').forEach(b=>b.classList.toggle('active',b.dataset.poscat==='ALL'));renderPOS();return;}
+    const p=matches[0],available=sellable(items,p),current=cart.find(c=>c.item.id===p.id)?.qty||0;
+    if(current+1>available){status.textContent='No hay stock suficiente de '+p.nombre+'.';return;}
+    addToCart(p,available);status.textContent=p.nombre+' añadido al ticket.';input.value='';renderPOS();input.focus();
+  }
+  document.getElementById('pos-add-search').addEventListener('click',addSearchToTicket);
+  document.getElementById('pos-search').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addSearchToTicket();}});
   document.getElementById('pos-search').addEventListener('input', renderPOS);
   document.getElementById('pos-discount').addEventListener('input', renderCart);
   document.getElementById('pos-cash-received').addEventListener('input', updateCashChange);

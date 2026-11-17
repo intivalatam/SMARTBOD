@@ -19,6 +19,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20fill%3D%22none%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2218%22%20fill%3D%22%23064e3b%22%2F%3E%3Cpath%20d%3D%22M45%2019H25a9%209%200%200%200%200%2018h14a5%205%200%200%201%200%2010H19%22%20stroke%3D%22%23fff%22%20stroke-width%3D%227%22%20stroke-linecap%3D%22square%22%2F%3E%3Cpath%20d%3D%22M19%2045h20a9%209%200%200%200%200-18H25a5%205%200%200%201%200-10h20%22%20stroke%3D%22%2334d399%22%20stroke-width%3D%223%22%2F%3E%3Cpath%20d%3D%22m43%2012%206%206-6%206%22%20stroke%3D%22%2334d399%22%20stroke-width%3D%223%22%20stroke-linejoin%3D%22miter%22%2F%3E%3C%2Fsvg%3E">
 <script src="vendor/pdf-lib.min.js"></script>
 <link rel="stylesheet" href="/workspace.css">
+<link rel="stylesheet" href="/sales-layout.css">
 </head>
 <body>
 <div class="install-bar"><span id="connection-status" role="status" aria-live="polite"></span><button id="install-app" class="btn ghost" type="button">Instalar en mi teléfono</button></div>
@@ -119,12 +120,12 @@
     </section>
 
     <!-- Paneles de Entrada de Datos -->
-    <div class="panels-grid" style="margin-bottom: 20px;">
+    <div class="panels-grid entry-panels" style="margin-bottom: 20px;">
       <!-- Panel 1: Ingresar Stock (Compras) -->
-      <div class="panel">
+      <div class="panel stock-entry">
         <div class="panel-header">
-          <span>📥 1. Abastecer Stock (Compras)</span>
-          <button type="button" class="btn soft small" id="btn-quick-custom">+ Crear SKU</button>
+          <span>Productos y compras</span>
+          <button type="button" class="btn" id="btn-quick-custom">+ Registrar producto</button>
         </div>
 
         <div class="autocomplete-container">
@@ -168,13 +169,13 @@
           </div>
         </div>
 
-        <div style="font-size:12px; color:var(--muted); margin-top:auto;">
-          💡 <b>Tip:</b> Selecciona cualquier producto de la lista desplegable o haz clic en <b>+ Crear SKU</b> para registrar un artículo personalizado.
+        <div class="stock-entry-help">
+          💡 <b>Tip:</b> Selecciona cualquier producto de la lista desplegable o haz clic en <b>Registrar producto</b> para registrar un artículo personalizado.
         </div>
       </div>
 
       <!-- Panel 2: Crear Producto Elaborado (Recetas) -->
-      <div class="panel">
+      <div class="panel recipe-entry">
         <div class="panel-header">
           <span>🍔 2. Crear Plato / Combo Elaborado (Receta)</span>
           <span class="badge elab" id="recipe-live-cost">Costo Receta: S/ 0.00</span>
@@ -194,12 +195,12 @@
         <div style="border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface-2);">
           <label>Insumos Requeridos por Porción</label>
           <label>Esta receta rinde (porciones)<input id="el-yield" type="number" min="1" step="1" value="1"></label><p class="sub-t">Ejemplo: si ingresas ingredientes para 24 hamburguesas, indica 24. Guardar la receta no descuenta insumos: registra después la preparación.</p><div id="el-ingredients-list" style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px; max-height:130px; overflow-y:auto;"></div>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <select id="el-insumo-select" style="flex:2.2;">
-              <option value="">Seleccionar insumo del inventario...</option>
-            </select>
-            <select id="el-insumo-mode" aria-label="Medición"><option value="batch">Unidades para receta</option><option value="coverage">Porciones por envase</option><option value="dose">Gramos/ml por porción</option></select><select id="el-insumo-at" aria-label="Momento"><option value="prepare">Al preparar</option><option value="sale">Al servir</option></select><input type="number" id="el-insumo-qty" placeholder="Cant." style="flex:0.8;" min="0.000001" step="any" value="1">
-            <button type="button" class="btn soft" id="btn-add-insumo" title="Añadir insumo a la receta">+</button>
+          <div class="ingredient-composer">
+            <label class="ingredient-product" for="el-insumo-select">Insumo del inventario<select id="el-insumo-select"><option value="">Seleccionar insumo...</option></select></label>
+            <label class="ingredient-quantity" for="el-insumo-qty">Cantidad<input type="number" id="el-insumo-qty" placeholder="Ej. 20" min="0.000001" step="any" value="1"></label>
+            <label for="el-insumo-mode">Cómo se mide<select id="el-insumo-mode"><option value="batch">Unidades para receta</option><option value="coverage">Porciones por envase</option><option value="dose">Gramos/ml por porción</option></select></label>
+            <label for="el-insumo-at">Cuándo se descuenta<select id="el-insumo-at"><option value="prepare">Al preparar</option><option value="sale">Al servir</option></select></label>
+            <button type="button" class="btn" id="btn-add-insumo">+ Añadir insumo</button>
           </div>
         </div>
 
@@ -265,25 +266,10 @@
   <!-- ==================== VISTA 2: CAJA (POS) ==================== -->
   <div class="view" id="v-pos" hidden>
     <div class="pos-layout">
-      <div style="display: flex; flex-direction: column; gap: 14px;">
-        <div class="toolbar">
-          <input type="text" id="pos-search" placeholder="🔍 Buscar producto o escanear código SKU..." style="max-width: 320px;">
-          <div class="filter-pills" id="pos-cat-pills">
-            <button type="button" class="pill active" data-poscat="ALL">Todos</button>
-            <button type="button" class="pill" data-poscat="Elaborado">🍔 Platos/Combos</button>
-            <button type="button" class="pill" data-poscat="Bebidas">🥤 Bebidas</button>
-            <button type="button" class="pill" data-poscat="Abarrotes">🛒 Abarrotes</button>
-            <button type="button" class="pill" data-poscat="Limpieza">🧼 Limpieza</button>
-            <button type="button" class="pill" data-poscat="Insumos">🥖 Insumos</button>
-          </div>
-        </div>
-        <div class="pos-grid" id="pos-grid"></div>
-      </div>
-
       <!-- Ticket de Venta / Checkout -->
       <div class="pos-cart">
         <div class="cart-header">
-          <span>🛍️ Ticket de Venta</span>
+          <div><span class="ticket-eyebrow">VENTA ACTUAL</span><h2>Ticket de venta</h2><small>Revisa los productos y confirma el cobro</small></div>
           <button type="button" class="btn ghost small" id="btn-clear-cart">Vaciar</button>
         </div>
         <div class="cart-items" id="cart-items"></div>
@@ -336,10 +322,26 @@
           </div>
 
           <button type="button" class="btn" style="width: 100%; font-size: 15px; padding: 14px;" id="btn-process-sale">
-            Procesar Venta
+            Confirmar venta y emitir ticket
           </button>
         </div>
       </div>
+      <div class="pos-products">
+        <div class="toolbar pos-product-toolbar">
+          <div class="pos-search-heading"><h2>Selecciona tus productos</h2><p>Busca por nombre o SKU, o selecciona una tarjeta.</p></div><div class="pos-search-row"><label for="pos-search">Nombre o SKU<input type="search" id="pos-search" placeholder="Escribe un nombre o escanea el SKU" autocomplete="off"></label><button type="button" class="btn" id="pos-add-search">Añadir al ticket</button></div><p id="pos-search-status" role="status" aria-live="polite">Enter añade una coincidencia única. Si hay varias, selecciona una tarjeta.</p>
+          <div class="filter-pills" id="pos-cat-pills">
+            <button type="button" class="pill active" data-poscat="ALL">Todos</button>
+            <button type="button" class="pill" data-poscat="Elaborado">🍔 Platos/Combos</button>
+            <button type="button" class="pill" data-poscat="Bebidas">🥤 Bebidas</button>
+            <button type="button" class="pill" data-poscat="Abarrotes">🛒 Abarrotes</button>
+            <button type="button" class="pill" data-poscat="Limpieza">🧼 Limpieza</button>
+            <button type="button" class="pill" data-poscat="Insumos">🥖 Insumos</button>
+          </div>
+        </div>
+        <div class="pos-grid" id="pos-grid"></div>
+      </div>
+
+
     </div>
   </div>
 

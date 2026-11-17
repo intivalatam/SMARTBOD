@@ -1,0 +1,27 @@
+.entry-panels{grid-template-columns:minmax(0,1fr)!important;align-items:start;gap:22px}
+.stock-entry{width:100%;max-width:900px;justify-self:center;min-height:0!important;padding:24px;gap:16px}
+.stock-entry .panel-header{flex-direction:column;text-align:center;gap:14px;margin:0;padding-bottom:18px;font-size:24px}
+.stock-entry #btn-quick-custom{min-height:52px;padding:12px 28px;font-size:18px}
+.stock-entry-help{font-size:14px;color:var(--muted);margin:0;text-align:center}
+.recipe-entry{width:100%;max-width:1100px;justify-self:center}
+.ingredient-composer{display:grid;grid-template-columns:minmax(0,2fr) minmax(160px,1fr);gap:14px;margin-top:16px;align-items:end}
+.ingredient-composer label{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:14px}
+.ingredient-composer select,.ingredient-composer input{width:100%;min-width:0;min-height:54px;font-size:17px;border:1px solid #8ba9a0;background:var(--surface);color:var(--ink)}
+.ingredient-composer #btn-add-insumo{grid-column:1/-1;justify-self:end;min-width:190px;min-height:50px}
+.pos-layout{grid-template-columns:minmax(390px,440px) minmax(0,1fr);gap:24px;align-items:start}
+.pos-cart{position:static;min-width:0;border:2px solid var(--accent);box-shadow:0 12px 30px #064e3b14;border-radius:20px}
+.cart-header{background:#064e3b;color:white;padding:22px;gap:12px;align-items:flex-start}
+.cart-header h2{margin:3px 0 7px;font-size:27px;color:white}.cart-header small{font-size:13px;font-weight:400;color:#d1fae5}
+.ticket-eyebrow{font-size:11px;letter-spacing:.14em;color:#a7f3d0}.cart-header .btn{color:white;border-color:#ffffff66;background:transparent}
+.cart-items{min-height:130px;max-height:340px;padding:18px}.cart-items .empty-state{font-size:16px;line-height:1.6}
+.cart-checkout-box{padding:20px;gap:18px}.cart-checkout-box>.row-inputs{grid-template-columns:minmax(0,1fr)}
+.cart-checkout-box .input-group{min-width:0}.cart-checkout-box label{font-size:13px}.cart-checkout-box input,.cart-checkout-box select{min-width:0;width:100%}
+.cart-checkout-box .pay-methods{grid-template-columns:repeat(2,minmax(0,1fr))}.pay-btn{min-height:46px;font-size:14px}
+#cart-total-val{font-size:32px!important}#btn-process-sale{min-height:58px;font-size:17px!important}
+.pos-products{display:flex;flex-direction:column;gap:18px;min-width:0}.pos-product-toolbar{display:flex;flex-direction:column;align-items:stretch;gap:14px;padding:22px}
+.pos-search-heading h2{margin:0;font-size:25px}.pos-search-heading p,#pos-search-status{margin:5px 0 0;color:var(--muted);font-size:14px}
+.pos-search-row{display:flex;gap:12px;align-items:end}.pos-search-row label{flex:1;min-width:0;display:grid;gap:7px}.pos-search-row input{width:100%;max-width:none;min-height:54px;font-size:18px}.pos-search-row .btn{min-height:54px}
+.pos-grid{max-height:none;overflow:visible;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}.pos-item{padding:14px;gap:12px}.pos-item .thumb{aspect-ratio:16/9}
+.tabs-bar{position:static}
+@media(max-width:1050px){.pos-layout{grid-template-columns:minmax(320px,380px) minmax(0,1fr)}.pos-search-row{flex-direction:column;align-items:stretch}.pos-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+@media(max-width:760px){.pos-layout{grid-template-columns:minmax(0,1fr)}.ingredient-composer{grid-template-columns:minmax(0,1fr)}.ingredient-composer #btn-add-insumo{width:100%}.stock-entry,.recipe-entry{padding:18px}.recipe-entry>.row-inputs{grid-template-columns:minmax(0,1fr)}.pos-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
