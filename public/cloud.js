@@ -1,9 +1,10 @@
 window.Cloud={
  async api(action,data={}){
   if(!navigator.onLine)throw Error('Sin conexión. Activa Wi-Fi o datos móviles antes de guardar.');
-  let response;try{response=await fetch('/api/index',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Smartbod':'1'},body:JSON.stringify({action,...data})});}catch{const error=Error('No se pudo confirmar la respuesta. Revisa la conexión y reintenta la misma operación sin cambiar los datos.');error.networkError=true;throw error;}
+  const operation=data.sale||data.production||data.restock||data.operation;if(operation?.requestId)sessionStorage.setItem('smartbod-pending',JSON.stringify({action,requestId:operation.requestId}));
+  let response;try{response=await fetch('/api/index',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Smartbod':'1'},body:JSON.stringify({action,...data})});}catch{throw Error('No se pudo confirmar la respuesta. Revisa la conexión y reintenta la misma operación sin cambiar los datos.');}
   let body;try{body=await response.json();}catch{throw Error('El servidor no está disponible. Verifica el despliegue.');}
-  if(!response.ok)throw Object.assign(Error(body.error||'Error de conexión'),{status:response.status});return body;
+  if(response.ok||response.status<500){if(operation?.requestId)sessionStorage.removeItem('smartbod-pending');}if(!response.ok)throw Object.assign(Error(body.error||'Error de conexión'),{status:response.status});return body;
  },
  async start(){
   const $=id=>document.getElementById(id);$('auth-heading').textContent='Bienvenido a SMARTBOD';

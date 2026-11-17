@@ -1,7 +1,7 @@
 (() => {
   const button=document.getElementById('install-app'),dialog=document.getElementById('install-help');let promptEvent=null;
   const installed=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
-  const refresh=()=>{button.hidden=installed();document.getElementById('connection-status').textContent=navigator.onLine?'Con conexión · Las operaciones se confirman en la nube':'Sin conexión · Las ventas quedan pendientes, sin ticket, hasta confirmarse en el servidor.';document.getElementById('connection-status').classList.toggle('offline',!navigator.onLine);};
+  const refresh=()=>{button.hidden=installed();document.getElementById('connection-status').textContent=navigator.onLine?'Con conexión · Los datos se guardan en la nube':'Sin conexión · No puedes guardar compras o ventas. Reconecta antes de continuar.';document.getElementById('connection-status').classList.toggle('offline',!navigator.onLine);};
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptEvent=e;button.textContent='Instalar SMARTBOD';});
   window.addEventListener('appinstalled',()=>{promptEvent=null;refresh();});
   window.addEventListener('online',refresh);window.addEventListener('offline',refresh);

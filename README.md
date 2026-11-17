@@ -1,83 +1,27 @@
-# Actualización vigente
-Lee primero **LEEME_ACTUALIZACION.md** para el rendimiento por producto y el descuento al vender. SMARTBOD también ofrece lotes y vencimientos, mermas, compras por proveedor, turnos de caja, ubicaciones de venta con stock compartido, cola de ventas offline y respaldos diarios verificables en S3.
+# SMARTBOD 4.0
 
-# Actualización más reciente: preparación simplificada
-En la fila de una receta pulsa + Preparar, escribe cuántas unidades preparaste y pulsa Agregar al stock de venta. El diálogo muestra stock anterior, resultado previsto y, después de la respuesta del servidor, stock confirmado. Los ingredientes están en un detalle plegable; si falta alguno el mensaje indica cuál y cuánto hay.
-Si necesitas modificar el rendimiento/ingredientes, el editor permite Guardar receta y agregar al stock de venta en una sola transacción; ya no exige guardar, cerrar y volver a abrir. La operación se rechaza completa si falta stock o los datos cambiaron. No se cargan unidades ficticias ni se omite la validación.
-Después de preparar se enfoca el SKU en Inventario y se quitan filtros de stock/categoría que podrían ocultarlo. Se actualiza Caja con el estado del servidor. El filtro de agotados/bajo/normal ahora clasifica también recetas por su stock preparado.
-Se verificó el código actual de public/index.html en el repositorio intivalatam/SMARTBOD antes de modificar el flujo. Se confirmó el bloqueo de preparación al cambiar ingredientes/rendimiento; no se verificó la causa de cada intento fallido en la base de datos real del usuario.
-Antes de actualizar, conserva un respaldo de PostgreSQL y el JSON manual. Las nuevas tablas de lotes se inicializan al primer acceso: las existencias previas se migran como lotes de apertura sin fecha; asigna su vencimiento en Operación antes de vender perecederos.
+Inventario, compras, recetas por dosis, preparación, ventas, caja y reportes para un negocio con existencias compartidas.
 
-# SMARTBOD Cloud
+Lee **LEEME_ACTUALIZACION.md** antes de desplegar: incluye el caso de las 24 hamburguesas, la migración, las funciones comprobadas y los pendientes.
 
-Versión con API para Vercel y PostgreSQL. Requiere conectar la base de datos antes de operar. No es una versión estática ni funciona abriendo index.html desde el disco.
+## Estructura
 
-## Activación
-1. Antes de cambiar la versión, descarga el respaldo JSON desde la plataforma anterior. Conserva el archivo fuera del navegador.
-2. Crea una base PostgreSQL administrada (por ejemplo Neon) y obtén su conexión con SSL y pool. La cuenta usada por la aplicación necesita crear tablas en su base dedicada. No reutilices una base de otro sistema.
-3. Sube el contenido de esta carpeta a una rama de revisión del repositorio SMARTBOD. La estructura incluye public/, api/, lib/, tests/, package.json y vercel.json. Retira del repositorio la anterior configuración estática y el index.html antiguo de raíz al integrar esta versión.
-4. En Vercel: Framework Other; Root Directory raíz; Output Directory public; Install Command npm install; Build Command vacío; Node 22.x. Las rutas /api se ejecutan como funciones Node. Conserva smartbod.intiva.edu.pe en Domains.
-5. En Settings > Environment Variables configura DATABASE_URL, ADMIN_USERNAME y ADMIN_PASSWORD (mínimo 12 caracteres). Para respaldos automáticos agrega CRON_SECRET, BACKUP_S3_BUCKET, BACKUP_S3_REGION, BACKUP_S3_ACCESS_KEY_ID y BACKUP_S3_SECRET_ACCESS_KEY. BACKUP_S3_ENDPOINT es opcional para servicios compatibles con S3. Otorga a las credenciales acceso de lectura/listado/escritura y borrado únicamente al bucket/prefijo de SMARTBOD. Solo Production para datos reales. Preview debe usar otra base, otro bucket y credenciales separadas. No copies secretos al repositorio, al chat ni al README.
-6. Despliega. El esquema se crea al recibir la primera solicitud; el primer inicio de sesión crea el administrador indicado en las variables. No hay registro público. Tras comprobar el acceso, puedes retirar ADMIN_PASSWORD y ADMIN_USERNAME del entorno y redesplegar: el usuario ya permanece en la base.
-7. Desde Usuarios y permisos crea vendedores y fija descuentos. Las cuentas locales anteriores NO se importan: recréalas para darles contraseñas nuevas.
-8. En Reportes restaura el respaldo JSON después de revisarlo. Reemplaza los datos centrales y requiere confirmación. Hazlo una sola vez, antes de iniciar ventas con otros equipos.
-9. Comprueba con dos navegadores: login, abrir turno, compra con vencimiento, venta, arqueo, recepción de orden, venta offline y conflicto de stock, restauración de respaldo y cierre de sesión. No elimines tu respaldo anterior.
+- public/index.html, app.js, base.css, workspace.css: interfaz y estilos.
+- public/inventory-math.js: medidas, dosis y disponibilidad compartidas con servidor.
+- public/operations-ui.js: caja, gastos, devoluciones, ajustes y recuperación.
+- public/cloud.js: comunicación y recuperación de confirmaciones.
+- lib/domain.js, operations.js, batches.js: reglas de negocio.
+- lib/permissions.js: autorización de perfiles.
+- lib/repository.js y schema.sql: persistencia, migración y auditoría.
+- api/index.js: API, sesiones y transacciones.
+- tests: pruebas de dominio, interfaz e integración.
 
-Si ya sustituiste la versión anterior, /migrar.html permite descargar sus datos locales desde el MISMO dominio y navegador. No migra automáticamente ni borra los datos locales.
+## Configuración
 
-## Comportamiento
-- Datos centrales en PostgreSQL, sin datos demo al iniciar.
-- Sesión de 8 horas en cookie HttpOnly/Secure/SameSite, contraseñas scrypt con sal, límite de intentos de login y permisos consultados en el servidor.
-- Administrador: inventario, importación, usuarios, descuentos, reportes y respaldo. Vendedor: catálogo y ventas. El servidor rechaza cambios administrativos del vendedor y no entrega el historial financiero global.
-- El servidor usa sus precios, costos, recetas y límites; no acepta el total ni el permiso enviados por el cliente.
-- Cada venta requiere un turno abierto. El arqueo compara fondo inicial, ventas en efectivo no anuladas y efectivo contado. No incluye ingresos/retiros de caja externos.
-- Los ingresos y preparaciones crean lotes; salida y preparación consumen FEFO (primero vence, primero sale). Los lotes vencidos se bloquean. Las existencias antiguas se migran como lote de apertura sin vencimiento, que el administrador debe actualizar. Las mermas actualizan stock e historial.
-- Proveedores y órdenes de compra se guardan en la nube; recibir una orden crea entradas y lotes una sola vez. Las ubicaciones se guardan en tickets y reportes, pero comparten un solo inventario: no representan stock separado por sucursal.
-- Venta offline: la app cachea el shell y el último estado visible en el navegador; una venta sin conexión queda en IndexedDB, sin ticket ni confirmación de stock hasta que el servidor la acepte. Al reconectar se sincroniza con el mismo identificador; conflictos se mantienen pendientes para revisión. La cola es local al dispositivo, no es una sincronización entre equipos y puede perderse si se borran los datos del navegador.
-- Venta y consumo de insumos en una transacción con bloqueo. Reintentos con el mismo identificador no duplican ventas.
-- Las ediciones administrativas llevan revisión: un estado antiguo se rechaza para evitar sobrescribir ventas de otro equipo. Si hay conflicto, recarga y repite tu cambio.
-- Actualizar datos consulta el estado central. No incluye actualización instantánea por WebSockets: una pantalla abierta se refresca con ese botón o después de guardar/vender. Cada venta siempre valida el stock actual del servidor.
-- El respaldo diario de Vercel Cron copia estado, configuración e imágenes a S3, verifica lectura e integridad y conserva hasta 30 copias. Restaurar desde Operación reemplaza estado e imágenes y requiere confirmación. Usa un bucket separado de la base productiva y prueba la restauración periódicamente; el proveedor S3 debe mantener sus propias medidas de durabilidad.
-- Tickets internos, sin facturación electrónica. No incluye recuperación de contraseña por email ni MFA. Otro administrador puede restablecer una contraseña; conserva acceso administrativo al proveedor.
-- La migración conserva los datos disponibles y congela el histórico estimado de la versión anterior. No reconstruye costos que nunca se registraron.
-- Los reportes actuales y acumulados mantienen sus límites históricos. PDF de entrada: plantilla rellenable SMARTBOD, no escaneos.
+Vercel sin framework, salida public, Node 22.x. Variables: DATABASE_URL, ADMIN_USERNAME y ADMIN_PASSWORD (mínimo 12 caracteres). Las credenciales iniciales solo crean el primer usuario cuando aún no existen usuarios. Nunca incluir secretos en archivos públicos.
 
-## Verificación realizada
-Ejecutar `npm test` para las pruebas de dominio, lotes FEFO, vencimientos, mermas, compras, caja, reportes y PWA.
+Comandos: `npm ci`, `npm test`, `npm run test:integration`. Las pruebas de integración requieren dependencias de desarrollo.
 
-Pendiente de configuración: credenciales PostgreSQL/S3 y Vercel, pruebas contra servicios reales, login/roles de extremo a extremo y comprobación visual. Las pruebas automatizadas no sustituyen estas comprobaciones. La publicación requiere conectar esta carpeta al repositorio GitHub y proyecto Vercel destino.
+Flujo: registrar productos y contenido → registrar compra → receta con dosis y momento de consumo → preparar revisando sobrantes → vender → conciliar caja → revisar resultados.
 
-## Arquitectura y mantenimiento
-api/index.js: autenticación, autorización, transacciones y respaldo S3. lib/schema.sql: tablas propias sb_*. lib/domain.js: validación/cálculo y operaciones de inventario. public/: interfaz, cola local de ventas y plantillas. sb_audit registra operaciones administrativas y ventas. Los datos de negocio se guardan como documento JSONB versionado; no es un motor analítico de alto volumen. La API limita las solicitudes a 3 MB. Vigila crecimiento de historial e imágenes y migra a tablas normalizadas/paginación antes de alcanzar ese límite.
-
-## Actualización: preparación por tandas
-Antes de actualizar exporta el respaldo JSON. Sustituye los archivos del proyecto Cloud completo; no basta con actualizar public/index.html porque también cambia la API. Conserva las variables y base de datos de Vercel.
-En una receta indica cuántas porciones rinden TODOS los ingredientes listados. Ejemplo: ingredientes para 24 hamburguesas -> rendimiento 24. Guarda. En Editar, indica cuántas porciones vas a preparar y pulsa Registrar preparación. El servidor descuenta ingredientes proporcionalmente y crea stock preparado. Caja solo vende porciones preparadas y no vuelve a descontar los ingredientes. El costo de esas porciones queda conservado aunque luego cambie la receta.
-Las recetas previas conservan rendimiento 1 hasta que el administrador lo corrija. No se reconstruyen existencias preparadas ni se corrige retroactivamente el consumo anterior. Si antes registraste una tanda entera como una porción, revisa los ingredientes reales y ajusta el inventario con motivo antes de preparar. Las nuevas existencias preparadas comienzan en cero.
-Reportes se actualiza al abrir la pestaña y muestra una tabla dentro de la plataforma. Incluye Preparaciones con filtro de fechas. Guardar/cargar un reporte conserva una instantánea; Actualizar vista vuelve a los datos actuales. Importar/descargar está al final de Inventario, debajo de la tabla.
-Validación de esta actualización: 14 pruebas de dominio pasadas para rendimiento, preparación parcial, costos, insumos insuficientes, permisos, venta, doble consumo e idempotencia. Sintaxis y referencias HTML comprobadas; queda por verificar el flujo visual completo contra el despliegue real.
-
-## Actualización: anulaciones e imágenes
-Reportes > Ventas y correcciones permite buscar y anular tickets. Solo administrador, con motivo obligatorio y confirmación. La anulación conserva el ticket marcado como Anulado, devuelve stock y revierte ingresos/costos según lo registrado. En preparados devuelve porciones listas sin devolver ingredientes. En ventas antiguas de consumo directo devuelve insumos de la receta histórica cuando esos datos están disponibles. Tickets sin costos/productos históricos suficientes se rechazan para no inventar ajustes. Los reintentos no duplican devoluciones. Las nuevas ventas conservan ID del producto para soportar cambios posteriores de SKU.
-Anular es para una venta errónea cuya mercadería sigue disponible. No devuelve dinero mediante Yape, tarjeta ni banco; el usuario debe gestionar el reembolso por separado. Una devolución con productos dañados necesita un ajuste de merma posterior. Las instantáneas de reportes guardadas antes de anular mantienen su contenido; genera una nueva vista para consultar cifras corregidas.
-Editar producto incluye carga de JPG/PNG/WebP, vista previa y quitar imagen. Admite archivos de entrada de hasta 10 MB; el navegador convierte a JPEG, limita a 640 px y comprime antes de subir. El servidor guarda imágenes en sb_images y exige sesión para leerlas, y rol administrador para cargarlas. No requiere Blob ni variables adicionales. Editar otros campos conserva la foto. Para recetas nuevas, guarda la receta y añade su foto desde Editar.
-Los respaldos JSON contienen referencias a las imágenes, no sus bytes. Conserva backups PostgreSQL de sb_images si migras toda la base. Quitar la imagen retira la referencia del producto; no elimina el archivo de la base para preservar referencias históricas. El almacenamiento de imágenes cuenta en el uso de PostgreSQL.
-Pruebas actuales: 21 pruebas de dominio pasadas, incluyendo anulación, permisos, reintentos, stock directo/preparado e histórico. Sintaxis, IDs de interfaz y CSP verificados. La carga real de imágenes, la nueva tabla y el flujo visual deben probarse en el despliegue conectado.
-Para instalar reemplaza el proyecto Cloud completo (api, lib y public incluidos) y redespliega; conserva DATABASE_URL y la base. El esquema añade sb_images sin borrar datos existentes.
-
-## Actualización: venta diaria y eventos
-La pestaña Eventos permite al administrador crear y editar actividades con nombre, tipo (libre o sugerido: feria, kermesse, campeonato, festival), inicio, fin, duración inclusiva automática, lugar, observaciones y estado habilitado/cerrado. No elimina actividades históricas.
-En Caja el vendedor selecciona Venta diaria/local o un evento habilitado vigente hoy en Lima. El servidor valida las fechas y el estado y conserva en el ticket una copia de los datos del evento y la fecha comercial. Cambiar el evento después no cambia los tickets históricos. No permite registrar ventas retroactivas: las fechas del evento organizan la actividad, pero cada venta usa la hora real del servidor.
-Reportes incluye Ventas por día y Ventas por evento, con fechas y filtro de origen: todos, solo local o un evento. Tickets anulados se cuentan por separado y no suman importes ni descuentos vigentes. Se pueden guardar, descargar en Excel/PDF e imprimir. El filtro de origen solo se aplica a los reportes de ventas; stock y movimientos son globales. Días sin tickets no generan una fila. Tickets antiguos sin evento se consideran venta diaria; si no hay fecha recuperable se identifican como históricos sin fecha.
-Los eventos forman parte del respaldo JSON. Se usa el mismo inventario para local y eventos; esta versión no crea almacenes o transferencias por feria. Para ofrecer porciones en un evento, registra primero su preparación y luego selecciona el evento al cobrar.
-Validación: 30 pruebas de dominio y 3 pruebas de reportes pasan, incluyendo fechas inclusivas, fecha Lima, eventos cerrados, permisos, persistencia histórica y conciliación con anulaciones. La comprobación visual de extremo a extremo sigue pendiente en el despliegue real.
-Actualiza api, lib y public juntos; conserva base y variables y redespliega en Vercel. No requiere nuevas variables ni servicios.
-
-## Actualización integrada: portada, reposición y envases
-La portada de acceso reproduce la composición de la referencia proporcionada, con su ilustración integrada y formulario HTML funcional. Diseño adaptable, mostrar/ocultar contraseña y errores del servidor. En móvil se priorizan título y formulario.
-Inventario > + Reponer stock abre directamente el producto seleccionado. Elige unidades o paquetes, indica costo y descuento de compra, revisa costo unitario y precio sugerido. El precio vigente se conserva salvo cambio explícito. La operación suma unidades al mismo SKU; el servidor valida y evita duplicar una reposición por reintento. Las recetas se preparan, no se reponen como mercadería.
-Editar receta permite por ingrediente: Cantidad para toda la receta (incluye 0.25, 0.5, 1, etc.) o Un envase rinde X porciones. Ejemplo: mayonesa para 48 porciones con receta de 24 consume 0.5 envases; si 1 envase está calculado para 24, registra 1 por receta o rendimiento de envase 24. Una bolsa grande se trata igual. Siempre usa la misma unidad física que registras en inventario: envase, bolsa o unidad.
-La sección ¿Es suficiente para la preparación? muestra requerido, disponible y si alcanza cada insumo. El botón de preparación guarda los cambios de receta y registra la preparación juntos. El sistema permite consumos fraccionarios y no exige un envase por porción; sí impide consumir más existencias de las registradas. Guarda el rendimiento real, no confirmes un sí genérico para saltar el control.
-Todas las mejoras previas están incluidas: usuarios/roles, descuentos, paquetes, recetas y preparados, eventos, reportes visibles, anulaciones, imágenes y plantillas.
-Verificación actual: 43 pruebas de lógica/reportes pasadas; sintaxis JavaScript, recursos locales, IDs y hash CSP verificados. El navegador de pruebas no pudo iniciarse en este entorno, así que queda pendiente la revisión visual de escritorio/móvil y el flujo conectado a PostgreSQL real.
-Instalación: exporta respaldo, sube el contenido completo a la raíz del repositorio (api, lib, public, tests, package.json, vercel.json), mantén Output Directory public y las variables actuales. No cambies DATABASE_URL ni crees otra base. Revisa el nuevo despliegue en Vercel. Esta actualización no borra datos; no restaures el respaldo salvo necesidad. El recurso public/assets/login-reference.png debe subirse también.
+Este paquete no incluye la base real ni se despliega automáticamente. Respaldar antes de actualizar. Margen bruto no equivale a ganancia neta; los resultados consideran únicamente costos y gastos registrados.

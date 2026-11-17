@@ -1,0 +1,1 @@
+Chart.js 4.4.1, SheetJS/xlsx 0.18.5, jsPDF 2.5.1, jsPDF AutoTable 3.5.31. Versiones conservadas del proyecto original y empaquetadas localmente. pdf-lib se conserva del original. No se afirma auditoría exhaustiva de dependencias.

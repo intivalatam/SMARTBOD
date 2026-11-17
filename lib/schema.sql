@@ -6,3 +6,9 @@ CREATE TABLE IF NOT EXISTS sb_attempts(key text PRIMARY KEY,count int NOT NULL,u
 CREATE TABLE IF NOT EXISTS sb_audit(id bigserial PRIMARY KEY,at timestamptz NOT NULL DEFAULT now(),user_id text,action text NOT NULL,revision int);
 
 CREATE TABLE IF NOT EXISTS sb_images(id text PRIMARY KEY,content bytea NOT NULL,mime text NOT NULL,created timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS sb_backups(id bigserial PRIMARY KEY,at timestamptz NOT NULL DEFAULT now(),revision int NOT NULL,data jsonb NOT NULL,reason text NOT NULL);
+ALTER TABLE sb_audit ADD COLUMN IF NOT EXISTS detail jsonb;
+CREATE TABLE IF NOT EXISTS sb_entities(kind text NOT NULL,id text NOT NULL,position int NOT NULL DEFAULT 0,payload jsonb NOT NULL,PRIMARY KEY(kind,id));
+CREATE INDEX IF NOT EXISTS sb_entities_order ON sb_entities(kind,position);
+CREATE INDEX IF NOT EXISTS sb_sessions_expiry ON sb_sessions(expires);
+ALTER TABLE sb_users ADD COLUMN IF NOT EXISTS permissions jsonb;

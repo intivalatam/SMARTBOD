@@ -1,103 +1,68 @@
-# Actualización: precios históricos, uso sencillo e instalación móvil
+# SMARTBOD 4.0 — Actualización y alcance comprobado
 
-## Actualizar tu instalación
-Descarga un respaldo desde SMARTBOD. Extrae el ZIP y reemplaza en GitHub el contenido completo de la carpeta SMARTBOD: api, lib, public, tests, package.json y vercel.json. Conserva DATABASE_URL y la base de datos. Esta versión añade el SDK S3 y requiere configurar los secretos `CRON_SECRET`, `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION`, `BACKUP_S3_ACCESS_KEY_ID` y `BACKUP_S3_SECRET_ACCESS_KEY` en Vercel para activar copias automáticas. Revisa el despliegue y restaura una copia de prueba antes de iniciar ventas.
+Actualizado desde el proyecto proporcionado. Este paquete no se ha desplegado en Vercel ni conectado a tu base real.
 
-## Reponer con precios nuevos
-Busca el producto existente y pulsa «+ Reponer stock».
-1. Indica cuántas unidades/envases o paquetes compraste.
-2. Escribe el costo NUEVO de la compra, el descuento y el precio de venta NUEVO. Los precios anteriores aparecen como referencia. Si la venta no cambia, pulsa «Mantener precio de venta actual». El costo nuevo no se rellena con un promedio antiguo.
-3. Revisa el stock resultante, compra neta, costo por unidad y precio que cobrarás. Pulsa «Guardar compra y nuevos precios».
+## El caso de las 24 hamburguesas
 
-Se registra costo neto por unidad/envase, precio de venta, cantidad, total, fecha, responsable y datos del paquete. Reintentar la misma operación no duplica la compra. Los tickets anteriores conservan sus precios y costos. Editar el precio de un producto también deja una fila; una edición sin compra no se cuenta como compra.
+Registrar pan y carne por unidad. Registrar cada crema como envase de 1 kg, contenido 1,000 g y dosis orientativa de 20 g (rendimiento de 50). Crear una receta de rendimiento 1: un pan, una carne y 20 g de cada crema. Elegir «Al preparar» en los cuatro ingredientes.
 
-En Inventario se muestra la última compra y, por separado, el costo promedio registrado. Los cálculos financieros existentes siguen utilizando el costo acumulado de compras dividido entre unidades compradas (y el valor de preparación para platos); el consumo físico de existencias sí sigue los lotes FEFO.
+| Insumo | Antes | Consumo para 24 | Después |
+|---|---:|---:|---:|
+| Pan | 30 | 24 | 6 |
+| Carne | 40 | 24 | 16 |
+| Mayonesa | 1,000 g | 480 g | 520 g |
+| Ketchup | 1,000 g | 480 g | 520 g |
+| Hamburguesas preparadas | 0 | +24 | 24 |
 
-## Operación: lotes, caja, compras y conectividad
-- Reposición y recepción de órdenes crean lotes con fecha de vencimiento opcional. En **Operación** el administrador puede asignar fecha a lotes de apertura, revisar vencimientos y registrar mermas. Ventas y preparación consumen lotes vigentes por fecha FEFO; los vencidos no se venden.
-- El administrador registra proveedores, crea órdenes de uno o más productos y las recibe una sola vez. Las entradas actualizan stock, precio e historial de compra.
-- Cada venta requiere que el cajero abra un turno, indique ubicación y fondo inicial. Al cierre se compara efectivo esperado (fondo más ventas en efectivo no anuladas) con el monto contado. No se incluyen retiros ni ingresos externos de caja.
-- Las ubicaciones se guardan en los tickets; en esta versión comparten un solo inventario. No uses las ubicaciones como existencias independientes.
-- La PWA conserva la interfaz pública y el último estado visible. Si se pierde la red, una venta se guarda localmente como pendiente y no genera ticket hasta confirmación del servidor. Al reconectar se reintenta con el mismo identificador; conflictos por stock requieren revisión. La cola pertenece a ese navegador/dispositivo y no sincroniza ventas offline entre equipos.
-- Vercel Cron crea un respaldo diario en S3 compatible, incluye imágenes, verifica su integridad al leerlo y conserva hasta 30 copias. **Operación** permite crear y restaurar copias manuales. Usa un bucket separado y prueba la restauración; para otros servicios S3 configura `BACKUP_S3_ENDPOINT`.
+Vender cinco deja 19 preparadas y no vuelve a descontar ingredientes. Si las cremas se agregan al servir, seleccionar «Al servir»: se descuentan al vender. Dosis y momento de consumo pertenecen a cada receta. La configuración antigua se conserva hasta editarla explícitamente. No se han cargado productos de prueba en tu base real.
 
-## Evolución y métricas
-Pulsa «Ver evolución de precios» o Reportes > Historial de precios. Selecciona producto y fechas.
-- Compras registradas e importe total.
-- Para un producto: costo mínimo y máximo, promedio ponderado por unidades y variaciones de compra/venta.
-- Gráfico de compra y venta, con tabla por movimiento.
-- Guardar reporte, descargar Excel/PDF e imprimir. Los archivos Excel/PDF contienen la tabla; imprimir incluye las métricas visibles.
+## Implementado
 
-Las tarjetas comparan primer y último registro del periodo; la tabla compara cada registro con el precio anterior, que puede estar fuera del periodo. Con un solo registro, o base cero, no hay comparación porcentual. No se mezclan precios de productos diferentes en una media. Si no carga Chart.js, la tabla sigue disponible.
+- Inventario con siete columnas agrupadas, nombres con salto de línea, SKU discreto, detalle desplegable y paginación de 25 productos. Tarjetas por debajo de 1,050 px. Archivo y reactivación de productos.
+- Gramos/ml para envases medidos. Vista previa de disponible, consumo y sobrante antes de preparar. Dosis distintas por receta; disponibilidad para vender limitada por complementos.
+- Costo promedio móvil de las existencias disponibles. Valorización de preparados incluida. Ventas conservan su costo histórico. Avisos de costo cero o margen superior al 90 % para revisar datos, no como afirmación de un error.
+- Lotes de preparados con referencia de receta y vencimiento opcional. Venta prioriza vencimiento próximo y excluye lotes vencidos. Las mermas permiten retirarlos. Sin fecha, no es posible determinar vencimiento.
+- Cambios de receta bloqueados mientras quedan preparados, para no alterar el consumo de lotes anteriores. Se conservan versiones de recetas. Para cambiar, terminar el lote, registrar merma o crear otra receta.
+- Compras con proveedor, documento, fecha y gastos asociados. Historial también para precios de elaborados. Detección de documento repetido por producto/proveedor.
+- Control de importación repetida mediante huella SHA-256 del archivo. Detecta el mismo archivo, no todas sus variantes reformateadas.
+- Mermas y ajustes validados en servidor. Verificación del valor total del saldo inicial con motivo; conserva cantidades y ventas históricas.
+- Apertura, movimientos y cierre de caja; esperado, contado y diferencia. Un turno abierto por negocio. Pagos divididos y referencia del cobro.
+- Devoluciones parciales con destino recuperable/no recuperable y reembolso registrado. La plataforma registra el reembolso, no transfiere dinero ni confirma abonos bancarios.
+- Gastos por local/evento. Margen bruto por periodo/origen, gastos y resultado operativo de lo registrado. Mermas incluidas solo al consultar todos los orígenes, pues no se asignan a evento.
+- Cobertura según ventas de 30 días y productos sin ventas. Para insumos sin venta directa esta métrica no sustituye el análisis de consumo de recetas.
+- Perfiles de administración completa, almacén/compras, producción, supervisión/caja y vendedor. Los perfiles de gestión ven información administrativa; las escrituras se restringen en el servidor. No son permisos por campo.
+- Auditoría de cambios y operaciones. Copia antes de restaurar y primera escritura después de 24 horas sin copia diaria. Retención de copias diarias por 30 días. Descarga desde Caja y gestión.
+- Consulta de confirmación de operación pendiente al volver a entrar; se conserva solo su identificador en la sesión del navegador. No reconstruye carritos ni permite vender sin red.
+- Formularios conservados en pantalla ante fallo de guardado. Mensajes de confirmación posteriores a la respuesta del servidor en los flujos actualizados.
+- Persistencia por entidades, lecturas sin bloqueo de escritura y cambios transaccionales. Se conserva un bloqueo global de escritura para proteger stock.
+- Separación de HTML, estilos, aplicación, cálculos, operaciones, permisos y persistencia. Bibliotecas de gráficos/Excel/PDF incluidas localmente.
 
-El historial empieza con los movimientos registrados tras esta actualización. No se inventan precios ni fechas de compras anteriores. Se conserva en respaldos JSON y se recupera al restaurarlos. La restauración, exclusiva del administrador y con confirmación, reemplaza los datos actuales.
+## Actualizar conservando datos
 
-## Uso más sencillo
-Accesos para vender, reponer y consultar precios. Reposición en tres pasos, textos más grandes, botones táctiles amplios, etiquetas «Vender» y «Entradas y salidas», ayudas y resumen previo al guardado. Vendedores solo ven las tareas autorizadas. La sugerencia de precio queda dentro de «Ayúdame a calcular el precio de venta». Se conservan las funciones anteriores.
+1. Exportar respaldo JSON de la versión actual y una copia de la base del proveedor.
+2. Descomprimir. Subir el contenido de SMARTBOD al repositorio conectado a Vercel. No subir node_modules ni secretos.
+3. Conservar DATABASE_URL, ADMIN_USERNAME y ADMIN_PASSWORD existentes.
+4. Probar primero en staging. El esquema añade tablas y columnas de manera idempotente. La primera escritura migra el estado a entidades; el usuario SQL necesita permisos para tablas, índices y columnas.
+5. Comprobar inventario, receta, compra y venta con datos de prueba antes de cambiar producción.
+6. Revisar los productos con «Saldo inicial estimado». Contrastar sus compras y existencias físicas y usar «Caja y gestión → Verificar valor del saldo inicial» cuando corresponda.
 
-## Instalar en el teléfono
-Abre https://smartbod.intiva.edu.pe tras desplegar y pulsa «Instalar en mi teléfono».
-- iPhone: Safari > Compartir > Añadir a pantalla de inicio. Si aparece «Abrir como app web», actívalo.
-- Android: botón de instalación cuando esté disponible, o menú del navegador > Instalar aplicación / Añadir a pantalla de inicio.
-- Huawei: menú del navegador > Añadir a pantalla de inicio. Según modelo, sistema y navegador puede crear un acceso directo en vez de una instalación independiente. Sin esa opción puedes seguir usando la web.
-
-Es una aplicación web instalable (PWA), no un APK ni una publicación en App Store, Google Play o AppGallery. Usa las mismas cuentas y base de datos. Necesita HTTPS. Con conexión consulta y guarda operaciones en el servidor; sin conexión solo permite consultar el último estado visible y guardar ventas pendientes en la cola local del dispositivo. No emite ticket ni confirma stock hasta que el servidor acepte la venta. Al reconectar reintenta con el mismo identificador; conflictos por stock requieren revisión. La cola no se comparte entre dispositivos y puede perderse al borrar los datos del navegador. Si se interrumpe una operación, revisa su resultado antes de iniciar otra distinta.
-Referencia técnica: https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable
-
-## Verificación
-87 pruebas automatizadas aprobadas, incluidas reglas de lotes FEFO, vencimientos, mermas, compras, caja, reportes y PWA. Ejecuta `npm test` después de actualizar. Pendiente: prueba visual completa, conexión a tu PostgreSQL/S3 y prueba de instalación en dispositivos físicos iPhone/Android/Huawei.
-
----
-
-## Mejoras de la versión anterior
-
-# Nueva clasificación visible antes de la imagen
-
-Inventario > Editar producto > ¿Cómo se utiliza este producto?
-
-1. **Por unidad / cantidad de receta:** pan, carne u otros insumos cuya cantidad se indica en la receta. Se consumen al preparar.
-2. **Envase para varias porciones:** registra directamente cuántas porciones rinde una bolsa o envase. Se consume la fracción correspondiente al vender.
-3. **Por peso o volumen:** ingresa contenido del envase (kg, g, l o ml) y dosis por hamburguesa (g o ml). El rendimiento se calcula automáticamente y se descuenta al vender. No convierte masa a volumen.
-
-Ejemplo ilustrativo: mayonesa de 1 kg que cuesta S/17, con una dosis que tú determines de 20 g, rinde 50 hamburguesas. Cuesta S/0,34 por hamburguesa. Vender 24 usa 480 g (0,48 envases), con costo de mayonesa S/8,16; quedan 520 g. Los 20 g son un ejemplo, no una dosis predeterminada. Puedes cambiar rendimiento o dosis para ventas futuras.
-
-La vista previa muestra costo por porción y consumo equivalente para 24 ventas. En cada producto existente debes guardar la clasificación correcta; no se deduce el rendimiento por el nombre. Elige una de las tres opciones antes de guardar. Las recetas que lo incluyen usarán el rendimiento actualizado. Los campos aparecen antes de la imagen para que no queden ocultos debajo de ella.
-
-La foto enviada muestra un formulario sin estos controles. Para disponer de ellos hay que reemplazar public, lib y api juntos con esta entrega. La actualización no se ha aplicado automáticamente a tu sitio.
-
----
-
-# SMARTBOD · Rendimiento de insumos y descuento al vender
-
-## Actualizar tu instalación existente
-1. Descarga un respaldo JSON desde SMARTBOD.
-2. Descomprime este ZIP. Sube el CONTENIDO de la carpeta SMARTBOD a la raíz de tu repositorio, sustituyendo los archivos anteriores: public, api, lib, tests, package.json y vercel.json. No subas únicamente el ZIP ni únicamente index.html. Incluye public/assets/login-reference.png.
-3. Conserva tu base de datos, DATABASE_URL y las demás variables actuales. No requiere nuevas variables. Mantén la salida public y la configuración existente del proyecto.
-4. Revisa el nuevo despliegue de Vercel y entra a smartbod.intiva.edu.pe. No restaures el respaldo sobre los datos actuales salvo que necesites recuperarlos.
-5. Confirma una operación controlada en el despliegue antes de continuar la jornada. Esta entrega fue comprobada localmente; no se ha conectado a tu base real ni desplegado por ti.
-
-## Configurar una bolsa o crema
-En Inventario > Editar el producto existente:
-- Presentación: Bolsa, envase, botella, etc.
-- Contenido: por ejemplo 1 kg o 500 ml. Este dato es descriptivo, no convierte automáticamente gramos a unidades.
-- Detalle: marca, sabor o indicaciones.
-- Activa «Descontar este insumo por cada porción vendida».
-- En «Un envase rinde (porciones)» registra el rendimiento real; por ejemplo, 40.
-- Guarda. Usa «+ Reponer stock» para sumar compras al mismo producto sin duplicarlo. Si registras bolsas, cada unidad de stock equivale a una bolsa.
-
-Incluye ese insumo en las recetas correspondientes. Se toma su rendimiento automáticamente y se indica que se descuenta al vender. Cada plato vendido usa una porción de cada insumo configurado de esta manera; el rendimiento se comparte entre las recetas que lo incluyen. Si dos recetas necesitan dosis diferentes, esta versión no incorpora un multiplicador de dosis por receta: configura insumos separados con existencias asignadas coherentemente o usa el consumo por receta durante la preparación.
-
-Ejemplo: una bolsa de papas al hilo rinde 40 porciones. Preparar 24 hamburguesas no consume esta bolsa. Vender 24 descuenta 0,6 bolsas y deja 0,4 bolsas (16 porciones). El pan y la carne, sin activar esta opción, se descuentan al preparar. El stock de hamburguesas listas se incrementa al preparar y disminuye al vender.
-
-Mayonesa, ketchup y papas pueden tener rendimientos distintos. La venta valida simultáneamente todos los insumos necesarios, incluso cuando el carrito contiene varios platos. Si falta alguno, no se registra parcialmente la venta. Vender directamente un envase del catálogo descuenta un envase completo.
-
-Anular una venta devuelve las porciones preparadas y el consumo fraccionario que se registró al vender; usa los datos históricos aunque después cambies el rendimiento. No devuelve el pan/carne consumidos en la preparación.
-
-## Existencias anteriores
-Los consumos anteriores no se recalculan. Para evitar consumir dos veces los ingredientes de tandas existentes, no se permite cambiar entre descuento al preparar y al vender si hay platos preparados pendientes que usan el insumo. Termina esas existencias antes de activar el nuevo modo. El mensaje identifica el motivo. Cambiar el número de porciones de un insumo ya configurado para descontar al vender aplica a ventas futuras.
-
-## Incluido
-Portada de acceso, reposición por unidades/paquetes, preparación rápida, roles administrador/vendedor, descuentos por perfil, eventos, reportes en pantalla y exportación, imágenes, anulaciones y plantillas permanecen integrados.
+No es posible reconstruir costos omitidos. Los saldos antiguos parten del promedio histórico existente como estimación: no se inventan compras ni lotes pasados. Descargar una copia interna e importarla requiere administración completa; restaurar genera antes una copia de seguridad.
 
 ## Validación
-64 pruebas automatizadas aprobadas: dominio, reportes y actualización de interfaz con DOM simulado. Incluyen consumo fraccionario, múltiples cremas, insuficiencia, reintentos, anulación, costos y stock preparado. Sintaxis JavaScript, IDs HTML y hash CSP verificados. Pendiente: revisión visual escritorio/móvil y flujo de extremo a extremo conectado a PostgreSQL en el despliegue real.
+
+105 pruebas automáticas de dominio y funciones de interfaz. Integración del endpoint con PostgreSQL embebido (PGlite): autenticación, guardado, ventas, costos, copias, auditoría y restricciones por perfil. Migración SQL repetible y lectura/escritura de entidades. JSDOM: inicio, vista previa, preparación de 24, sobrantes, edición y guardado. Verificación sintáctica de módulos.
+
+Comandos: `npm ci`, `npm test`, `npm run test:integration`. También se repitieron las 105 pruebas y las tres comprobaciones de integración en Node 22.23.5, con resultado satisfactorio. El despliegue conserva Node 22.x. Las pruebas de integración requieren las dependencias de desarrollo.
+
+## Pendientes y límites
+
+- Despliegue y validación contra tu base real: no realizados.
+- Validación visual en navegador real y dispositivos iPhone/Android/Huawei: pendiente. Chromium no pudo iniciarse en el entorno; JSDOM no comprueba píxeles, responsive real, impresión o instalación PWA.
+- Ventas offline, sincronización y conflictos entre dispositivos: NO implementados; se exige conexión para confirmar.
+- Múltiples almacenes y transferencias: NO implementados. Local y eventos comparten existencias.
+- Lotes y vencimientos de insumos comprados: pendientes. Los lotes agregados son de preparados.
+- Copias externas y recuperación ante pérdida del proveedor: requieren configuración externa. Las copias internas comparten la base y se generan al operar, no por un cron independiente.
+- Paginación de servidor y pruebas de carga/concurrencia real: pendientes. El cliente recibe todavía el historial completo.
+- No se conectaron pagos, facturación tributaria, conciliación bancaria automática ni notificaciones.
+- Devolución recuperable de preparado supone recuperación completa, incluidos complementos al servir. No hay recuperación selectiva por ingrediente.
+- No se afirma que todas las recomendaciones anteriores estén terminadas ni una auditoría exhaustiva de seguridad o dependencias.
