@@ -12,3 +12,5 @@ CREATE TABLE IF NOT EXISTS sb_entities(kind text NOT NULL,id text NOT NULL,posit
 CREATE INDEX IF NOT EXISTS sb_entities_order ON sb_entities(kind,position);
 CREATE INDEX IF NOT EXISTS sb_sessions_expiry ON sb_sessions(expires);
 ALTER TABLE sb_users ADD COLUMN IF NOT EXISTS permissions jsonb;
+
+CREATE INDEX IF NOT EXISTS sb_receipt_operator_date ON sb_entities ((payload->>'operatorId'),(payload->>'isoDate') DESC,id DESC) WHERE kind='receipts';

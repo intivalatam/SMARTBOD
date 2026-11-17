@@ -1494,7 +1494,7 @@
   document.getElementById('btn-reset-all').hidden=true;
   // ==================== TABS NAVIGATION ====================
   function switchTab(tabKey) {
-    if(!activeUser || (activeUser.role!=='admin' && !['pos','cat'].includes(tabKey)))return;
+    if(!activeUser || !permittedTab(tabKey))return;
     ["inv", "pos", "kardex", "cat", "est", "rep", "events", "supplies"].forEach(k => {
       if(document.getElementById("v-" + k))document.getElementById("v-" + k).hidden = (k !== tabKey);
     });
@@ -1509,7 +1509,11 @@
 
   document.querySelector(".tabs").addEventListener("click", e => {
     const b = e.target.closest(".tab");
-    if (b) switchTab(b.dataset.tab);
+    if (b) {
+      switchTab(b.dataset.tab);
+      document.getElementById('menu-toggle').setAttribute('aria-expanded','false');
+      document.getElementById('side-menu').classList.remove('menu-open');
+    }
   });
 
   // Initialize
@@ -1518,14 +1522,63 @@
   const policy=()=>currentPolicy;
   const el=id=>document.getElementById(id);
   const can=scope=>activeUser?.role==='admin'&&(!activeUser.permissions||activeUser.permissions.includes('*')||activeUser.permissions.includes(scope));
+  el('menu-toggle').onclick=()=>{
+    const open=el('side-menu').classList.toggle('menu-open');
+    el('menu-toggle').setAttribute('aria-expanded',String(open));
+  };
+  function permittedTab(tab){
+    if(activeUser.role==='seller')return ['cat','pos'].includes(tab);
+    if(can('users')||can('cash'))return true;
+    return ['cat','inv','supplies'].includes(tab)||(tab==='kardex'&&can('purchase'));
+  }
+  function roleOverview(){
+    const box=el('role-overview');box.replaceChildren();
+    const card=(label,value,action)=>{
+      const node=document.createElement(action?'button':'div');node.className='overview-metric';
+      const title=document.createElement('small'),detail=document.createElement('strong');
+      title.textContent=label;detail.textContent=value;node.append(title,detail);box.append(node);
+      if(action){node.type='button';node.onclick=action;}
+    };
+    const open=extraState.cashSessions?.find(c=>!c.closedAt);
+    if(activeUser.role==='seller'){card('Turno de caja',extraState.cashOpen?'Abierto':'Cerrado · solicita apertura para cobrar efectivo');return;}
+    if(can('cash')){
+      const today=limaDay(new Date()),sales=extraState.receipts||[];
+      const income=sales.filter(r=>r.status!=='voided'&&r.businessDate===today).reduce((sum,r)=>sum+num(r.total),0);
+      const refunds=sales.flatMap(r=>r.returns||[]).filter(r=>limaDay(new Date(r.date))===today).reduce((sum,r)=>sum+r.amount,0);
+      card('Ventas netas de hoy',money(income-refunds),()=>switchTab('rep'));
+      card('Caja · efectivo esperado',open?money(open.expectedLive??open.opening):'Abrir turno',()=>document.querySelector('.header-actions .btn.soft')?.click());
+    }
+    if(can('production')&&!can('purchase')){
+      for(const recipe of items.filter(p=>p.tipo==='elaborado'&&!p.archived)){
+        let limit=Infinity,source='';
+        for(const [id,needed] of Object.entries(recipeNeeds(items,recipe,1,'prepare'))){
+          const item=items.find(p=>p.id===id),available=calc(item,getConsumoElaborados()).stock;
+          const count=Math.floor((available+1e-9)/needed);
+          if(count<limit){limit=count;source=item.nombre;}
+        }
+        card(recipe.nombre,Number.isFinite(limit)?limit+' porciones · '+source:'Preparar por pedido',()=>openQuickProduction(recipe));
+      }
+      if(!box.children.length)card('Producción','Aún no hay recetas activas');
+    }
+    if(can('purchase')){
+      for(const p of items.filter(i=>i.inventoryKind==='consumable'&&!i.archived&&i.unidadesCompradas-i.vendidos-i.consumed<=i.minStock)){
+        card('Por reponer',p.nombre,()=>window.Smartbod.openSupplyPurchase(p.id));
+      }
+      if(!box.children.length)card('Almacén','Materiales por encima del mínimo');
+    }
+  }
   function accountUI(){
     const admin=activeUser?.role==='admin';
     el('account-label').textContent=activeUser ? activeUser.name+' · '+(admin?'Administrador':'Vendedor'):'';
     el('manage-users').hidden=!can('users');document.querySelectorAll('.btn-restock').forEach(b=>b.disabled=!can('purchase'));document.querySelectorAll('.btn-quick-production').forEach(b=>b.disabled=!can('production'));document.querySelectorAll('.btn-edit-item').forEach(b=>b.disabled=!can('catalog'));
     ['negocio','negocio-tel','save-business'].forEach(id=>el(id).disabled=!admin);
     document.querySelectorAll('[data-admin-guide]').forEach(b=>b.hidden=!admin);
-    document.querySelectorAll('[data-tab]').forEach(b=>b.hidden=!admin && !['pos','cat'].includes(b.dataset.tab));
+    document.querySelectorAll('[data-tab]').forEach(b=>b.hidden=!permittedTab(b.dataset.tab));
     ['btn-load-demo','chip-low-stock'].forEach(id=>{if(el(id))el(id).hidden=!admin;});
+    el('guide-sell').hidden=!permittedTab('pos');el('guide-restock').hidden=!can('purchase');el('btn-open-custom-prod').hidden=!can('catalog');
+    el('guide-prices').hidden=!permittedTab('rep');el('my-tickets').hidden=!permittedTab('pos');el('btn-reset-all').closest('.panel').hidden=!can('restore');
+    ['negocio','negocio-tel','save-business'].forEach(id=>el(id).disabled=!can('users'));el('manage-users').hidden=!can('users');
+    roleOverview();
     el('discount-policy-note').textContent='Descuento autorizado: hasta '+policy()[activeUser?.role||'seller']+'% del subtotal';
   }
   async function lock(){try{await Cloud.api('logout');sessionStorage.removeItem('smartbod-pending');location.reload();}catch(e){alert('No se pudo cerrar sesión: '+e.message);}}
@@ -1535,6 +1588,27 @@
     if(!activeUser || (activeUser.role!=='admin' && restricted)){e.preventDefault();e.stopImmediatePropagation();}
   },true);
   el('logout').onclick=lock;
+  let ticketPage=0;
+  async function loadTicketPage(page){
+    const back=el('tickets-back'),next=el('tickets-next'),list=el('ticket-list');
+    back.disabled=true;next.disabled=true;el('ticket-list-status').textContent='Cargando…';
+    try{
+      const result=await Cloud.api('myTickets',{page});
+      ticketPage=page;list.replaceChildren();
+      for(const r of result.tickets){
+        const row=document.createElement('p');
+        row.textContent=[new Date(r.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),r.ticket,r.status==='voided'?'Anulado':money(r.total-r.refund)].join(' · ');
+        list.append(row);
+      }
+      el('ticket-list-status').textContent=result.tickets.length?'Página '+(page+1):'Aún no hay ventas registradas por tu cuenta.';
+      next.disabled=!result.more;
+    }catch(error){el('ticket-list-status').textContent=error.message;}
+    finally{back.disabled=ticketPage===0;}
+  }
+  el('my-tickets').onclick=()=>{el('ticket-history').showModal();loadTicketPage(0);};
+  el('tickets-back').onclick=()=>loadTicketPage(ticketPage-1);
+  el('tickets-next').onclick=()=>loadTicketPage(ticketPage+1);
+  el('tickets-close').onclick=()=>el('ticket-history').close();
   el('cloud-refresh').onclick=async()=>{try{if(saving)return;if(cart.length&&!confirm('Se actualizarán las existencias. El carrito se conservará.'))return;applyCloud(await Cloud.api('state'));}catch(e){alert(e.message);}};
   el('manage-users').onclick=async()=>{if(activeUser?.role!=='admin')return;try{usersCache=(await Cloud.api('users')).users;el('users-dialog').showModal();renderUsers();}catch(e){alert(e.message);}};
   el('users-close').onclick=()=>el('users-dialog').close();
@@ -1680,6 +1754,9 @@
   let restockAttempt=null;
   function openRestock(product){
     el('restock-id').value=product.id;el('restock-heading').textContent='Reponer: '+product.nombre;el('restock-sku').textContent='SKU: '+product.sku;
+    el('restock-size-label').hidden=product.consumptionMode!=='measure';
+    el('restock-size').value=product.consumptionMode==='measure'?content(product):1;
+    el('restock-size-caption').textContent='Contenido de cada envase comprado ('+(['kg','g'].includes(product.contentUnit)?'g':'ml')+')';
     el('restock-stock').textContent='Stock actual: '+Number(calc(product,getConsumoElaborados()).stock.toFixed(4))+' unidades / envases';
     el('restock-previous').textContent='Último costo de compra registrado: '+(product.lastPurchaseCost==null?'Aún no hay historial':money(product.lastPurchaseCost))+' · Precio de venta actual: '+money(product.precio);
     el('restock-supplier').value='';el('restock-document').value='';el('restock-date').value=limaDay(new Date());el('restock-extra').value=0;el('restock-mode').value='units';el('restock-count').value=1;el('restock-units').value=1;el('restock-cost').value='';el('restock-discount').value=0;el('restock-price').value='';el('restock-margin').value=25;el('restock-status').textContent='';restockAttempt=null;restockPreview();el('restock-dialog').showModal();el('restock-count').focus();
@@ -1688,13 +1765,19 @@
     const byUnit=el('restock-mode').value==='units';el('restock-units').disabled=byUnit;el('restock-units-label').hidden=byUnit;if(byUnit)el('restock-units').value=1;
     el('restock-count-label').textContent=byUnit?'Unidades que ingresan':'Cantidad de paquetes';el('restock-cost-label').textContent=byUnit?'Nuevo costo por unidad / envase (S/)':'Nuevo costo por paquete (S/)';el('restock-discount-label').textContent=byUnit?'Descuento por unidad (S/)':'Descuento por paquete (S/)';
     if(el('restock-cost').value===''){el('restock-preview').textContent='Ingresa el costo de esta compra. Puede ser diferente al anterior.';return null;}
-    try{const result=packageMath(...['restock-count','restock-units','restock-cost','restock-discount','restock-margin'].map(id=>Number(el(id).value)));result.total+=Number(el('restock-extra').value)||0;result.unit=result.total/result.qty;result.price=result.unit/(1-Number(el('restock-margin').value)/100);el('restock-preview').textContent=`Ingresan ${result.qty} unidades · Compra neta ${money(result.total)} · Costo unitario ${money(result.unit)} · Nuevo precio de venta: ${el('restock-price').value?money(el('restock-price').value):'por completar'} · Stock después: ${Number((calc(items.find(p=>p.id===el('restock-id').value),getConsumoElaborados()).stock+result.qty).toFixed(4))}`;return result;}catch(e){el('restock-preview').textContent=e.message;return null;}
+    try{const result=packageMath(...['restock-count','restock-units','restock-cost','restock-discount','restock-margin'].map(id=>Number(el(id).value)));const product=items.find(p=>p.id===el('restock-id').value);
+    if(product.consumptionMode==='measure'){
+      const received=Number(el('restock-size').value);
+      if(!(received>0))throw Error('Indica el contenido real de cada envase.');
+      result.qty*=received/content(product);
+    }
+    result.total+=Number(el('restock-extra').value)||0;result.unit=result.total/result.qty;result.price=result.unit/(1-Number(el('restock-margin').value)/100);el('restock-preview').textContent=`Ingresan ${result.qty} unidades · Compra neta ${money(result.total)} · Costo unitario ${money(result.unit)} · Nuevo precio de venta: ${el('restock-price').value?money(el('restock-price').value):'por completar'} · Stock después: ${Number((calc(items.find(p=>p.id===el('restock-id').value),getConsumoElaborados()).stock+result.qty).toFixed(4))}`;if(product.consumptionMode==='measure')el('restock-preview').textContent+=' · Ingreso medido: '+quantityLabel(product,result.qty)+' · '+Math.floor(result.qty*product.portionsPerUnit+1e-9)+' dosis de referencia';return result;}catch(e){el('restock-preview').textContent=e.message;return null;}
   }
-  ['restock-extra','restock-mode','restock-count','restock-units','restock-cost','restock-discount','restock-margin','restock-price'].forEach(id=>el(id).oninput=restockPreview);
+  ['restock-extra','restock-size','restock-mode','restock-count','restock-units','restock-cost','restock-discount','restock-margin','restock-price'].forEach(id=>el(id).oninput=restockPreview);
   el('restock-use-price').onclick=()=>{const r=restockPreview();if(r){el('restock-price').value=r.price;restockPreview();}};
   el('restock-keep-price').onclick=()=>{el('restock-price').value=items.find(p=>p.id===el('restock-id').value).precio;restockPreview();};
   el('restock-close').onclick=()=>el('restock-dialog').close();
-  el('restock-form').onsubmit=async e=>{e.preventDefault();if(!restockPreview()||saving)return;const input={supplier:el('restock-supplier').value,document:el('restock-document').value,purchaseDate:el('restock-date').value,extraCost:Number(el('restock-extra').value),id:el('restock-id').value,packages:Number(el('restock-count').value),units:Number(el('restock-units').value),cost:Number(el('restock-cost').value),discount:Number(el('restock-discount').value),price:Number(el('restock-price').value)};const signature=JSON.stringify(input);if(restockAttempt?.signature!==signature)restockAttempt={signature,requestId:crypto.randomUUID()};saving=true;e.submitter.disabled=true;try{const result=await Cloud.api('restock',{restock:{...input,requestId:restockAttempt.requestId}});applyCloud(result);el('restock-dialog').close();restockAttempt=null;showToast('Stock repuesto','Compra guardada. Stock, precio de venta e historial actualizados.');}catch(err){el('restock-status').textContent=err.message;}finally{saving=false;e.submitter.disabled=false;}};
+  el('restock-form').onsubmit=async e=>{e.preventDefault();if(!restockPreview()||saving)return;const input={receivedContent:Number(el('restock-size').value),supplier:el('restock-supplier').value,document:el('restock-document').value,purchaseDate:el('restock-date').value,extraCost:Number(el('restock-extra').value),id:el('restock-id').value,packages:Number(el('restock-count').value),units:Number(el('restock-units').value),cost:Number(el('restock-cost').value),discount:Number(el('restock-discount').value),price:Number(el('restock-price').value)};const signature=JSON.stringify(input);if(restockAttempt?.signature!==signature)restockAttempt={signature,requestId:crypto.randomUUID()};saving=true;e.submitter.disabled=true;try{const result=await Cloud.api('restock',{restock:{...input,requestId:restockAttempt.requestId}});applyCloud(result);el('restock-dialog').close();restockAttempt=null;showToast('Stock repuesto','Compra guardada. Stock, precio de venta e historial actualizados.');}catch(err){el('restock-status').textContent=err.message;}finally{saving=false;e.submitter.disabled=false;}};
 
 
   let priceChart=null;

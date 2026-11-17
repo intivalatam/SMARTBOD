@@ -20,3 +20,23 @@ test('consumibles no se venden directamente ni se editan desde guardado general'
 test('permisos de compras, ajustes y catálogo se aplican a cada operación',()=>{assert.equal(actionScope('operation',{operation:{kind:'supplyUse'}}),'adjust');assert.equal(actionScope('operation',{operation:{kind:'supplyAssign'}}),'catalog');assert.equal(actionScope('operation',{operation:{kind:'supplyPurchase'}}),'purchase');assert.equal(allowed({role:'admin',permissions:['reports']},'adjust'),false);assert.throws(()=>operate(empty(),{kind:'supplyCreate',requestId:randomUUID()},{role:'seller'}),/administradores/);});
 test('anular consumibles gratuitos conserva su costo cero aunque una compra posterior tenga costo',()=>{let {s,id}=prepared();s.items[0].inventoryValue=0;s.items[0].lastPurchaseCost=0;const r=sale(s);s=op(r.state,{kind:'supplyPurchase',id,qty:10,total:10});s=voidSale(s,{ticketNum:r.receipt.ticketNum,reason:'Anulación completa'},user);assert.equal(s.items[0].inventoryValue,10);assert.equal(stock(s.items[0]),110);});
 test('retirar asignación afecta ventas futuras, no el historial de la venta previa',()=>{let {s}=prepared();const r=sale(s);s=op(r.state,{kind:'supplyAssign',id:'h',expectedLinks:JSON.stringify(r.state.items.at(-1).consumables),links:[]});s=sale(s,1).state;assert.equal(stock(s.items[0]),92);s=voidSale(s,{ticketNum:r.receipt.ticketNum,reason:'Venta equivocada'},user);assert.equal(stock(s.items[0]),100);});
+test('eliminar distingue material nuevo, saldo, asignaciones e historial',()=>{
+  const fresh=op(empty(),{kind:'supplyCreate',name:'Vasos',unit:'paquete',minStock:1});
+  assert.equal(op(fresh,{kind:'supplyRemove',id:fresh.items[0].id}).items.length,0);
+  const {s,id}=prepared();
+  assert.throws(()=>op(s,{kind:'supplyRemove',id}),/saldo/);
+  const used=op(s,{kind:'supplyUse',id,mode:'use',expectedStock:100,qty:100,reason:'Uso del turno'});
+  assert.throws(()=>op(used,{kind:'supplyRemove',id}),/asignación/);
+  const unlinked=op(used,{kind:'supplyAssign',id:'h',expectedLinks:JSON.stringify([{id,qty:1}]),links:[]});
+  const archived=op(unlinked,{kind:'supplyRemove',id});
+  assert.equal(archived.items.find(p=>p.id===id).archived,true);
+  assert.deepEqual(archived.kardex,unlinked.kardex);
+});
+test('dos paquetes de cien vasos permiten descontar unidades individuales',()=>{
+ let state=op(empty(),{kind:'supplyCreate',name:'Vasos',unit:'unidad',minStock:10});
+ const id=state.items[0].id;
+ state=op(state,{kind:'supplyPurchase',id,qty:2,perPack:100,total:24});
+ state=op(state,{kind:'supplyUse',id,mode:'use',expectedStock:200,qty:10,reason:'Uso del turno'});
+ assert.equal(stock(state.items[0]),190);
+ assert.equal(state.items[0].inventoryValue,22.8);
+});

@@ -1,1 +1,1 @@
-import {execFileSync} from 'node:child_process';for(const name of ['api','storage','ui'])execFileSync(process.execPath,[new URL('./integration-'+name+'.mjs',import.meta.url).pathname],{stdio:'inherit'});
+import {execFileSync} from 'node:child_process';for(const name of ['api','storage','recovery','ui'])execFileSync(process.execPath,[new URL('./integration-'+name+'.mjs',import.meta.url).pathname],{stdio:'inherit'});
