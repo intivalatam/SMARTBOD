@@ -179,7 +179,7 @@
 
   let saving=false;
   function captureState(){return {...extraState,items,kardex,events:JSON.parse(lsGet('smartbod-events-v1','[]')),receipts:JSON.parse(lsGet('smartbod-receipts-v1','[]')),savedReports:JSON.parse(lsGet('smartbod-saved-reports-v1','[]')),negocio:neg,telefono:negTel};}
-  function applyCloud(result){extraState=result.state;cloudRevision=result.revision;hydrate(result.state);items=result.state.items;kardex=result.state.kardex;neg=result.state.negocio;negTel=result.state.telefono;currentPolicy=result.policy;activeUser=result.user;renderApp();accountUI();renderEvents();}
+  function applyCloud(result){extraState=result.state;cloudRevision=result.revision;hydrate(result.state);items=result.state.items;kardex=result.state.kardex;neg=result.state.negocio;negTel=result.state.telefono;currentPolicy=result.policy;activeUser=result.user;renderApp();accountUI();renderEvents();if(typeof window!=='undefined')window.Smartbod?.refreshSupplies?.();}
   async function save(options={}){
     if(saving)throw Error('Espera a que termine el guardado');
     saving=true;document.getElementById('app').inert=true;document.getElementById('cloud-status').textContent='Guardando en la nube…';
@@ -243,6 +243,7 @@
       costoReceta/=Math.max(1,num(p.recipeYield)||1);
       const maxPortions = num(p.preparedStock);
       if(maxPortions>0)costoReceta=num(p.preparedValue)/maxPortions+(p.ingredientes||[]).reduce((sum,ing)=>{const ins=items.find(x=>x.id===ing.idInsumo);return sum+(ins&&ingredient(ins,ing,p.recipeYield||1).deductAtSale?purchaseCost(ins)*ingredient(ins,ing,p.recipeYield||1).cantidad/(p.recipeYield||1):0);},0);
+      costoReceta+=(p.consumables||[]).reduce((sum,a)=>{const ins=items.find(x=>x.id===a.id);return sum+(ins?purchaseCost(ins)*a.qty:0);},0);
       const margenPct = precio > 0 ? ((precio - costoReceta) / precio) * 100 : 0;
       return {
         cu: costoReceta,
@@ -324,7 +325,7 @@
 
   function getCombinedCatalog() {
     const combined = [...masterCatalog];
-    items.filter(i => i.tipo !== 'elaborado').forEach(invItem => {
+    items.filter(i => i.tipo !== 'elaborado'&&i.inventoryKind!=='consumable').forEach(invItem => {
       if (!combined.some(m => m.sku === invItem.sku)) {
         combined.push({
           sku: invItem.sku,
@@ -464,7 +465,7 @@
     const select = document.getElementById('el-insumo-select');
     const uso = getConsumoElaborados();
     select.innerHTML = '<option value="">Seleccionar insumo del inventario...</option>';
-    items.filter(i => i.tipo !== 'elaborado').forEach(i => {
+    items.filter(i => i.tipo !== 'elaborado'&&i.inventoryKind!=='consumable').forEach(i => {
       const c = calc(i, uso);
       select.innerHTML += `<option value="${esc(i.id)}">${esc(i.nombre)} (Stock: ${c.stock} · Costo: ${money(c.cu)})</option>`;
     });
@@ -686,7 +687,7 @@
     const sel = document.getElementById('adj-product');
     const uso = getConsumoElaborados();
     sel.innerHTML = '';
-    items.filter(i => i.tipo !== 'elaborado').forEach(i => {
+    items.filter(i => i.tipo !== 'elaborado'&&i.inventoryKind!=='consumable').forEach(i => {
       sel.innerHTML += `<option value="${esc(i.id)}">${esc(i.nombre)} (Disponible: ${quantityLabel(i,calc(i,uso).stock)})</option>`;
     });
     document.getElementById('adj-qty').value = 1;
@@ -765,6 +766,7 @@
 
         const tr=document.createElement('tr');const summary=(p.ingredientes||[]).map(raw=>{const ins=items.find(x=>x.id===raw.idInsumo);if(!ins)return '';const i=ingredient(ins,raw,p.recipeYield||1);return esc(ins.nombre)+': '+quantityLabel(ins,i.cantidad/(p.recipeYield||1))+' por porción · '+(i.consumeAt==='sale'?'al servir':'al preparar');}).join('<br>');
         tr.innerHTML=`<td data-label="Producto"><div class="product-cell"><img src="${esc(p.imgUrl||getCategoryVisual(p.cat,p.nombre))}" class="thumb" alt=""><div><strong class="item-name">${esc(p.nombre)}</strong><span class="item-sku">${esc(p.sku)}</span><span class="sub-t">${esc(isElab?'Preparado':p.cat||'Insumo')}</span></div></div></td><td data-label="Costo"><strong>${money(c.cu)}</strong><small>Disponible${p.lastPurchaseCost!=null?' · Última compra '+money(p.lastPurchaseCost):''}</small></td><td data-label="Venta / margen"><strong>${money(p.precio)}</strong><small>${money(p.precio-c.cu)} · ${c.margenPct.toFixed(1)}% bruto</small>${c.cu===0||c.margenPct>90?'<small class="cost-warning">Revisar costo registrado</small>':''}</td><td data-label="Existencias"><strong>${isElab?c.stock+' preparadas':quantityLabel(p,c.stock)}</strong><small>${isElab?sellable(items,p)+' vendibles con complementos':p.portionsPerUnit?Math.floor(c.stock*p.portionsPerUnit+1e-9)+' porciones estimadas':esc(c.estado)}</small></td><td data-label="Vendidos"><strong>${num(p.vendidos)}</strong><small>Acumulados</small></td><td data-label="Margen bruto"><strong>${money(c.ganancia)}</strong><small>Acumulado</small></td><td data-label="Acciones"><div class="inventory-actions"><button class="btn small ${isElab?'btn-quick-production':'btn-restock'}" data-id="${esc(p.id)}">${isElab?'Preparar':'Reponer'}</button><button class="btn ghost small btn-edit-item" data-id="${esc(p.id)}">Editar</button><button class="btn ghost small" data-detail="${esc(p.id)}" aria-expanded="false">Ver detalle</button></div></td>`;
+        if(p.inventoryKind==='consumable'){tr.children[2].textContent='Uso interno';tr.children[4].textContent='—';tr.children[5].textContent='Consumo en su módulo';tr.children[6].innerHTML='<button type="button" class="btn small" data-supply-open>Gestionar consumible</button>';}
         tbody.appendChild(tr);const detail=document.createElement('tr');detail.hidden=true;detail.className='inventory-detail';detail.dataset.productDetail=p.id;const td=document.createElement('td');td.colSpan=7;td.innerHTML=`<div class="detail-grid"><section><h3>${esc(p.nombre)}</h3><p>${esc([p.presentation,p.contentDescription,p.productDetail].filter(Boolean).join(' · '))}</p><p>${summary}</p>${(p.batches||[]).filter(b=>b.qty>0).map(b=>'<p>Lote '+esc(b.label||b.id)+' · '+b.qty+' porciones · Vence: '+esc(b.expiry||'Sin fecha')+'</p>').join('')}<p>Valor disponible: ${money(isElab?p.preparedValue:c.valorStock)}</p>${p.costMigration?'<p class="cost-warning">'+esc(p.costMigration)+'</p>':''}</section><section><h3>Últimos cambios de precio</h3>${(p.priceHistory||[]).slice(-5).reverse().map(h=>'<p>'+new Date(h.date).toLocaleDateString('es-PE')+' · '+esc(h.source)+' · '+money(h.salePrice)+'</p>').join('')||'<p>Sin cambios registrados.</p>'}<button class="btn ghost" data-archive="${esc(p.id)}">Archivar producto</button></section></div>`;detail.append(td);tbody.append(detail);
 
       });
@@ -798,6 +800,7 @@
 
   document.getElementById('inventory-tbody').addEventListener('click',async e=>{const more=e.target.closest('[data-detail]');if(more){const row=[...document.querySelectorAll('[data-product-detail]')].find(x=>x.dataset.productDetail===more.dataset.detail);row.hidden=!row.hidden;more.setAttribute('aria-expanded',String(!row.hidden));return;}const archive=e.target.closest('[data-archive]');if(archive){await runOperation({kind:'archive',id:archive.dataset.archive,archived:true});return;}
     const prepareBtn=e.target.closest('.btn-quick-production');if(prepareBtn){const product=items.find(p=>p.id===prepareBtn.dataset.id);if(product)openQuickProduction(product);return;}
+    const supplyBtn=e.target.closest('[data-supply-open]');if(supplyBtn){window.Smartbod.openSupplies();return;}
     const restockBtn=e.target.closest('.btn-restock');if(restockBtn){const product=items.find(p=>p.id===restockBtn.dataset.id);if(product)openRestock(product);return;}
     const editBtn = e.target.closest('.btn-edit-item');
     if (editBtn) {
@@ -842,7 +845,7 @@
     const filtered = items.filter(p => {
       const matchQ = !q || p.nombre.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q);
       const matchCat = activePosCat === 'ALL' || (activePosCat === 'Elaborado' ? p.tipo === 'elaborado' : p.cat === activePosCat);
-      return matchQ && matchCat && !p.archived;
+      return matchQ && matchCat && !p.archived && p.inventoryKind!=='consumable';
     });
 
     if (filtered.length === 0) {
@@ -948,7 +951,7 @@
   function addSearchToTicket(){
     const input=document.getElementById('pos-search'),q=input.value.trim().toLowerCase(),status=document.getElementById('pos-search-status');
     if(!q){status.textContent='Escribe un nombre o SKU antes de añadir.';input.focus();return;}
-    const products=items.filter(p=>!p.archived),exact=products.filter(p=>String(p.sku||'').toLowerCase()===q);
+    const products=items.filter(p=>!p.archived&&p.inventoryKind!=='consumable'),exact=products.filter(p=>String(p.sku||'').toLowerCase()===q);
     const matches=exact.length?exact:products.filter(p=>p.nombre.toLowerCase().includes(q)||String(p.sku||'').toLowerCase().includes(q));
     if(matches.length!==1){status.textContent=matches.length?'Hay varias coincidencias. Selecciona la tarjeta del producto.':'No se encontró ese nombre o SKU.';activePosCat='ALL';document.querySelectorAll('#pos-cat-pills .pill').forEach(b=>b.classList.toggle('active',b.dataset.poscat==='ALL'));renderPOS();return;}
     const p=matches[0],available=sellable(items,p),current=cart.find(c=>c.item.id===p.id)?.qty||0;
@@ -1165,6 +1168,7 @@
     const uso = getConsumoElaborados();
 
     const filtered = items.filter(p => {
+      if(p.inventoryKind==='consumable')return false;
       if (catFilter === 'ALL') return true;
       if (catFilter === 'Elaborado') return p.tipo === 'elaborado';
       return p.cat === catFilter;
@@ -1231,7 +1235,7 @@
 
     // 2. Salud de Stock
     let sOK = 0, sLow = 0, sOut = 0;
-    items.filter(i => i.tipo !== 'elaborado').forEach(i => {
+    items.filter(i => i.tipo !== 'elaborado'&&i.inventoryKind!=='consumable').forEach(i => {
       const e = calc(i, uso).estado;
       if (e === 'Ok') sOK++;
       else if (e === 'Stock bajo') sLow++;
@@ -1491,8 +1495,8 @@
   // ==================== TABS NAVIGATION ====================
   function switchTab(tabKey) {
     if(!activeUser || (activeUser.role!=='admin' && !['pos','cat'].includes(tabKey)))return;
-    ["inv", "pos", "kardex", "cat", "est", "rep", "events"].forEach(k => {
-      document.getElementById("v-" + k).hidden = (k !== tabKey);
+    ["inv", "pos", "kardex", "cat", "est", "rep", "events", "supplies"].forEach(k => {
+      if(document.getElementById("v-" + k))document.getElementById("v-" + k).hidden = (k !== tabKey);
     });
     document.querySelectorAll(".tab").forEach(t => {
       t.setAttribute("aria-selected", t.dataset.tab === tabKey ? "true" : "false");
@@ -1527,7 +1531,7 @@
   async function lock(){try{await Cloud.api('logout');sessionStorage.removeItem('smartbod-pending');location.reload();}catch(e){alert('No se pudo cerrar sesión: '+e.message);}}
   document.addEventListener('click',e=>{
     if(!e.target.closest('#app'))return;
-    const restricted=e.target.closest('#v-inv,#v-kardex,#v-est,#v-rep,#v-events,#manage-users,#btn-load-demo,#chip-low-stock');
+    const restricted=e.target.closest('#v-inv,#v-kardex,#v-est,#v-rep,#v-events,#v-supplies,#manage-users,#btn-load-demo,#chip-low-stock');
     if(!activeUser || (activeUser.role!=='admin' && restricted)){e.preventDefault();e.stopImmediatePropagation();}
   },true);
   el('logout').onclick=lock;
@@ -1593,7 +1597,7 @@
     if(type==='stock'){title='Existencias actuales';headers=['SKU','Producto','Stock','Última compra S/','Costo promedio / preparado S/','Precio de venta S/'];rows=items.map(p=>{const c=calc(p,usage);return[p.sku,p.nombre,c.stock,p.lastPurchaseCost??'Sin historial',+c.cu.toFixed(2),num(p.precio)];});}
     if(type==='profit'){title='Margen bruto por periodo y origen';headers=['SKU','Producto','Ingresos netos S/','Costo vendido S/','Margen bruto S/'];const groups=new Map();for(const r of selectedReceipts.filter(x=>x.status!=='voided'))for(const l of r.lines){const c=r.costs?.find(x=>x.productId===l.productId||x.sku===l.sku),id=l.productId||l.sku;if(!groups.has(id))groups.set(id,[l.sku,l.nombre,0,0,0]);const row=groups.get(id);row[2]+=num(l.net??l.subtotal);row[3]+=num(c?.unitCost)*l.qty;}for(const r of JSON.parse(lsGet('smartbod-receipts-v1','[]')).filter(r=>origin==='all'||(origin==='daily'?!r.eventId:r.eventId===origin)))for(const ret of r.returns||[]){if(!inRange(ret.date))continue;const l=r.lines.find(x=>x.productId===ret.productId),c=r.costs.find(x=>x.productId===ret.productId);if(!groups.has(ret.productId))groups.set(ret.productId,[l.sku,l.nombre,0,0,0]);const row=groups.get(ret.productId);row[2]-=ret.amount;if(ret.restock)row[3]-=c.unitCost*ret.qty;}rows=[...groups.values()].map(r=>[r[0],r[1],+r[2].toFixed(2),+r[3].toFixed(2),+(r[2]-r[3]).toFixed(2)]);}
     if(type==='expenses'){title='Gastos por periodo';headers=['Fecha','Motivo','Evento','Importe S/'];rows=(extraState.expenses||[]).filter(x=>inRange(x.date)&&(origin==='all'||(origin==='daily'?!x.eventId:x.eventId===origin))).map(x=>[new Date(x.date).toLocaleString('es-PE'),x.reason,extraState.events?.find(e=>e.id===x.eventId)?.name||'Venta diaria',x.amount]);}
-    if(type==='result'){title='Resultado operativo de costos y gastos registrados';headers=['Concepto','Importe S/'];let revenue=0,cost=0;for(const r of selectedReceipts.filter(x=>x.status!=='voided')){revenue+=r.total;for(const l of r.lines)cost+=(r.costs?.find(c=>c.productId===l.productId||c.sku===l.sku)?.unitCost||0)*l.qty;}for(const r of extraState.receipts||[]){if(origin!=='all'&&(origin==='daily'?!!r.eventId:r.eventId!==origin))continue;for(const ret of r.returns||[])if(inRange(ret.date)){revenue-=ret.amount;if(ret.restock)cost-=(r.costs.find(c=>c.productId===ret.productId)?.unitCost||0)*ret.qty;}}const expenses=(extraState.expenses||[]).filter(x=>inRange(x.date)&&(origin==='all'||(origin==='daily'?!x.eventId:x.eventId===origin))).reduce((a,x)=>a+x.amount,0),waste=origin==='all'?kardex.filter(k=>k.type==='WASTE'&&inRange(k.date)).reduce((a,k)=>a+num(k.amount),0):0;rows=[['Ventas netas de reembolsos',revenue],['Costo vendido',cost],['Margen bruto',revenue-cost],['Gastos registrados',expenses],['Mermas (solo todos los orígenes)',waste],['Resultado registrado; no incluye gastos omitidos',revenue-cost-expenses-waste]].map(([l,v])=>[l,+v.toFixed(2)]);}
+    if(type==='result'){title='Resultado operativo de costos y gastos registrados';headers=['Concepto','Importe S/'];let revenue=0,cost=0;for(const r of selectedReceipts.filter(x=>x.status!=='voided')){revenue+=r.total;for(const l of r.lines)cost+=(r.costs?.find(c=>c.productId===l.productId||c.sku===l.sku)?.unitCost||0)*l.qty;}for(const r of extraState.receipts||[]){if(origin!=='all'&&(origin==='daily'?!!r.eventId:r.eventId!==origin))continue;for(const ret of r.returns||[])if(inRange(ret.date)){revenue-=ret.amount;if(ret.restock)cost-=(r.costs.find(c=>c.productId===ret.productId)?.unitCost||0)*ret.qty;}}const expenses=(extraState.expenses||[]).filter(x=>inRange(x.date)&&(origin==='all'||(origin==='daily'?!x.eventId:x.eventId===origin))).reduce((a,x)=>a+x.amount,0),waste=origin==='all'?kardex.filter(k=>k.type==='WASTE'&&inRange(k.date)).reduce((a,k)=>a+num(k.amount),0):0;const supplies=kardex.filter(k=>k.type?.startsWith('SUPPLY_')&&inRange(k.date)&&(origin==='all'||(origin==='daily'?!k.eventId:k.eventId===origin))).reduce((a,k)=>a+num(k.expense),0);rows=[['Ventas netas de reembolsos',revenue],['Costo vendido',cost],['Margen bruto',revenue-cost],['Gastos registrados',expenses],['Consumibles: uso manual y ajustes netos',supplies],['Mermas (solo todos los orígenes)',waste],['Resultado registrado; no incluye gastos omitidos',revenue-cost-expenses-waste-supplies]].map(([l,v])=>[l,+v.toFixed(2)]);}
     if(type==='sales'){title='Ventas por ticket';headers=['Fecha','Ticket','Vendedor','Pago','Descuento S/','Total original S/','Estado','Importe vigente S/','Origen / Evento'];rows=selectedReceipts.map(r=>[r.isoDate?new Date(r.isoDate).toLocaleString('es-PE',{timeZone:'America/Lima'}):r.date,r.ticketNum,r.operator||'Sin registro',r.payMethod,num(r.discount),num(r.total),r.status==='voided'?'Anulada':r.returns?.length?'Con devolución':'Vigente',r.status==='voided'?0:num(r.total)-(r.returns||[]).reduce((a,x)=>a+x.amount,0),r.eventSnapshot?.name||'Venta diaria / local']);}
     if(type==='daily'||type==='eventSummary'){
       title=type==='daily'?'Ventas por día':'Ventas por evento';headers=['Fecha / Evento','Tickets vigentes','Tickets anulados','Descuentos vigentes S/','Ventas vigentes S/'];
@@ -1713,7 +1717,7 @@
 
   let operationAttempt=null;
   async function runOperation(input){const signature=JSON.stringify(input);if(operationAttempt?.signature!==signature)operationAttempt={signature,requestId:crypto.randomUUID()};try{const result=await Cloud.api('operation',{operation:{...input,requestId:operationAttempt.requestId}});applyCloud(result);operationAttempt=null;showToast('Operación registrada','Confirmada en el servidor.');return true;}catch(e){showToast('No se confirmó',e.message,'error');return false;}}
-  window.Smartbod={can,state:()=>captureState(),user:()=>activeUser,run:runOperation,apply:applyCloud,money,quantityLabel};await import('/operations-ui.js');try{const pending=JSON.parse(sessionStorage.getItem('smartbod-pending')||'null');if(pending){const status=await Cloud.api('requestStatus',{requestId:pending.requestId});showToast(status.found?'Operación anterior confirmada':'Revisa la operación anterior',status.found?'Está registrada. No la repitas.':'No se encontró confirmación. Revisa el historial antes de reintentar.');if(status.found)sessionStorage.removeItem('smartbod-pending');}}catch{}
+  window.Smartbod={can,state:()=>captureState(),user:()=>activeUser,run:runOperation,apply:applyCloud,money,quantityLabel};await import('/operations-ui.js');const {installConsumables}=await import('/consumables-ui.js');installConsumables(window.Smartbod);try{const pending=JSON.parse(sessionStorage.getItem('smartbod-pending')||'null');if(pending){const status=await Cloud.api('requestStatus',{requestId:pending.requestId});showToast(status.found?'Operación anterior confirmada':'Revisa la operación anterior',status.found?'Está registrada. No la repitas.':'No se encontró confirmación. Revisa el historial antes de reintentar.');if(status.found)sessionStorage.removeItem('smartbod-pending');}}catch{}
 
   savedOptions();el('report-type').onchange();el('auth-screen').hidden=true;el('app').hidden=false;accountUI();switchTab(activeUser.role==='admin'?'inv':'pos');
 
