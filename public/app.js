@@ -1852,9 +1852,65 @@
   }
   el('report-generate').onclick=()=>{try{showReport(reportData());}catch(e){showToast('Reporte',e.message,'error');}};
   el('report-type').onchange=()=>{el('report-product-label').hidden=el('report-type').value!=='prices';refreshPriceProducts();el('report-event').disabled=['prices','stock','profit','production','movements'].includes(el('report-type').value);el('report-from').disabled=false;el('report-to').disabled=false;const snapshot=['stock'].includes(el('report-type').value);el('report-date-hint').textContent=snapshot?'Existencias actuales muestra el inventario de hoy; cambiar fechas no reconstruye inventarios históricos. Para consultar operaciones por fecha, selecciona Movimientos.':'Selecciona las fechas directamente en los calendarios. El periodo personalizado aplica a los reportes históricos.';el('report-generate').click();};
-  el('report-excel').onclick=()=>{if(!currentReport)return;if(!window.XLSX)return showToast('Excel','No se pudo cargar la biblioteca. Revisa tu conexión.','error');const r=currentReport,wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([[r.title],[r.period],r.headers,...r.rows]),'Reporte');XLSX.writeFile(wb,'SMARTBOD_reporte.xlsx');};
-  el('report-pdf').onclick=()=>{if(!currentReport)return;if(!window.jspdf)return showToast('PDF','No se pudo cargar la biblioteca. Revisa tu conexión.','error');const r=currentReport,doc=new window.jspdf.jsPDF({orientation:'landscape'});doc.setFontSize(18);doc.text('SMARTBOD | '+r.title,14,18);doc.setFontSize(10);doc.text(r.period,14,27);doc.autoTable({startY:34,head:[r.headers],body:r.rows,headStyles:{fillColor:[8,127,107]}});doc.save('SMARTBOD_reporte.pdf');};
-  el('report-print').onclick=()=>{if(!currentReport)return;document.body.classList.add('printing-report');window.print();document.body.classList.remove('printing-report');};
+  const reportFileName=(r,ext)=>'SMARTBOD_'+String(r.type||r.title||'reporte').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,65)+'_'+new Date().toISOString().slice(0,10)+'.'+ext;
+  const reportRows=r=>r.rows.length?r.rows:[['SIN REGISTROS: '+(r.type==='expenses'?'No se registraron gastos en Caja y gestión para el periodo consultado. Las compras de productos figuran en Movimientos.':'No existen registros para los filtros seleccionados.'),...r.headers.slice(1).map(()=>'')]];
+  const reportDownload=(blob,name)=>{
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  };
+  el('report-csv').onclick=()=>{
+    if(!currentReport)return showToast('Reporte','Genera un informe antes de exportarlo.','error');
+    const r=currentReport,escapeCsv=value=>'"'+String(value??'').replace(/^[=+@-]/,"'$&").replaceAll('"','""')+'"';
+    const content='\ufeff'+[[r.title],[r.period],r.headers,...reportRows(r)].map(row=>row.map(escapeCsv).join(';')).join('\r\n');
+    reportDownload(new Blob([content],{type:'text/csv;charset=utf-8'}),reportFileName(r,'csv'));
+  };
+  el('report-excel').onclick=()=>{
+    if(!currentReport)return showToast('Reporte','Genera un informe antes de exportarlo.','error');
+    if(!window.XLSX)return showToast('Excel','No se pudo cargar la biblioteca. Puedes descargar CSV.','error');
+    try{
+      const r=currentReport,wb=XLSX.utils.book_new();
+      const ws=XLSX.utils.aoa_to_sheet([['SMARTBOD',r.title],[r.period],[r.rows.length+' registros'],[],r.headers,...reportRows(r)]);
+      ws['!cols']=r.headers.map((header,i)=>({wch:Math.min(48,Math.max(16,String(header).length+5,...r.rows.slice(0,30).map(row=>String(row[i]??'').length+2)))}));
+      XLSX.utils.book_append_sheet(wb,ws,'Reporte');
+      XLSX.writeFile(wb,reportFileName(r,'xlsx'));
+    }catch(e){showToast('Error al exportar Excel',e.message,'error');}
+  };
+  el('report-pdf').onclick=()=>{
+    if(!currentReport)return showToast('Reporte','Genera un informe antes de exportarlo.','error');
+    if(!window.jspdf?.jsPDF)return showToast('PDF','No se pudo cargar la biblioteca PDF. Intenta Imprimir o CSV.','error');
+    try{
+      const r=currentReport,doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+      const pageWidth=doc.internal.pageSize.getWidth();
+      doc.setFillColor(6,95,80);doc.rect(0,0,pageWidth,31,'F');
+      doc.setTextColor(255,255,255);doc.setFontSize(10);doc.text('SMARTBOD  /  INFORME OPERATIVO',14,11);
+      doc.setFontSize(19);doc.text(String(r.title).slice(0,100),14,22);
+      doc.setTextColor(71,85,105);doc.setFontSize(10);doc.text(String(r.period||''),14,40);
+      doc.text('Generado: '+new Date(r.created||Date.now()).toLocaleString('es-PE',{timeZone:'America/Lima'}),14,47);
+      doc.text('Registros: '+r.rows.length,Math.max(14,pageWidth-60),47);
+      let y=55;
+      if(r.rows.length===0){
+        doc.setDrawColor(203,213,225);doc.roundedRect(14,y,pageWidth-28,30,3,3,'S');
+        doc.setFontSize(13);doc.setTextColor(30,41,59);
+        doc.text('No hay registros en el periodo seleccionado.',19,y+11);
+        doc.setFontSize(10);
+        const note=r.type==='expenses'?'El reporte de gastos solo incluye egresos registrados en Caja y gestion. Las compras de inventario se consultan en Movimientos.':'Revisa las fechas y el origen seleccionados.';
+        doc.text(doc.splitTextToSize(note,pageWidth-40),19,y+19);y+=36;
+      }else if(typeof doc.autoTable==='function'){
+        doc.autoTable({startY:y,head:[r.headers],body:r.rows.map(row=>row.map((v,i)=>typeof v==='number'&&reportCurrencyColumn(r.headers[i])?reportMoney(v):String(v??'—'))),
+          margin:{left:14,right:14},styles:{fontSize:8,cellPadding:2.6,overflow:'linebreak'},headStyles:{fillColor:[6,95,80],textColor:[255,255,255]},
+          alternateRowStyles:{fillColor:[242,248,246]},didDrawPage:({pageNumber})=>{doc.setFontSize(8);doc.setTextColor(100,116,139);doc.text('SMARTBOD · Documento de consulta  |  Página '+pageNumber,14,doc.internal.pageSize.getHeight()-8);}});
+      }else{
+        throw Error('El complemento de tablas PDF no está disponible. Utiliza Imprimir o CSV.');
+      }
+      doc.save(reportFileName(r,'pdf'));
+    }catch(e){showToast('Error al generar PDF',e.message,'error');}
+  };
+  el('report-print').onclick=()=>{
+    if(!currentReport)return showToast('Reporte','Genera un informe antes de imprimir.','error');
+    document.body.classList.add('printing-report');
+    const endPrint=()=>document.body.classList.remove('printing-report');
+    window.addEventListener('afterprint',endPrint,{once:true});
+    try{window.print();}catch(e){endPrint();showToast('Impresión',e.message,'error');}
+  };
   const savedReports=()=>JSON.parse(lsGet('smartbod-saved-reports-v1','[]'));
   function savedOptions(){el('saved-reports').replaceChildren(new Option('Selecciona un reporte guardado',''));savedReports().forEach((r,i)=>el('saved-reports').add(new Option(r.title+' · '+new Date(r.created).toLocaleString('es-PE'),String(i))));}
   el('report-save').onclick=async()=>{if(!currentReport)return;const reports=savedReports();reports.unshift(currentReport);lsSet('smartbod-saved-reports-v1',JSON.stringify(reports));if(await save()){savedOptions();showToast('Reporte guardado','Disponible en la nube.');}};
