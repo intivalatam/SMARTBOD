@@ -45,6 +45,42 @@
     return svgThumb(nombre, v.bg, v.fg, v.icon);
   }
 
+  // Match complete names so another flavor, brand or size keeps its own image.
+  const photoNames = new Map();
+  function photoKey(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  }
+  for (const [file, names] of Object.entries({
+    cielo: ['Agua Cielo'], 'cielo-sport': ['Agua Cielo Chupón', 'Agua Cielo Sport'],
+    'cielo-25': ['Agua Cielo Sin Gas 2.5L'], 'coca-cola': ['Coca Cola'],
+    'coca-cola-225': ['Coca Cola Original 2.25L'], 'inca-kola': ['Inca Kola', 'Inka Cola', 'Inka Kola'],
+    'inca-kola-15': ['Inca Kola Sabor Original 1.5L'], 'gatorade-rojo': ['Gatorade Rojo'],
+    'gatorade-azul': ['Gatorade Azul'], 'casino-fresa': ['Galleta Casino Fresa', 'Casino Fresa'],
+    'casino-alfajor': ['Galleta Casino Alfajor', 'Casino Alfajor'],
+    'tentacion-vainilla': ['Galleta Tentación Vainilla', 'Tentación Vainilla'],
+    'tentacion-chocolate': ['Galleta Tentación Chocolate', 'Tentación Chocolate'],
+    ritz: ['Galleta Ritz', 'Ritz'], margarita: ['Galleta Margarita'],
+    'pan-hamburguesa': ['Pan Hamburguesa', 'Pan de Hamburguesa (Unid.)'],
+    'carne-hamburguesa': ['Carne de hamburguesa', 'Carne de Hamburguesa Res (Unid.)'],
+    mayonesa: ['Mayonesa'], ketchup: ['Ketchup'], 'papas-al-hilo': ['Papas al hilo'],
+    primor: ['Aceite Primor'], hielo: ['Hielo'], tari: ['Ají Tarí'], 'san-luis': ['Agua San Luis'],
+    'pan-hotdog': ['Pan Hotdog', 'Pan Hot Dog', 'Pan de Hotdog (Unid.)'],
+    'maiz-popcorn': ['Maíz popcorn', 'Maíz pop corn'], popcorn: ['Popcorn', 'Pop corn'],
+    'gelatina-fresa': ['Gelatina de Fresa'], 'gelatina-vaso': ['Gelatina en vaso'],
+    hamburguesa: ['Hamburguesas de Carne', 'Hamburguesa de Carne']
+  })) {
+    for (const name of names) photoNames.set(photoKey(name), file);
+  }
+  function productVisual(item) {
+    const stored = item.imgUrl || '';
+    if (stored && !stored.startsWith('data:image/svg+xml;utf8,') && !stored.includes('placehold.co')) return stored;
+    const name = photoKey(item.nombre);
+    const prepared = item.tipo === 'elaborado' || ['elaborado','especialidad'].includes(photoKey(item.cat));
+    const file = ['hotdog','hot dog'].includes(name) ? (prepared ? 'hotdog' : 'salchicha') : photoNames.get(name);
+    return file ? '/assets/productos/' + file + '.webp' : stored && !stored.includes('placehold.co') ? stored : getCategoryVisual(item.cat,item.nombre);
+  }
+
   // ==================== CATÁLOGO MAESTRO ====================
   const masterCatalog = [
     { sku: 'ABA-001', nombre: 'Aceite Primor Premium 1L', cat: 'Abarrotes', icon: '🫒', precioSug: 11.50, costoSug: 8.80 },
@@ -356,7 +392,7 @@
         div.className = 'ac-item';
         div.innerHTML = `
           <div class="ac-item-left">
-            <img src="${esc(match.imgUrl)}" alt="${esc(match.nombre)}">
+            <img src="${esc(productVisual(match))}" alt="${esc(match.nombre)}">
             <div class="ac-item-info">
               <span class="ac-item-name">${esc(match.nombre)}</span>
               <span class="ac-item-cat">${match.cat} · ${match.sku}</span>
@@ -376,7 +412,7 @@
     selectedMasterItem = match;
     acInput.value = match.nombre;
     acList.hidden = true;
-    document.getElementById('sf-img').src = match.imgUrl;
+    document.getElementById('sf-img').src = productVisual(match);
     document.getElementById('sf-name').textContent = match.nombre;
     document.getElementById('sf-sku').textContent = `${match.cat} · ${match.sku}`;
 
@@ -537,7 +573,7 @@
 
   let productImage='',imageLoading=false;
   function openProductModal(editItem = null) {
-    productImage=editItem?.imgUrl||'';document.getElementById('mp-image-preview').src=productImage||getCategoryVisual('Abarrotes','Producto');document.getElementById('mp-image-file').value='';document.getElementById('mp-image-status').textContent='';
+    productImage=editItem?.imgUrl||'';document.getElementById('mp-image-preview').src=editItem ? productVisual(editItem) : getCategoryVisual('Abarrotes','Producto');document.getElementById('mp-image-file').value='';document.getElementById('mp-image-status').textContent='';
     document.getElementById('mp-id').value = editItem ? editItem.id : '';
     document.getElementById('modal-prod-title').textContent = editItem ? `✏️ Editar: ${editItem.nombre}` : '➕ Nuevo Producto Personalizado';
     document.getElementById('mp-name').value = editItem ? editItem.nombre : '';
@@ -767,7 +803,7 @@
           : (c.estado === 'Agotado' ? 'stock-out' : (c.estado === 'Stock bajo' ? 'stock-low' : 'stock-ok'));
 
         const tr=document.createElement('tr');const summary=(p.ingredientes||[]).map(raw=>{const ins=items.find(x=>x.id===raw.idInsumo);if(!ins)return '';const i=ingredient(ins,raw,p.recipeYield||1);return esc(ins.nombre)+': '+quantityLabel(ins,i.cantidad/(p.recipeYield||1))+' por porción · '+(i.consumeAt==='sale'?'al servir':'al preparar');}).join('<br>');
-        tr.innerHTML=`<td data-label="Producto"><div class="product-cell"><img src="${esc(p.imgUrl||getCategoryVisual(p.cat,p.nombre))}" class="thumb" alt=""><div><strong class="item-name">${esc(p.nombre)}</strong><span class="item-sku">${esc(p.sku)}</span><span class="sub-t">${esc(isElab?'Preparado':p.cat||'Insumo')}</span></div></div></td><td data-label="Costo"><strong>${money(c.cu)}</strong><small>Disponible${p.lastPurchaseCost!=null?' · Última compra '+money(p.lastPurchaseCost):''}</small></td><td data-label="Venta / margen"><strong>${money(p.precio)}</strong><small>${money(p.precio-c.cu)} · ${c.margenPct.toFixed(1)}% bruto</small>${c.cu===0||c.margenPct>90?'<small class="cost-warning">Revisar costo registrado</small>':''}</td><td data-label="Existencias"><strong>${isElab?c.stock+' preparadas':quantityLabel(p,c.stock)}</strong><small>${isElab?sellable(items,p)+' vendibles con complementos':p.portionsPerUnit?Math.floor(c.stock*p.portionsPerUnit+1e-9)+' porciones estimadas':esc(c.estado)}</small></td><td data-label="Vendidos"><strong>${num(p.vendidos)}</strong><small>Acumulados</small></td><td data-label="Margen bruto"><strong>${money(c.ganancia)}</strong><small>Acumulado</small></td><td data-label="Acciones"><div class="inventory-actions"><button class="btn small ${isElab?'btn-quick-production':'btn-restock'}" data-id="${esc(p.id)}">${isElab?'Preparar':'Reponer'}</button><button class="btn ghost small btn-edit-item" data-id="${esc(p.id)}">Editar</button><button class="btn ghost small" data-detail="${esc(p.id)}" aria-expanded="false">Ver detalle</button></div></td>`;
+        tr.innerHTML=`<td data-label="Producto"><div class="product-cell"><img src="${esc(productVisual(p))}" class="thumb" alt=""><div><strong class="item-name">${esc(p.nombre)}</strong><span class="item-sku">${esc(p.sku)}</span><span class="sub-t">${esc(isElab?'Preparado':p.cat||'Insumo')}</span></div></div></td><td data-label="Costo"><strong>${money(c.cu)}</strong><small>Disponible${p.lastPurchaseCost!=null?' · Última compra '+money(p.lastPurchaseCost):''}</small></td><td data-label="Venta / margen"><strong>${money(p.precio)}</strong><small>${money(p.precio-c.cu)} · ${c.margenPct.toFixed(1)}% bruto</small>${c.cu===0||c.margenPct>90?'<small class="cost-warning">Revisar costo registrado</small>':''}</td><td data-label="Existencias"><strong>${isElab?c.stock+' preparadas':quantityLabel(p,c.stock)}</strong><small>${isElab?sellable(items,p)+' vendibles con complementos':p.portionsPerUnit?Math.floor(c.stock*p.portionsPerUnit+1e-9)+' porciones estimadas':esc(c.estado)}</small></td><td data-label="Vendidos"><strong>${num(p.vendidos)}</strong><small>Acumulados</small></td><td data-label="Margen bruto"><strong>${money(c.ganancia)}</strong><small>Acumulado</small></td><td data-label="Acciones"><div class="inventory-actions"><button class="btn small ${isElab?'btn-quick-production':'btn-restock'}" data-id="${esc(p.id)}">${isElab?'Preparar':'Reponer'}</button><button class="btn ghost small btn-edit-item" data-id="${esc(p.id)}">Editar</button><button class="btn ghost small" data-detail="${esc(p.id)}" aria-expanded="false">Ver detalle</button></div></td>`;
         if(p.inventoryKind==='consumable'){tr.children[2].textContent='Uso interno';tr.children[4].textContent='—';tr.children[5].textContent='Consumo en su módulo';tr.children[6].innerHTML='<button type="button" class="btn small" data-supply-open>Gestionar consumible</button>';}
         tbody.appendChild(tr);const detail=document.createElement('tr');detail.hidden=true;detail.className='inventory-detail';detail.dataset.productDetail=p.id;const td=document.createElement('td');td.colSpan=7;td.innerHTML=`<div class="detail-grid"><section><h3>${esc(p.nombre)}</h3><p>${esc([p.presentation,p.contentDescription,p.productDetail].filter(Boolean).join(' · '))}</p><p>${summary}</p>${(p.batches||[]).filter(b=>b.qty>0).map(b=>'<p>Lote '+esc(b.label||b.id)+' · '+b.qty+' porciones · Vence: '+esc(b.expiry||'Sin fecha')+'</p>').join('')}<p>Valor disponible: ${money(isElab?p.preparedValue:c.valorStock)}</p>${p.costMigration?'<p class="cost-warning">'+esc(p.costMigration)+'</p>':''}</section><section><h3>Últimos cambios de precio</h3>${(p.priceHistory||[]).slice(-5).reverse().map(h=>'<p>'+new Date(h.date).toLocaleDateString('es-PE')+' · '+esc(h.source)+' · '+money(h.salePrice)+'</p>').join('')||'<p>Sin cambios registrados.</p>'}<button class="btn ghost" data-archive="${esc(p.id)}">Archivar producto</button></section></div>`;detail.append(td);tbody.append(detail);
 
@@ -865,7 +901,7 @@
         <span class="pos-item-stock-tag" style="background:${isOut ? '#dc2626' : 'rgb(15 23 42 / 0.78)'}">
           ${p.tipo === 'elaborado' ? `${available} porc.` : `Stock: ${available}`}
         </span>
-        <img class="thumb" src="${esc(p.imgUrl||getCategoryVisual(p.cat,p.nombre))}" alt="${esc(p.nombre)}">
+        <img class="thumb" src="${esc(productVisual(p))}" alt="${esc(p.nombre)}">
         <div style="font-weight:600; font-size:13px; line-height:1.25;">${esc(p.nombre)}</div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
           <span style="font-family:var(--font-display); color:var(--accent); font-weight:700; font-size:16px;">${money(num(p.precio))}</span>
@@ -1191,7 +1227,7 @@
       div.className = 'pos-item';
       div.style.cursor = 'default';
       div.innerHTML = `
-        <img class="thumb" src="${esc(p.imgUrl||getCategoryVisual(p.cat,p.nombre))}" alt="${esc(p.nombre)}">
+        <img class="thumb" src="${esc(productVisual(p))}" alt="${esc(p.nombre)}">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span class="badge ${p.tipo === 'elaborado' ? 'elab' : 'insumo'}">${p.tipo === 'elaborado' ? 'Especialidad' : (p.cat || 'Producto')}</span>
           <span class="badge ${disp ? 'stock-ok' : 'stock-out'}">${disp ? 'Disponible' : 'Agotado'}</span>

@@ -1,0 +1,162 @@
+{
+  "carne-hamburguesa": {
+    "producto": "Hamburguesa de Res OREGON Foods Bolsa 8un",
+    "fuente": "https://www.plazavea.com.pe/hamburguesa-de-res-oregon-foods-bolsa-8un/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/29450115/20433297.jpg?v=638616162266800000"
+  },
+  "casino-alfajor": {
+    "producto": "Galleta CASINO Sabor Alfajor Empaque 43g Paquete 6un",
+    "fuente": "https://www.plazavea.com.pe/galleta-casino-sabor-alfajor-empaque-43g-paquete-6un/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/27516657/3876.jpg?v=638304482492730000"
+  },
+  "casino-fresa": {
+    "producto": "Galleta CASINO Sabor Fresa Empaque 43g Paquete 6un",
+    "fuente": "https://www.plazavea.com.pe/galleta-casino-sabor-fresa-empaque-43g-paquete-6un/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/27516665/165259.jpg?v=638304482627900000"
+  },
+  "cielo": {
+    "producto": "Agua de Mesa CIELO Sin gas Botella 625ml",
+    "fuente": "https://www.plazavea.com.pe/agua-de-mesa-cielo-sin-gas-botella-625ml-1005652001/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/36303582/1005652001.jpg?v=639264191104000000"
+  },
+  "cielo-25": {
+    "producto": "Agua de Mesa CIELO Sin Gas Botella 2.5L",
+    "fuente": "https://www.plazavea.com.pe/agua-de-mesa-cielo-sin-gas-botella-25l-1046239002/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/36303612/1046239002.jpg?v=639264191279200000"
+  },
+  "cielo-sport": {
+    "producto": "Agua sin Gas CIELO Sport Botella 1L",
+    "fuente": "https://www.plazavea.com.pe/agua-sin-gas-cielo-sport-botella-1l-20032267/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/36770997/20032267.jpg?v=639295831122100000"
+  },
+  "coca-cola": {
+    "producto": "Gaseosa COCA COLA Sabor Original Botella 600ml",
+    "fuente": "https://www.plazavea.com.pe/gaseosa-coca-cola-sabor-original-botella-600ml-20200390/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/36302937/20200390.jpg?v=639264188396070000"
+  },
+  "coca-cola-225": {
+    "producto": "Gaseosa COCA COLA Botella 2.25L",
+    "fuente": "https://www.plazavea.com.pe/gaseosa-coca-cola-botella-225l-20100019/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/36302777/20100019.jpg?v=639264187766700000"
+  },
+  "gatorade-azul": {
+    "producto": "Bebida Rehidratante GATORADE Cool Blue Botella 500ml",
+    "fuente": "https://www.plazavea.com.pe/bebida-rehidratante-gatorade-cool-blue-botella-500ml/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/318892/20021179.jpg?v=637238860658400000"
+  },
+  "gatorade-rojo": {
+    "producto": "Bebida Rehidratante GATORADE Tropical Fruit Botella 500ml",
+    "fuente": "https://www.plazavea.com.pe/bebida-rehidratante-gatorade-tropical-fruit-botella-500ml/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/318889/20021025.jpg?v=637238860644270000"
+  },
+  "gelatina-fresa": {
+    "producto": "Gelatina UNIVERSAL Sabor a Fresa Bolsa 130g",
+    "fuente": "https://www.plazavea.com.pe/gelatina-universal-sabor-a-fresa-bolsa-130g/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/34361516/20331986.jpg?v=639125054519630000"
+  },
+  "gelatina-vaso": {
+    "producto": "Gelatina Sabor Fresa PV x un",
+    "fuente": "https://www.plazavea.com.pe/gelatina-sabor-fresa-pv-x-un/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/29071835/20141157.jpg?v=639300494926630000"
+  },
+  "hamburguesa": {
+    "producto": "Clásica",
+    "fuente": "https://www.rappi.com.pe/restaurantes/1231-bembos",
+    "foto": "https://images.rappi.pe/products/1b90813c-889b-4fed-9847-f32ea0a6a274.png"
+  },
+  "hielo": {
+    "producto": "Hielo BELL'S Bolsa 3Kg",
+    "fuente": "https://www.plazavea.com.pe/bells-hielo-premium-bl3kg/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/15956065/20103754.jpg?v=637964069198970000"
+  },
+  "hotdog": {
+    "producto": "Hot Dog",
+    "fuente": "https://www.rappi.com.pe/restaurantes/35172-cineplanet",
+    "foto": "https://images.rappi.pe/products/435281a8-f60d-4fb0-a90f-9721001916c5.png"
+  },
+  "inca-kola": {
+    "producto": "Gaseosa INCA KOLA Sabor Original Botella 600ml",
+    "fuente": "https://www.plazavea.com.pe/gaseosa-inca-kola-sabor-original-botella-600ml-20200389/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/36302939/20200389.jpg?v=639264188402170000"
+  },
+  "inca-kola-15": {
+    "producto": "Gaseosa INCA KOLA Botella 1.5L",
+    "fuente": "https://www.plazavea.com.pe/gaseosa-inca-kola-botella-15l-73035/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/36303698/73035.jpg?v=639264191720500000"
+  },
+  "ketchup": {
+    "producto": "Ketchup ALACENA Doypack 800g",
+    "fuente": "https://www.plazavea.com.pe/ketchup-alacena-doypack-800g/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/30426070/20331945.jpg?v=638730875743800000"
+  },
+  "maiz-popcorn": {
+    "producto": "Maíz Pop Corn COSTEÑO Bolsa 500g",
+    "fuente": "https://www.plazavea.com.pe/maiz-pop-corn-costeno-bolsa-500g/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/27552448/998185.jpg?v=638313121120600000"
+  },
+  "margarita": {
+    "producto": "Galletas VICTORIA Margarita Paquete 6un",
+    "fuente": "https://www.plazavea.com.pe/galletas-victoria-margarita-paquete-6un-20570316/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/34475502/20570316.jpg?v=639130834086000000"
+  },
+  "mayonesa": {
+    "producto": "Mayonesa ALACENA Doypack 850g",
+    "fuente": "https://www.plazavea.com.pe/mayonesa-alacena-doypack-850g/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/30426066/20314552.jpg?v=638761210743600000"
+  },
+  "pan-hamburguesa": {
+    "producto": "Pan Hamburguesa LA FLORENCIA Bolsa 6un",
+    "fuente": "https://www.plazavea.com.pe/pan-hamburguesa-la-florencia-bolsa-6un-20210039/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/35717679/20210039.jpg?v=639223297474800000"
+  },
+  "pan-hotdog": {
+    "producto": "Pan Hot Dog LA FLORENCIA Bolsa 6un",
+    "fuente": "https://www.plazavea.com.pe/pan-hot-dog-la-florencia-bolsa-6un-20219606/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/35717681/20219606.jpg?v=639223297484230000"
+  },
+  "papas-al-hilo": {
+    "producto": "Papas al Hilo VILLA NATURA Bolsa 500g",
+    "fuente": "https://www.plazavea.com.pe/papas-al-hilo-villa-natura-bolsa-500g/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/10511546/20148096.jpg?v=637867066680200000"
+  },
+  "popcorn": {
+    "producto": "Canchita gigante salada",
+    "fuente": "https://www.rappi.com.pe/restaurantes/35172-cineplanet",
+    "foto": "https://images.rappi.pe/products/34aa65ff-418c-44c5-8d06-05a7a6412488.png"
+  },
+  "primor": {
+    "producto": "Aceite Vegetal PRIMOR Clásico Botella 900ml",
+    "fuente": "https://www.plazavea.com.pe/aceite-vegetal-primor-clasico-botella-900ml-20281566/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/36303074/20281566.jpg?v=639264188955000000"
+  },
+  "ritz": {
+    "producto": "Galletas Saladas RITZ sabor Original Paquete 6un",
+    "fuente": "https://www.plazavea.com.pe/galletas-saladas-ritz-bolsa-20g-paquete-6un/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/30364828/20355481.jpg?v=639150597091900000"
+  },
+  "salchicha": {
+    "producto": "Hot Dog SAN FERNANDO Paquete 200g",
+    "fuente": "https://www.plazavea.com.pe/hot-dog-san-fernando-paquete-200g/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/29179555/20423073.jpg?v=638549635344530000"
+  },
+  "san-luis": {
+    "producto": "Agua sin Gas SAN LUIS Botella 750ml",
+    "fuente": "https://www.plazavea.com.pe/agua-sin-gas-san-luis-botella-750ml-20281279/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/36303065/20281279.jpg?v=639264188916500000"
+  },
+  "tari": {
+    "producto": "Crema de Ají Tarí ALACENA Doypack 400g",
+    "fuente": "https://www.plazavea.com.pe/crema-de-aji-tari-alacena-doypack-400g/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/30426032/20045247.jpg?v=638882970075700000"
+  },
+  "tentacion-chocolate": {
+    "producto": "Galleta TENTACION Sabor Chocolate Empaque 43g Paquete 6un",
+    "fuente": "https://www.plazavea.com.pe/galleta-tentacion-sabor-chocolate-empaque-43g-paquete-6un/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/28235639/20390131.jpg?v=638340131318370000"
+  },
+  "tentacion-vainilla": {
+    "producto": "Galleta TENTACION Sabor Vainilla Empaque 43g Paquete 6un",
+    "fuente": "https://www.plazavea.com.pe/galleta-tentacion-sabor-vainilla-empaque-43g-paquete-6un/p",
+    "foto": "https://plazavea.vteximg.com.br/arquivos/ids/28238123/20390135.jpg?v=638340204676700000"
+  }
+}
