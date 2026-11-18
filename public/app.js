@@ -1907,6 +1907,7 @@
     }
   }
   el('report-generate').onclick=()=>{try{showReport(reportData());}catch(e){showToast('Reporte',e.message,'error');}};
+  el('report-register-expense').onclick=()=>{if(!window.Smartbod?.openExpenseForm?.())showToast('Permiso requerido','Se necesita autorización para registrar gastos.','error');};
   el('report-type').onchange=()=>{el('report-product-label').hidden=el('report-type').value!=='prices';refreshPriceProducts();el('report-event').disabled=['prices','stock','profit','production','movements','purchases','supplies'].includes(el('report-type').value);el('report-from').disabled=false;el('report-to').disabled=false;const snapshot=['stock'].includes(el('report-type').value);el('report-date-hint').textContent=snapshot?'Existencias actuales muestra el inventario de hoy; cambiar fechas no reconstruye inventarios históricos. Para consultar operaciones por fecha, selecciona Movimientos.':'Selecciona las fechas directamente en los calendarios. El periodo personalizado aplica a los reportes históricos.';el('report-generate').click();};
   const reportFileName=(r,ext)=>'SMARTBOD_'+String(r.type||r.title||'reporte').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,65)+'_'+new Date().toISOString().slice(0,10)+'.'+ext;
   const reportRows=r=>r.rows.length?r.rows:[['SIN REGISTROS: '+(r.type==='expenses'?'No existen gastos ni compras registrados para el periodo consultado.':'No existen registros para los filtros seleccionados.'),...r.headers.slice(1).map(()=>'')]];
