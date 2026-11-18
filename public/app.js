@@ -1753,7 +1753,7 @@
     const usage=getConsumoElaborados();let headers,rows,title;
     if(type==='stock'){title='Existencias actuales';headers=['SKU','Producto','Stock','Última compra S/','Costo promedio / preparado S/','Precio de venta S/'];rows=items.map(p=>{const c=calc(p,usage);return[p.sku,p.nombre,c.stock,p.lastPurchaseCost??'Sin historial',+c.cu.toFixed(2),num(p.precio)];});}
     if(type==='profit'){title='Margen bruto por periodo y origen';headers=['SKU','Producto','Ingresos netos S/','Costo vendido S/','Margen bruto S/'];const groups=new Map();for(const r of selectedReceipts.filter(x=>x.status!=='voided'))for(const l of r.lines){const c=r.costs?.find(x=>x.productId===l.productId||x.sku===l.sku),id=l.productId||l.sku;if(!groups.has(id))groups.set(id,[l.sku,l.nombre,0,0,0]);const row=groups.get(id);row[2]+=num(l.net??l.subtotal);row[3]+=num(c?.unitCost)*l.qty;}for(const r of JSON.parse(lsGet('smartbod-receipts-v1','[]')).filter(r=>origin==='all'||(origin==='daily'?!r.eventId:r.eventId===origin)))for(const ret of r.returns||[]){if(!inRange(ret.date))continue;const l=r.lines.find(x=>x.productId===ret.productId),c=r.costs.find(x=>x.productId===ret.productId);if(!groups.has(ret.productId))groups.set(ret.productId,[l.sku,l.nombre,0,0,0]);const row=groups.get(ret.productId);row[2]-=ret.amount;if(ret.restock)row[3]-=c.unitCost*ret.qty;}rows=[...groups.values()].map(r=>[r[0],r[1],+r[2].toFixed(2),+r[3].toFixed(2),+(r[2]-r[3]).toFixed(2)]);}
-    if(type==='expenses'){title='Gastos por periodo';headers=['Fecha','Motivo','Evento','Importe S/'];rows=(extraState.expenses||[]).filter(x=>inRange(x.date)&&(origin==='all'||(origin==='daily'?!x.eventId:x.eventId===origin))).map(x=>[new Date(x.date).toLocaleString('es-PE'),x.reason,extraState.events?.find(e=>e.id===x.eventId)?.name||'Venta diaria',x.amount]);}
+    if(type==='expenses'){title='Gastos por periodo';headers=['Fecha','Motivo','Evento','Importe S/'];rows=(extraState.expenses||[]).filter(x=>inRange(x.date)&&(origin==='all'||(origin==='daily'?!x.eventId:x.eventId===origin))).map(x=>[new Date(x.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),x.reason,extraState.events?.find(e=>e.id===x.eventId)?.name||'Venta diaria / local',num(x.amount)]);}
     if(type==='result'){title='Resultado operativo de costos y gastos registrados';headers=['Concepto','Importe S/'];let revenue=0,cost=0;for(const r of selectedReceipts.filter(x=>x.status!=='voided')){revenue+=r.total;for(const l of r.lines)cost+=(r.costs?.find(c=>c.productId===l.productId||c.sku===l.sku)?.unitCost||0)*l.qty;}for(const r of extraState.receipts||[]){if(origin!=='all'&&(origin==='daily'?!!r.eventId:r.eventId!==origin))continue;for(const ret of r.returns||[])if(inRange(ret.date)){revenue-=ret.amount;if(ret.restock)cost-=(r.costs.find(c=>c.productId===ret.productId)?.unitCost||0)*ret.qty;}}const expenses=(extraState.expenses||[]).filter(x=>inRange(x.date)&&(origin==='all'||(origin==='daily'?!x.eventId:x.eventId===origin))).reduce((a,x)=>a+x.amount,0),waste=origin==='all'?kardex.filter(k=>k.type==='WASTE'&&inRange(k.date)).reduce((a,k)=>a+num(k.amount),0):0;const supplies=kardex.filter(k=>k.type?.startsWith('SUPPLY_')&&inRange(k.date)&&(origin==='all'||(origin==='daily'?!k.eventId:k.eventId===origin))).reduce((a,k)=>a+num(k.expense),0);rows=[['Ventas netas de reembolsos',revenue],['Costo vendido',cost],['Margen bruto',revenue-cost],['Gastos registrados',expenses],['Consumibles: uso manual y ajustes netos',supplies],['Mermas (solo todos los orígenes)',waste],['Resultado registrado; no incluye gastos omitidos',revenue-cost-expenses-waste-supplies]].map(([l,v])=>[l,+v.toFixed(2)]);}
     if(type==='sales'){title='Ventas por ticket';headers=['Fecha','Ticket','Vendedor','Pago','Descuento S/','Total original S/','Estado','Importe vigente S/','Origen / Evento'];rows=selectedReceipts.map(r=>[r.isoDate?new Date(r.isoDate).toLocaleString('es-PE',{timeZone:'America/Lima'}):r.date,r.ticketNum,r.operator||'Sin registro',r.payMethod,num(r.discount),num(r.total),r.status==='voided'?'Anulada':r.returns?.length?'Con devolución':'Vigente',r.status==='voided'?0:num(r.total)-(r.returns||[]).reduce((a,x)=>a+x.amount,0),r.eventSnapshot?.name||'Venta diaria / local']);}
     if(type==='daily'||type==='eventSummary'){
@@ -1764,15 +1764,153 @@
     }
     if(type==='movements'){title='Movimientos de inventario';headers=['Fecha','SKU','Producto','Tipo','Cantidad','Importe S/'];rows=kardex.filter(k=>inRange(k.date)).map(k=>[new Date(k.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),k.sku,k.name,k.type,num(k.qty),num(k.amount)]);}
     if(type==='production'){title='Preparaciones registradas';headers=['Fecha','SKU','Producto','Porciones preparadas','Costo total S/'];rows=kardex.filter(k=>k.type==='PROD_IN'&&inRange(k.date)).map(k=>[new Date(k.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),k.sku,k.name,num(k.qty),num(k.amount)]);}
-    if(type==='prices'){const history=PriceAnalytics.rows(items,{productId:el('report-product').value,from,to});return {title:'Historial de precios',headers:['Fecha','SKU','Producto','Movimiento','Unidades','Compra neta por unidad S/','Venta por unidad S/','Cambio compra %','Cambio venta %','Responsable'],rows:history.map(h=>[new Date(h.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),h.sku,h.productName,h.source,h.qty,h.unitCost==null?'—':Number(h.unitCost.toFixed(4)),h.salePrice,PriceAnalytics.change(h.previousPurchaseCost,h.unitCost)?.toFixed(2)??'—',PriceAnalytics.change(h.previousSalePrice,h.salePrice)?.toFixed(2)??'—',h.operator]),priceRows:history,priceProduct:el('report-product').value,created:new Date().toISOString(),period:(from||'Inicio')+' a '+(to||'Hoy')};}
-    return {title,headers,rows,created:new Date().toISOString(),period:['expenses','result','profit','sales','daily','eventSummary','movements','production'].includes(type)?`${from||'Inicio'} a ${to||'Hoy'}${['sales','daily','eventSummary'].includes(type)?' · '+el('report-event').selectedOptions[0].textContent:''}`:'Las fechas no se aplican: existencias actuales / rentabilidad acumulada'};
+    if(type==='prices'){const history=PriceAnalytics.rows(items,{productId:el('report-product').value,from,to});return {type,title:'Historial de precios',headers:['Fecha','SKU','Producto','Movimiento','Unidades','Compra neta por unidad S/','Venta por unidad S/','Cambio compra %','Cambio venta %','Responsable'],rows:history.map(h=>[new Date(h.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),h.sku,h.productName,h.source,h.qty,h.unitCost==null?'—':Number(h.unitCost.toFixed(4)),h.salePrice,PriceAnalytics.change(h.previousPurchaseCost,h.unitCost)?.toFixed(2)??'—',PriceAnalytics.change(h.previousSalePrice,h.salePrice)?.toFixed(2)??'—',h.operator]),priceRows:history,priceProduct:el('report-product').value,created:new Date().toISOString(),period:(from||'Inicio')+' a '+(to||'Hoy')};}
+    return {type,title,headers,rows,created:new Date().toISOString(),period:['expenses','result','profit','sales','daily','eventSummary','movements','production'].includes(type)?`${from||'Inicio'} a ${to||'Hoy'}${['sales','daily','eventSummary'].includes(type)?' · '+el('report-event').selectedOptions[0].textContent:''}`:'Las fechas no se aplican: existencias actuales / rentabilidad acumulada'};
   }
-  function showReport(r){currentReport=r;showPriceAnalytics(r);el('report-title').textContent=r.title;el('report-meta').textContent=`${r.period} · ${r.rows.length} registros · Generado ${new Date(r.created).toLocaleString('es-PE')}`;const table=el('report-table');table.replaceChildren();const thead=document.createElement('thead'),tr=document.createElement('tr');r.headers.forEach(v=>{const c=document.createElement('th');c.textContent=v;tr.append(c);});thead.append(tr);table.append(thead);const body=document.createElement('tbody');r.rows.forEach(row=>{const tr=document.createElement('tr');row.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td);});body.append(tr);});table.append(body);el('report-empty').hidden=r.rows.length>0;}
+  const reportMoney=value=>'S/ '+Number(value||0).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const reportCurrencyColumn=header=>/S\/|importe|margen bruto|costo vendido|ingresos netos|ventas vigentes|resultado registrado/i.test(header);
+  function reportInsights(r){
+    const rows=Array.isArray(r.rows)?r.rows:[],headers=r.headers||[],type=r.type||'';
+    const moneyCols=headers.map((h,i)=>reportCurrencyColumn(h)?i:-1).filter(i=>i>=0);
+    const sum=i=>rows.reduce((total,row)=>total+(Number(row[i])||0),0);
+    const indicators=[['Registros',rows.length.toLocaleString('es-PE'),'Operaciones incluidas'],['Periodo',r.period||'No definido','Intervalo consultado']];
+    if(type==='expenses'){
+      indicators.splice(1,0,['Gastos registrados',reportMoney(sum(3)),'Solo egresos anotados en Caja y gestión']);
+      indicators.push(['Áreas / eventos',new Set(rows.map(row=>row[2])).size.toLocaleString('es-PE'),'Orígenes con gastos']);
+    }else if(type==='result'){
+      const last=rows.at(-1);
+      indicators.splice(1,0,['Resultado registrado',reportMoney(last?.[1]),'No incluye gastos no registrados']);
+      const sales=rows.find(row=>String(row[0]).startsWith('Ventas netas'));
+      indicators.push(['Ventas netas',reportMoney(sales?.[1]),'Ingresos de tickets registrados']);
+    }else if(type==='stock'){
+      indicators.splice(1,0,['Productos registrados',rows.length.toLocaleString('es-PE'),'Existencias actuales']);
+    }else if(moneyCols.length){
+      const primary=moneyCols[moneyCols.length-1];
+      indicators.splice(1,0,['Importe acumulado',reportMoney(sum(primary)),'Columna: '+headers[primary]]);
+    }
+    return indicators;
+  }
+  function showReport(r){
+    if(!r||!Array.isArray(r.headers)||!Array.isArray(r.rows))throw Error('El reporte guardado tiene datos incompletos.');
+    currentReport=r;showPriceAnalytics(r);
+    el('report-title').textContent=r.title;
+    el('report-meta').textContent=(r.period||'Periodo sin especificar')+' · Generado '+new Date(r.created||Date.now()).toLocaleString('es-PE',{timeZone:'America/Lima'});
+    el('report-row-count').textContent=r.rows.length.toLocaleString('es-PE')+' registros';
+    el('report-status').textContent=r.rows.length?'Informe disponible':'Sin movimientos';
+    const kpis=el('report-kpis');kpis.replaceChildren();
+    reportInsights(r).forEach(([name,value,description])=>{
+      const card=document.createElement('div');card.className='report-kpi';
+      const label=document.createElement('span');label.className='report-kpi-name';label.textContent=name;
+      const strong=document.createElement('strong');strong.textContent=value;
+      const note=document.createElement('small');note.textContent=description;
+      card.append(label,strong,note);kpis.append(card);
+    });
+    const table=el('report-table');table.replaceChildren();
+    const thead=document.createElement('thead'),heading=document.createElement('tr');
+    r.headers.forEach(h=>{const th=document.createElement('th');th.textContent=h;th.scope='col';heading.append(th);});
+    thead.append(heading);table.append(thead);
+    const body=document.createElement('tbody');const moneyCols=r.headers.map((h,i)=>reportCurrencyColumn(h)?i:-1).filter(i=>i>=0);
+    r.rows.forEach((row,index)=>{
+      const tr=document.createElement('tr');
+      row.forEach((value,i)=>{
+        const td=document.createElement('td');
+        td.textContent=moneyCols.includes(i)&&typeof value==='number'?reportMoney(value):value??'—';
+        if(moneyCols.includes(i))td.classList.add('report-number');
+        if(index%2===1)tr.classList.add('report-alt-row');
+        tr.append(td);
+      });body.append(tr);
+    });table.append(body);
+    const empty=el('report-empty');empty.hidden=r.rows.length>0;
+    el('report-empty-detail').textContent=r.type==='expenses'
+      ?'No se encontraron gastos registrados en Caja y gestión para este periodo y origen. Las compras de inventario y el uso de consumibles se registran por separado; revisa Movimientos o Resultado operativo.'
+      :'No existen movimientos de este tipo con los filtros seleccionados. Amplía las fechas o revisa el origen.';
+    const footer=el('report-footer');footer.replaceChildren();
+    if(r.rows.length&&moneyCols.length){
+      const label=document.createElement('span');label.textContent='Totales del informe';
+      footer.append(label);
+      moneyCols.forEach(i=>{
+        const amount=r.rows.reduce((sum,row)=>sum+(typeof row[i]==='number'&&Number.isFinite(row[i])?row[i]:0),0);
+        const item=document.createElement('span');item.textContent=r.headers[i]+': '+reportMoney(amount);
+        footer.append(item);
+      });
+    }else if(!r.rows.length){footer.textContent='Sin importes registrados para sumar en este periodo.';}
+    const breakdown=el('report-breakdown');breakdown.replaceChildren();breakdown.hidden=true;
+    if(r.type==='expenses'&&r.rows.length){
+      breakdown.hidden=false;
+      const title=document.createElement('h3');title.textContent='Distribución de gastos por origen';breakdown.append(title);
+      const groups=new Map();r.rows.forEach(row=>groups.set(String(row[2]),(groups.get(String(row[2]))||0)+(Number(row[3])||0)));
+      const max=Math.max(...groups.values(),1);
+      [...groups].sort((a,b)=>b[1]-a[1]).slice(0,8).forEach(([name,value])=>{
+        const line=document.createElement('div');line.className='report-breakdown-row';
+        const header=document.createElement('div');header.className='report-breakdown-label';
+        const label=document.createElement('span');label.textContent=name;const moneyText=document.createElement('strong');moneyText.textContent=reportMoney(value);
+        header.append(label,moneyText);
+        const track=document.createElement('div');track.className='report-breakdown-track';const fill=document.createElement('span');fill.style.width=(Math.max(0,value)/max*100)+'%';track.append(fill);
+        line.append(header,track);breakdown.append(line);
+      });
+    }
+  }
   el('report-generate').onclick=()=>{try{showReport(reportData());}catch(e){showToast('Reporte',e.message,'error');}};
   el('report-type').onchange=()=>{el('report-product-label').hidden=el('report-type').value!=='prices';refreshPriceProducts();el('report-event').disabled=['prices','stock','profit','production','movements'].includes(el('report-type').value);el('report-from').disabled=false;el('report-to').disabled=false;const snapshot=['stock'].includes(el('report-type').value);el('report-date-hint').textContent=snapshot?'Existencias actuales muestra el inventario de hoy; cambiar fechas no reconstruye inventarios históricos. Para consultar operaciones por fecha, selecciona Movimientos.':'Selecciona las fechas directamente en los calendarios. El periodo personalizado aplica a los reportes históricos.';el('report-generate').click();};
-  el('report-excel').onclick=()=>{if(!currentReport)return;if(!window.XLSX)return showToast('Excel','No se pudo cargar la biblioteca. Revisa tu conexión.','error');const r=currentReport,wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([[r.title],[r.period],r.headers,...r.rows]),'Reporte');XLSX.writeFile(wb,'SMARTBOD_reporte.xlsx');};
-  el('report-pdf').onclick=()=>{if(!currentReport)return;if(!window.jspdf)return showToast('PDF','No se pudo cargar la biblioteca. Revisa tu conexión.','error');const r=currentReport,doc=new window.jspdf.jsPDF({orientation:'landscape'});doc.setFontSize(18);doc.text('SMARTBOD | '+r.title,14,18);doc.setFontSize(10);doc.text(r.period,14,27);doc.autoTable({startY:34,head:[r.headers],body:r.rows,headStyles:{fillColor:[8,127,107]}});doc.save('SMARTBOD_reporte.pdf');};
-  el('report-print').onclick=()=>{if(!currentReport)return;document.body.classList.add('printing-report');window.print();document.body.classList.remove('printing-report');};
+  const reportFileName=(r,ext)=>'SMARTBOD_'+String(r.type||r.title||'reporte').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,65)+'_'+new Date().toISOString().slice(0,10)+'.'+ext;
+  const reportRows=r=>r.rows.length?r.rows:[['SIN REGISTROS: '+(r.type==='expenses'?'No se registraron gastos en Caja y gestión para el periodo consultado. Las compras de productos figuran en Movimientos.':'No existen registros para los filtros seleccionados.'),...r.headers.slice(1).map(()=>'')]];
+  const reportDownload=(blob,name)=>{
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  };
+  el('report-csv').onclick=()=>{
+    if(!currentReport)return showToast('Reporte','Genera un informe antes de exportarlo.','error');
+    const r=currentReport,escapeCsv=value=>'"'+String(value??'').replace(/^[=+@-]/,"'$&").replaceAll('"','""')+'"';
+    const content='\ufeff'+[[r.title],[r.period],r.headers,...reportRows(r)].map(row=>row.map(escapeCsv).join(';')).join('\r\n');
+    reportDownload(new Blob([content],{type:'text/csv;charset=utf-8'}),reportFileName(r,'csv'));
+  };
+  el('report-excel').onclick=()=>{
+    if(!currentReport)return showToast('Reporte','Genera un informe antes de exportarlo.','error');
+    if(!window.XLSX)return showToast('Excel','No se pudo cargar la biblioteca. Puedes descargar CSV.','error');
+    try{
+      const r=currentReport,wb=XLSX.utils.book_new();
+      const ws=XLSX.utils.aoa_to_sheet([['SMARTBOD',r.title],[r.period],[r.rows.length+' registros'],[],r.headers,...reportRows(r)]);
+      ws['!cols']=r.headers.map((header,i)=>({wch:Math.min(48,Math.max(16,String(header).length+5,...r.rows.slice(0,30).map(row=>String(row[i]??'').length+2)))}));
+      XLSX.utils.book_append_sheet(wb,ws,'Reporte');
+      XLSX.writeFile(wb,reportFileName(r,'xlsx'));
+    }catch(e){showToast('Error al exportar Excel',e.message,'error');}
+  };
+  el('report-pdf').onclick=()=>{
+    if(!currentReport)return showToast('Reporte','Genera un informe antes de exportarlo.','error');
+    if(!window.jspdf?.jsPDF)return showToast('PDF','No se pudo cargar la biblioteca PDF. Intenta Imprimir o CSV.','error');
+    try{
+      const r=currentReport,doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+      const pageWidth=doc.internal.pageSize.getWidth();
+      doc.setFillColor(6,95,80);doc.rect(0,0,pageWidth,31,'F');
+      doc.setTextColor(255,255,255);doc.setFontSize(10);doc.text('SMARTBOD  /  INFORME OPERATIVO',14,11);
+      doc.setFontSize(19);doc.text(String(r.title).slice(0,100),14,22);
+      doc.setTextColor(71,85,105);doc.setFontSize(10);doc.text(String(r.period||''),14,40);
+      doc.text('Generado: '+new Date(r.created||Date.now()).toLocaleString('es-PE',{timeZone:'America/Lima'}),14,47);
+      doc.text('Registros: '+r.rows.length,Math.max(14,pageWidth-60),47);
+      let y=55;
+      if(r.rows.length===0){
+        doc.setDrawColor(203,213,225);doc.roundedRect(14,y,pageWidth-28,30,3,3,'S');
+        doc.setFontSize(13);doc.setTextColor(30,41,59);
+        doc.text('No hay registros en el periodo seleccionado.',19,y+11);
+        doc.setFontSize(10);
+        const note=r.type==='expenses'?'El reporte de gastos solo incluye egresos registrados en Caja y gestion. Las compras de inventario se consultan en Movimientos.':'Revisa las fechas y el origen seleccionados.';
+        doc.text(doc.splitTextToSize(note,pageWidth-40),19,y+19);y+=36;
+      }else if(typeof doc.autoTable==='function'){
+        doc.autoTable({startY:y,head:[r.headers],body:r.rows.map(row=>row.map((v,i)=>typeof v==='number'&&reportCurrencyColumn(r.headers[i])?reportMoney(v):String(v??'—'))),
+          margin:{left:14,right:14},styles:{fontSize:8,cellPadding:2.6,overflow:'linebreak'},headStyles:{fillColor:[6,95,80],textColor:[255,255,255]},
+          alternateRowStyles:{fillColor:[242,248,246]},didDrawPage:({pageNumber})=>{doc.setFontSize(8);doc.setTextColor(100,116,139);doc.text('SMARTBOD · Documento de consulta  |  Página '+pageNumber,14,doc.internal.pageSize.getHeight()-8);}});
+      }else{
+        throw Error('El complemento de tablas PDF no está disponible. Utiliza Imprimir o CSV.');
+      }
+      doc.save(reportFileName(r,'pdf'));
+    }catch(e){showToast('Error al generar PDF',e.message,'error');}
+  };
+  el('report-print').onclick=()=>{
+    if(!currentReport)return showToast('Reporte','Genera un informe antes de imprimir.','error');
+    document.body.classList.add('printing-report');
+    const endPrint=()=>document.body.classList.remove('printing-report');
+    window.addEventListener('afterprint',endPrint,{once:true});
+    try{window.print();}catch(e){endPrint();showToast('Impresión',e.message,'error');}
+  };
   const savedReports=()=>JSON.parse(lsGet('smartbod-saved-reports-v1','[]'));
   function savedOptions(){el('saved-reports').replaceChildren(new Option('Selecciona un reporte guardado',''));savedReports().forEach((r,i)=>el('saved-reports').add(new Option(r.title+' · '+new Date(r.created).toLocaleString('es-PE'),String(i))));}
   el('report-save').onclick=async()=>{if(!currentReport)return;const reports=savedReports();reports.unshift(currentReport);lsSet('smartbod-saved-reports-v1',JSON.stringify(reports));if(await save()){savedOptions();showToast('Reporte guardado','Disponible en la nube.');}};
