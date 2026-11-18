@@ -352,11 +352,7 @@
   let activeStockAlert = null;
   let stockAlertIndex = 0;
   const stockChip = document.getElementById('chip-low-stock');
-  const stockAlertLabel = document.createElement('span');
-  stockAlertLabel.id = 'stock-alert-product';
-  stockAlertLabel.setAttribute('aria-live', 'off');
-  stockAlertLabel.style.cssText = 'display:inline-block;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;font-size:12px;font-weight:600';
-  stockChip.append(' · ', stockAlertLabel);
+  const stockAlertLabel = document.getElementById('stock-alert-product');
   stockChip.addEventListener('click', () => {
     switchTab('inv');
     document.getElementById('inv-search').value = activeStockAlert ? activeStockAlert.sku : '';
@@ -1755,7 +1751,7 @@
   }
   function showReport(r){currentReport=r;showPriceAnalytics(r);el('report-title').textContent=r.title;el('report-meta').textContent=`${r.period} · ${r.rows.length} registros · Generado ${new Date(r.created).toLocaleString('es-PE')}`;const table=el('report-table');table.replaceChildren();const thead=document.createElement('thead'),tr=document.createElement('tr');r.headers.forEach(v=>{const c=document.createElement('th');c.textContent=v;tr.append(c);});thead.append(tr);table.append(thead);const body=document.createElement('tbody');r.rows.forEach(row=>{const tr=document.createElement('tr');row.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td);});body.append(tr);});table.append(body);el('report-empty').hidden=r.rows.length>0;}
   el('report-generate').onclick=()=>{try{showReport(reportData());}catch(e){showToast('Reporte',e.message,'error');}};
-  el('report-type').onchange=()=>{el('report-product-label').hidden=el('report-type').value!=='prices';refreshPriceProducts();el('report-event').disabled=['prices','stock','profit','production','movements'].includes(el('report-type').value);el('report-from').disabled=['stock','profit'].includes(el('report-type').value);el('report-to').disabled=el('report-from').disabled;el('report-generate').click();};
+  el('report-type').onchange=()=>{el('report-product-label').hidden=el('report-type').value!=='prices';refreshPriceProducts();el('report-event').disabled=['prices','stock','profit','production','movements'].includes(el('report-type').value);el('report-from').disabled=false;el('report-to').disabled=false;const snapshot=['stock'].includes(el('report-type').value);el('report-date-hint').textContent=snapshot?'Existencias actuales muestra el inventario de hoy; cambiar fechas no reconstruye inventarios históricos. Para consultar operaciones por fecha, selecciona Movimientos.':'Selecciona las fechas directamente en los calendarios. El periodo personalizado aplica a los reportes históricos.';el('report-generate').click();};
   el('report-excel').onclick=()=>{if(!currentReport)return;if(!window.XLSX)return showToast('Excel','No se pudo cargar la biblioteca. Revisa tu conexión.','error');const r=currentReport,wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([[r.title],[r.period],r.headers,...r.rows]),'Reporte');XLSX.writeFile(wb,'SMARTBOD_reporte.xlsx');};
   el('report-pdf').onclick=()=>{if(!currentReport)return;if(!window.jspdf)return showToast('PDF','No se pudo cargar la biblioteca. Revisa tu conexión.','error');const r=currentReport,doc=new window.jspdf.jsPDF({orientation:'landscape'});doc.setFontSize(18);doc.text('SMARTBOD | '+r.title,14,18);doc.setFontSize(10);doc.text(r.period,14,27);doc.autoTable({startY:34,head:[r.headers],body:r.rows,headStyles:{fillColor:[8,127,107]}});doc.save('SMARTBOD_reporte.pdf');};
   el('report-print').onclick=()=>{if(!currentReport)return;document.body.classList.add('printing-report');window.print();document.body.classList.remove('printing-report');};
@@ -1799,7 +1795,7 @@
   };
   el('inventory-confirm').onclick=async()=>{if(!pendingImport.length)return;el('inventory-confirm').disabled=true;if(await runOperation({kind:'import',fingerprint:importFingerprint,rows:pendingImport})){pendingImport=[];el('inventory-file').value='';el('inventory-import-status').textContent='Compra confirmada. Archivo registrado para evitar duplicados.';}else el('inventory-confirm').disabled=false;};
   const limaDay=d=>{const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Lima',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);const val=k=>parts.find(p=>p.type===k).value;return `${val('year')}-${val('month')}-${val('day')}`;};
-  el('report-period').onchange=()=>{const now=new Date(),end=limaDay(now);let start=end;const mode=el('report-period').value;if(mode==='all'){el('report-from').value='';el('report-to').value='';}else if(mode!=='custom'){if(mode==='month')start=end.slice(0,7)+'01';if(mode==='week')start=limaDay(new Date(now.getTime()-6*86400000));el('report-from').value=start;el('report-to').value=end;}el('report-generate').click();};
+  el('report-period').onchange=()=>{const now=new Date(),end=limaDay(now);let start=end;const mode=el('report-period').value;if(mode==='all'){el('report-from').value='';el('report-to').value='';}else if(mode==='custom'){if(!el('report-from').value)el('report-from').value=end.slice(0,7)+'01';if(!el('report-to').value)el('report-to').value=end;el('report-from').focus();}else{if(mode==='month')start=end.slice(0,7)+'01';if(mode==='week')start=limaDay(new Date(now.getTime()-6*86400000));el('report-from').value=start;el('report-to').value=end;}el('report-generate').click();};
   ['report-from','report-to'].forEach(id=>el(id).onchange=()=>{el('report-period').value='custom';el('report-generate').click();});
 
   const events=()=>JSON.parse(lsGet('smartbod-events-v1','[]'));
