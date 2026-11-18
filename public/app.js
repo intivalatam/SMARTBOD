@@ -559,7 +559,9 @@
         const row=document.createElement('div');row.className='ingredient-setting';const name=document.createElement('strong');name.textContent=items.find(x=>x.id===ing.idInsumo)?.nombre||'Insumo';row.append(name);
         const mode=document.createElement('select');mode.dataset.ingredientMode=index;mode.add(new Option('Cantidad para toda la receta','batch'));mode.add(new Option('Un envase rinde X porciones','coverage'));mode.add(new Option('Gramos/ml por porción','dose'));mode.value=ing.measureMode||'batch';mode.setAttribute('aria-label','Forma de medir '+name.textContent);row.append(mode);
         const label=document.createElement('label');const text=document.createElement('span');const input=document.createElement('input');input.type='number';input.min='0.000001';input.step='any';input.value=ing.measureMode==='dose'?ing.dose:ing.measureMode==='coverage'?ing.servingsPerUnit:ing.cantidad;input.dataset.ingredientIndex=index;
-        const update=()=>{text.textContent=mode.value==='coverage'?'Porciones por envase':mode.value==='dose'?'Gramos/ml por porción':'Unidades/envases para receta';checkPreparation();};mode.onchange=update;input.oninput=()=>checkPreparation();text.textContent=mode.value==='coverage'?'Porciones por envase':mode.value==='dose'?'Gramos/ml por porción':'Unidades/envases para receta';const source=items.find(x=>x.id===ing.idInsumo);const at=document.createElement('select');at.dataset.ingredientAt=index;at.add(new Option('Al preparar','prepare'));at.add(new Option('Al servir','sale'));at.value=ing.consumeAt||(source?.deductOnSale?'sale':'prepare');at.onchange=checkPreparation;at.setAttribute('aria-label','Momento de consumo');row.append(at);label.append(text,input);row.append(label);list.append(row);
+        const update=()=>{text.textContent=mode.value==='coverage'?'Porciones por envase':mode.value==='dose'?'Gramos/ml por porción':'Unidades/envases para receta';checkPreparation();};mode.onchange=update;input.oninput=()=>checkPreparation();text.textContent=mode.value==='coverage'?'Porciones por envase':mode.value==='dose'?'Gramos/ml por porción':'Unidades/envases para receta';const source=items.find(x=>x.id===ing.idInsumo);const at=document.createElement('select');at.dataset.ingredientAt=index;at.add(new Option('Al preparar','prepare'));at.add(new Option('Al servir','sale'));at.value=ing.consumeAt||(source?.deductOnSale?'sale':'prepare');at.onchange=checkPreparation;at.setAttribute('aria-label','Momento de consumo');row.append(at);label.append(text,input);row.append(label);const fiscal=document.createElement('button');fiscal.className='btn ghost small';fiscal.textContent='Comprobante';
+        fiscal.onclick=()=>{el('ticket-history').close();window.dispatchEvent(new CustomEvent('smartbod-fiscal',{detail:{ticketNum:r.ticket,date:r.date,total:r.total,client:'',returns:[]}}));};
+        row.append(fiscal);list.append(row);
       });
       checkPreparation();
     }
@@ -881,21 +883,21 @@
     renderCart();
   }
 
-  function addToCart(item, maxStock) {
-    const exist = cart.find(c => c.item.id === item.id);
-    if (exist) {
-      if (exist.qty + 1 > maxStock) {
-        return showToast("Límite de Stock", `Solo quedan ${maxStock} disponibles de ${esc(item.nombre)}.`, "warn");
-      }
-      exist.qty++;
-    } else {
-      cart.push({ item, qty: 1 });
+  function addToCart(item,maxStock,pack=null){
+    const step=pack?1:(item.scaleStep||1),factor=pack?.units||1;
+    const quantity=!pack&&item.saleUnit&&item.saleUnit!=='unidad'?Number(el('pos-weight').value):1;
+    const used=cart.filter(c=>c.item.id===item.id).reduce((sum,c)=>sum+c.qty*(c.factor||1),0);
+    if(!(quantity>0)||Math.abs(quantity/step-Math.round(quantity/step))>0.000001||used+quantity*factor>maxStock+1e-8){
+      showToast('Cantidad inválida','Revisa el peso, la precisión y el stock disponible.','warn');return false;
     }
-    renderCart();
+    const existing=cart.find(c=>c.item.id===item.id&&c.barcode===(pack?.code||null));
+    if(existing)existing.qty=Number((existing.qty+quantity).toFixed(6));
+    else cart.push({item:{...item,precio:pack?.price??item.precio,nombre:pack?item.nombre+' · '+pack.name:item.nombre},qty:quantity,barcode:pack?.code||null,factor,step});
+    renderCart();return true;
   }
 
   function getCartTotal() {
-    const subtotal = cart.reduce((acc, c) => acc + num(c.item.precio) * c.qty, 0);
+    const subtotal = cart.reduce((acc, c) => acc + Math.round(Math.round(num(c.item.precio)*100)*c.qty)/100, 0);
     const disc = Math.max(0, num(document.getElementById('pos-discount').value));
     return Math.max(0, subtotal - disc);
   }
@@ -926,7 +928,7 @@
         div.style.cssText = "display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--line); padding-bottom:8px; gap:8px;";
         div.innerHTML = `
           <div style="flex:1;">
-            <div style="font-weight:600;font-size:13px;">${c.item.nombre}</div>
+            <div style="font-weight:600;font-size:13px;">${esc(c.item.nombre)}</div>
             <div style="font-size:11px;color:var(--muted);">${money(num(c.item.precio))} c/u</div>
           </div>
           <div style="display:flex; align-items:center; gap:4px;">
@@ -952,11 +954,13 @@
     const input=document.getElementById('pos-search'),q=input.value.trim().toLowerCase(),status=document.getElementById('pos-search-status');
     if(!q){status.textContent='Escribe un nombre o SKU antes de añadir.';input.focus();return;}
     const products=items.filter(p=>!p.archived&&p.inventoryKind!=='consumable'),exact=products.filter(p=>String(p.sku||'').toLowerCase()===q);
+    const packaged=products.find(p=>p.presentations?.some(x=>x.code.toLowerCase()===q));
+    if(packaged){const pack=packaged.presentations.find(x=>x.code.toLowerCase()===q);if(addToCart(packaged,sellable(items,packaged),pack)){status.textContent=pack.name+' añadido';input.value='';renderPOS();}return;}
     const matches=exact.length?exact:products.filter(p=>p.nombre.toLowerCase().includes(q)||String(p.sku||'').toLowerCase().includes(q));
     if(matches.length!==1){status.textContent=matches.length?'Hay varias coincidencias. Selecciona la tarjeta del producto.':'No se encontró ese nombre o SKU.';activePosCat='ALL';document.querySelectorAll('#pos-cat-pills .pill').forEach(b=>b.classList.toggle('active',b.dataset.poscat==='ALL'));renderPOS();return;}
     const p=matches[0],available=sellable(items,p),current=cart.find(c=>c.item.id===p.id)?.qty||0;
-    if(current+1>available){status.textContent='No hay stock suficiente de '+p.nombre+'.';return;}
-    addToCart(p,available);status.textContent=p.nombre+' añadido al ticket.';input.value='';renderPOS();input.focus();
+    if(!p.scaleStep&&current+1>available){status.textContent='No hay stock suficiente de '+p.nombre+'.';return;}
+    if(!addToCart(p,available))return;status.textContent=p.nombre+' añadido al ticket.';input.value='';renderPOS();input.focus();
   }
   document.getElementById('pos-add-search').addEventListener('click',addSearchToTicket);
   document.getElementById('pos-search').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addSearchToTicket();}});
@@ -978,17 +982,17 @@
       const idx = Number(inc.dataset.idx);
       const entry = cart[idx];
       const maxStock = sellable(items,items.find(p=>p.id===entry.item.id)||entry.item);
-      if (entry.qty + 1 > maxStock) {
+      const used=cart.filter(c=>c.item.id===entry.item.id).reduce((sum,c)=>sum+c.qty*(c.factor||1),0);if (used+(entry.step||1)*(entry.factor||1)>maxStock+1e-8) {
         return showToast("Límite de Stock", `Stock máximo disponible: ${maxStock}`, "warn");
       }
-      entry.qty++;
+      entry.qty=Number((entry.qty+(entry.step||1)).toFixed(6));
       renderCart();
       return;
     }
     const dec = e.target.closest('.btn-cart-dec');
     if (dec) {
       const idx = Number(dec.dataset.idx);
-      if (cart[idx].qty > 1) cart[idx].qty--;
+      if (cart[idx].qty > (cart[idx].step||1)) cart[idx].qty=Number((cart[idx].qty-(cart[idx].step||1)).toFixed(6));
       else cart.splice(idx, 1);
       renderCart();
       return;
@@ -1022,7 +1026,7 @@
   let saleAttempt=null;
   document.getElementById('btn-process-sale').addEventListener('click',async()=>{
     if(!cart.length||saving)return;
-    const input={eventId:document.getElementById('pos-event').value||null,lines:cart.map(c=>({id:c.item.id,qty:c.qty})),discount:num(document.getElementById('pos-discount').value),cash:num(document.getElementById('pos-cash-received').value),payMethod:selectedPayMethod,paymentReference:document.getElementById('payment-reference').value,payments:selectedPayMethod==='Mixto'?['Efectivo','Yape','Plin','Tarjeta'].map((method,i)=>({method,amount:Number(document.getElementById('split-'+i).value)||0,reference:document.getElementById('payment-reference').value})).filter(p=>p.amount>0):undefined,client:document.getElementById('pos-client').value};
+    const input={register:el('pos-register').value||undefined,eventId:document.getElementById('pos-event').value||null,lines:cart.map(c=>({id:c.item.id,qty:c.qty,barcode:c.barcode||undefined,expectedPrice:c.item.precio})),discount:num(document.getElementById('pos-discount').value),cash:num(document.getElementById('pos-cash-received').value),payMethod:selectedPayMethod,paymentReference:document.getElementById('payment-reference').value,payments:selectedPayMethod==='Mixto'?['Efectivo','Yape','Plin','Tarjeta'].map((method,i)=>({method,amount:Number(document.getElementById('split-'+i).value)||0,reference:document.getElementById('payment-reference').value})).filter(p=>p.amount>0):undefined,client:document.getElementById('pos-client').value};
     const signature=JSON.stringify(input);if(!saleAttempt||saleAttempt.signature!==signature)saleAttempt={signature,id:crypto.randomUUID()};
     saving=true;document.getElementById('app').inert=true;
     try{
@@ -1035,7 +1039,7 @@
   });
 
   function showReceiptModal(r) {
-    const linesHtml = r.lines.map(l =>
+    const linesHtml = r.lines.flatMap(l=>l.parts?.length?l.parts.map(p=>({nombre:p.description,qty:p.count,subtotal:p.amount/100})): [l]).map(l =>
       `<div style="display:flex; justify-content:space-between; margin:4px 0;">
         <span>${l.qty}x ${esc(l.nombre.slice(0, 22))}</span>
         <b>${money(l.subtotal)}</b>
@@ -1068,6 +1072,7 @@
     document.getElementById('modal-receipt').hidden = false;
   }
 
+  document.getElementById('receipt-fiscal').onclick=()=>{document.getElementById('modal-receipt').hidden=true;window.dispatchEvent(new CustomEvent('smartbod-fiscal',{detail:lastReceiptData}));};
   document.getElementById('btn-close-receipt').addEventListener('click', () => {
     document.getElementById('modal-receipt').hidden = true;
   });
@@ -1539,14 +1544,14 @@
       title.textContent=label;detail.textContent=value;node.append(title,detail);box.append(node);
       if(action){node.type='button';node.onclick=action;}
     };
-    const open=extraState.cashSessions?.find(c=>!c.closedAt);
+    const shifts=(extraState.cashSessions||[]).filter(c=>!c.closedAt);
     if(activeUser.role==='seller'){card('Turno de caja',extraState.cashOpen?'Abierto':'Cerrado · solicita apertura para cobrar efectivo');return;}
     if(can('cash')){
       const today=limaDay(new Date()),sales=extraState.receipts||[];
       const income=sales.filter(r=>r.status!=='voided'&&r.businessDate===today).reduce((sum,r)=>sum+num(r.total),0);
       const refunds=sales.flatMap(r=>r.returns||[]).filter(r=>limaDay(new Date(r.date))===today).reduce((sum,r)=>sum+r.amount,0);
       card('Ventas netas de hoy',money(income-refunds),()=>switchTab('rep'));
-      card('Caja · efectivo esperado',open?money(open.expectedLive??open.opening):'Abrir turno',()=>document.querySelector('.header-actions .btn.soft')?.click());
+      card(shifts.length>1?shifts.length+' cajas · efectivo esperado':'Caja · efectivo esperado',shifts.length?money(shifts.reduce((sum,c)=>sum+(c.expectedLive??c.opening),0)):'Abrir turno',()=>document.querySelector('.header-actions .btn.soft')?.click());
     }
     if(can('production')&&!can('purchase')){
       for(const recipe of items.filter(p=>p.tipo==='elaborado'&&!p.archived)){
@@ -1566,6 +1571,11 @@
     }
   }
   function accountUI(){
+    const register=el('pos-register'),previous=register.value;
+    const registers=extraState.openRegisters||(extraState.cashSessions||[]).filter(c=>!c.closedAt).map(c=>c.register||'Principal');
+    register.replaceChildren(...(registers.length?registers:['']).map(n=>new Option(n||'Sin turno abierto',n)));
+    if(registers.includes(previous))register.value=previous;
+
     const admin=activeUser?.role==='admin';
     el('account-label').textContent=activeUser ? activeUser.name+' · '+(admin?'Administrador':'Vendedor'):'';
     el('manage-users').hidden=!can('users');document.querySelectorAll('.btn-restock').forEach(b=>b.disabled=!can('purchase'));document.querySelectorAll('.btn-quick-production').forEach(b=>b.disabled=!can('production'));document.querySelectorAll('.btn-edit-item').forEach(b=>b.disabled=!can('catalog'));
@@ -1596,7 +1606,9 @@
       for(const r of result.tickets){
         const row=document.createElement('p');
         row.textContent=[new Date(r.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),r.ticket,r.status==='voided'?'Anulado':money(r.total-r.refund)].join(' · ');
-        list.append(row);
+        const fiscal=document.createElement('button');fiscal.className='btn ghost small';fiscal.textContent='Comprobante';
+        fiscal.onclick=()=>{el('ticket-history').close();window.dispatchEvent(new CustomEvent('smartbod-fiscal',{detail:{ticketNum:r.ticket,date:r.date,total:r.total,client:'',returns:[]}}));};
+        row.append(fiscal);list.append(row);
       }
       el('ticket-list-status').textContent=result.tickets.length?'Página '+(page+1):'Aún no hay ventas registradas por tu cuenta.';
       next.disabled=!result.more;
@@ -1654,7 +1666,7 @@
     receipts.forEach(r=>{const tr=document.createElement('tr');[r.date,r.ticketNum,r.client,money(r.total),r.status==='voided'?'Anulada: '+r.voidReason:'Vigente'].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td);});const td=document.createElement('td');const button=document.createElement('button');button.className='btn danger small';button.textContent='Anular venta';button.disabled=r.status==='voided';button.onclick=async()=>{
       const reason=prompt('Motivo de la anulación (mínimo 5 caracteres):');if(reason===null)return;
       if(!confirm('Se anulará '+r.ticketNum+' y se devolverán las existencias. Confirma que es una venta errónea y que los productos siguen disponibles. Si hubo un cobro, devuelve el dinero por separado.'))return;
-      button.disabled=true;try{const result=await Cloud.api('void',{void:{ticketNum:r.ticketNum,reason}});applyCloud(result);renderSaleManager();el('report-generate').click();showToast('Venta anulada','Stock e importes corregidos en la nube.');}catch(e){showToast('No se pudo anular',e.message,'error');button.disabled=false;}
+      button.disabled=true;try{const result=await Cloud.api('void',{void:{ticketNum:r.ticketNum,reason,register:el('pos-register').value||undefined}});applyCloud(result);renderSaleManager();el('report-generate').click();showToast('Venta anulada','Stock e importes corregidos en la nube.');}catch(e){showToast('No se pudo anular',e.message,'error');button.disabled=false;}
     };td.append(button);tr.append(td);body.append(tr);});
   }
   el('sale-search').oninput=renderSaleManager;
@@ -1752,19 +1764,20 @@
   let restockAttempt=null;
   function openRestock(product){
     el('restock-id').value=product.id;el('restock-heading').textContent='Reponer: '+product.nombre;el('restock-sku').textContent='SKU: '+product.sku;
-    el('restock-size-label').hidden=product.consumptionMode!=='measure';
+    const weighed=['kg','L'].includes(product.saleUnit);el('restock-size-label').hidden=product.consumptionMode!=='measure'&&!weighed;
     el('restock-size').value=product.consumptionMode==='measure'?content(product):1;
     el('restock-size-caption').textContent='Contenido de cada envase comprado ('+(['kg','g'].includes(product.contentUnit)?'g':'ml')+')';
+    if(weighed&&product.consumptionMode!=='measure')el('restock-size-caption').textContent='Cantidad neta por envase comprado ('+product.saleUnit+')';
     el('restock-stock').textContent='Stock actual: '+Number(calc(product,getConsumoElaborados()).stock.toFixed(4))+' unidades / envases';
     el('restock-previous').textContent='Último costo de compra registrado: '+(product.lastPurchaseCost==null?'Aún no hay historial':money(product.lastPurchaseCost))+' · Precio de venta actual: '+money(product.precio);
-    el('restock-supplier').value='';el('restock-document').value='';el('restock-date').value=limaDay(new Date());el('restock-extra').value=0;el('restock-mode').value='units';el('restock-count').value=1;el('restock-units').value=1;el('restock-cost').value='';el('restock-discount').value=0;el('restock-price').value='';el('restock-margin').value=25;el('restock-status').textContent='';restockAttempt=null;restockPreview();el('restock-dialog').showModal();el('restock-count').focus();
+    el('restock-lot').value='';el('restock-expiry').value='';el('restock-supplier').value='';el('restock-document').value='';el('restock-date').value=limaDay(new Date());el('restock-extra').value=0;el('restock-mode').value='units';el('restock-count').value=1;el('restock-units').value=1;el('restock-cost').value='';el('restock-discount').value=0;el('restock-price').value='';el('restock-margin').value=25;el('restock-status').textContent='';restockAttempt=null;restockPreview();el('restock-dialog').showModal();el('restock-count').focus();
   }
   function restockPreview(){
     const byUnit=el('restock-mode').value==='units';el('restock-units').disabled=byUnit;el('restock-units-label').hidden=byUnit;if(byUnit)el('restock-units').value=1;
     el('restock-count-label').textContent=byUnit?'Unidades que ingresan':'Cantidad de paquetes';el('restock-cost-label').textContent=byUnit?'Nuevo costo por unidad / envase (S/)':'Nuevo costo por paquete (S/)';el('restock-discount-label').textContent=byUnit?'Descuento por unidad (S/)':'Descuento por paquete (S/)';
     if(el('restock-cost').value===''){el('restock-preview').textContent='Ingresa el costo de esta compra. Puede ser diferente al anterior.';return null;}
     try{const result=packageMath(...['restock-count','restock-units','restock-cost','restock-discount','restock-margin'].map(id=>Number(el(id).value)));const product=items.find(p=>p.id===el('restock-id').value);
-    if(product.consumptionMode==='measure'){
+    if(product.consumptionMode==='measure'||['kg','L'].includes(product.saleUnit)){
       const received=Number(el('restock-size').value);
       if(!(received>0))throw Error('Indica el contenido real de cada envase.');
       result.qty*=received/content(product);
@@ -1775,7 +1788,7 @@
   el('restock-use-price').onclick=()=>{const r=restockPreview();if(r){el('restock-price').value=r.price;restockPreview();}};
   el('restock-keep-price').onclick=()=>{el('restock-price').value=items.find(p=>p.id===el('restock-id').value).precio;restockPreview();};
   el('restock-close').onclick=()=>el('restock-dialog').close();
-  el('restock-form').onsubmit=async e=>{e.preventDefault();if(!restockPreview()||saving)return;const input={receivedContent:Number(el('restock-size').value),supplier:el('restock-supplier').value,document:el('restock-document').value,purchaseDate:el('restock-date').value,extraCost:Number(el('restock-extra').value),id:el('restock-id').value,packages:Number(el('restock-count').value),units:Number(el('restock-units').value),cost:Number(el('restock-cost').value),discount:Number(el('restock-discount').value),price:Number(el('restock-price').value)};const signature=JSON.stringify(input);if(restockAttempt?.signature!==signature)restockAttempt={signature,requestId:crypto.randomUUID()};saving=true;e.submitter.disabled=true;try{const result=await Cloud.api('restock',{restock:{...input,requestId:restockAttempt.requestId}});applyCloud(result);el('restock-dialog').close();restockAttempt=null;showToast('Stock repuesto','Compra guardada. Stock, precio de venta e historial actualizados.');}catch(err){el('restock-status').textContent=err.message;}finally{saving=false;e.submitter.disabled=false;}};
+  el('restock-form').onsubmit=async e=>{e.preventDefault();if(!restockPreview()||saving)return;const input={lot:el('restock-lot').value,expiry:el('restock-expiry').value,receivedContent:Number(el('restock-size').value),supplier:el('restock-supplier').value,document:el('restock-document').value,purchaseDate:el('restock-date').value,extraCost:Number(el('restock-extra').value),id:el('restock-id').value,packages:Number(el('restock-count').value),units:Number(el('restock-units').value),cost:Number(el('restock-cost').value),discount:Number(el('restock-discount').value),price:Number(el('restock-price').value)};const signature=JSON.stringify(input);if(restockAttempt?.signature!==signature)restockAttempt={signature,requestId:crypto.randomUUID()};saving=true;e.submitter.disabled=true;try{const result=await Cloud.api('restock',{restock:{...input,requestId:restockAttempt.requestId}});applyCloud(result);el('restock-dialog').close();restockAttempt=null;showToast('Stock repuesto','Compra guardada. Stock, precio de venta e historial actualizados.');}catch(err){el('restock-status').textContent=err.message;}finally{saving=false;e.submitter.disabled=false;}};
 
 
   let priceChart=null;
@@ -1800,6 +1813,7 @@
   async function runOperation(input){const signature=JSON.stringify(input);if(operationAttempt?.signature!==signature)operationAttempt={signature,requestId:crypto.randomUUID()};try{const result=await Cloud.api('operation',{operation:{...input,requestId:operationAttempt.requestId}});applyCloud(result);operationAttempt=null;showToast('Operación registrada','Confirmada en el servidor.');return true;}catch(e){showToast('No se confirmó',e.message,'error');return false;}}
   window.Smartbod={can,state:()=>captureState(),user:()=>activeUser,run:runOperation,apply:applyCloud,money,quantityLabel};await import('/operations-ui.js');const {installConsumables}=await import('/consumables-ui.js');installConsumables(window.Smartbod);try{const pending=JSON.parse(sessionStorage.getItem('smartbod-pending')||'null');if(pending){const status=await Cloud.api('requestStatus',{requestId:pending.requestId});showToast(status.found?'Operación anterior confirmada':'Revisa la operación anterior',status.found?'Está registrada. No la repitas.':'No se encontró confirmación. Revisa el historial antes de reintentar.');if(status.found)sessionStorage.removeItem('smartbod-pending');}}catch{}
 
+  window.dispatchEvent(new Event('smartbod-ready'));
   savedOptions();el('report-type').onchange();el('auth-screen').hidden=true;el('app').hidden=false;accountUI();switchTab(activeUser.role==='admin'?'inv':'pos');
 
 

@@ -1,3 +1,4 @@
+import {reserveFiscal,transmitFiscal,fiscalList} from '../lib/fiscal.js';
 import {databaseUrl} from '../lib/environment.js';
 import {operate} from '../lib/operations.js';
 import {load,persist,diff,cashierState,writeCashierSale} from '../lib/repository.js';
@@ -13,11 +14,13 @@ const digest=s=>createHash('sha256').update(s).digest('hex');
 function visible(state,user){
  const view=publicState(state,user);
  if(view.cashSessions)view.cashSessions=view.cashSessions.map(c=>c.closedAt?c:{...c,expectedLive:cashExpected(state,c)});
- return view;
+ const openRegisters=(state.cashSessions||[]).filter(c=>!c.closedAt&&(!c.cashierId||user.role==='admin'||c.cashierId===user.id)).map(c=>c.register||'Principal');
+ return {...view,cashOpen:openRegisters.length>0,openRegisters};
 }
-function requireShift(data){
- const shift=data.cashSessions?.find(c=>!c.closedAt);
- if(!shift)fail('Abre un turno de caja antes de registrar efectivo.',409);
+function requireShift(data,register='Principal',operator){
+ const shift=data.cashSessions?.find(c=>!c.closedAt&&(c.register||'Principal')===register);
+ if(!shift)fail('Abre o selecciona un turno activo para registrar el movimiento.',409);
+ if(shift.cashierId&&operator?.role==='seller'&&shift.cashierId!==operator.id)fail('Esta caja pertenece a otro cajero',403);
  return shift.id;
 }
 const safeUser=u=>({id:u.id,username:u.username,name:u.name,role:u.role,enabled:u.enabled,permissions:u.permissions||null});
@@ -52,6 +55,20 @@ export default async function handler(req,res){
  const {rows}=await pool.query('SELECT u.* FROM sb_users u JOIN sb_sessions s ON s.user_id=u.id WHERE s.token=$1 AND s.expires>now() AND u.enabled',[digest(token)]);const user=rows[0];if(!user)fail('Inicia sesión para continuar',401);
  if(imageId){const {rows:[image]}=await pool.query('SELECT content,mime FROM sb_images WHERE id=$1',[imageId]);if(!image)fail('Imagen no encontrada',404);res.setHeader('Content-Type',image.mime);return res.send(image.content);}
  if(action==='logout'){await pool.query('DELETE FROM sb_sessions WHERE token=$1',[digest(token)]);cookie('');return res.json({ok:true});}
+ if(['fiscalReserve','fiscalSend','fiscalList'].includes(action)){
+  if(!allowed(user,'cash')&&user.role!=='seller')fail('Se requiere permiso de caja',403);
+  const result=await transaction(async c=>{
+   if(user.role==='seller'){
+    const {rows}=await c.query("SELECT id FROM sb_entities WHERE kind='receipts' AND payload->>'ticketNum'=$1 AND payload->>'operatorId'=$2",[b.ticket,user.id]);
+    if(!rows.length||Number(b.kind)===3||(action==='fiscalSend'&&b.key!==b.ticket+':sale'))fail('Solo puedes gestionar comprobantes de tus propias ventas',403);
+   }
+   if(action==='fiscalSend')return {document:await transmitFiscal(c,String(b.key),b.consult===true)};
+   if(action==='fiscalList')return {documents:await fiscalList(c,String(b.ticket))};
+   const {rows}=await c.query("SELECT payload FROM sb_entities WHERE kind='receipts' AND payload->>'ticketNum'=$1 FOR SHARE",[b.ticket]);
+   if(!rows.length)fail('Ticket inexistente',404);
+   return {document:await reserveFiscal(c,rows[0].payload,b)};
+  });return res.json(result);
+ }
  if(action==='myTickets'){
   const page=Number(b.page??0),size=20;
   if(!Number.isSafeInteger(page)||page<0||page>1000000)fail('Página inválida');
@@ -89,18 +106,27 @@ export default async function handler(req,res){
  }
  data=b.restore===true?next:secureSave(data,next,safeUser(fresh));revision++;await persist(c,data,revision);
   }
-  else if(action==='operation'){admin();if(b.operation?.kind==='return'&&b.operation.payMethod==='Efectivo'&&!data.operations?.some(o=>o.id===b.operation.requestId))requireShift(data);data=operate(data,b.operation,safeUser(fresh));revision++;await persist(c,data,revision);}
+  else if(action==='operation'){admin();
+   if(b.operation?.kind==='cashOpen'){
+    delete b.operation.cashierId;
+    if(b.operation.cashier){
+     const {rows:[cashier]}=await c.query('SELECT id,name FROM sb_users WHERE enabled AND username=$1',[String(b.operation.cashier).toLowerCase().trim()]);
+     if(!cashier)fail('El usuario del cajero debe existir y estar activo');
+     b.operation.cashierId=cashier.id;b.operation.cashier=cashier.name;
+    }
+   }
+   if(b.operation?.kind==='return'&&!data.operations?.some(o=>o.id===b.operation.requestId))requireShift(data,b.operation.register);data=operate(data,b.operation,safeUser(fresh));revision++;await persist(c,data,revision);}
  else if(action==='restock'){admin();data=restock(data,b.restock,safeUser(fresh));revision++;await persist(c,data,revision);}
   else if(action==='event'){admin();if(b.revision!==revision)fail('Los datos cambiaron. Actualiza antes de guardar el evento.',409);data=upsertEvent(data,b.event,safeUser(fresh));revision++;await persist(c,data,revision);}
   else if(action==='void'){admin();const previous=data.receipts.find(r=>r.ticketNum===b.void?.ticketNum);
- const shiftId=previous&&previous.status!=='voided'&&cashPart(previous)>0?requireShift(data):null;
+ const shiftId=previous&&previous.status!=='voided'&&(cashPart(previous)>0||previous.cashSessionId)?requireShift(data,b.void.register):null;
  data=voidSale(data,b.void,safeUser(fresh));if(shiftId)data.receipts.find(r=>r.ticketNum===previous.ticketNum).cashVoidSessionId=shiftId;revision++;await persist(c,data,revision);}
   else if(action==='imageUpload'){admin();if(typeof b.image!=='string'||b.image.length>210000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.image))fail('Imagen inválida');const bytes=Buffer.from(b.image.split(',')[1],'base64');if(bytes.length>150000||bytes[0]!==255||bytes[1]!==216||bytes[2]!==255)fail('Imagen inválida o demasiado grande');const id=randomUUID();await c.query('INSERT INTO sb_images(id,content,mime) VALUES($1,$2,$3)',[id,bytes,'image/jpeg']);return {url:'/api/index?image='+id};}
   else if(action==='prepare'){admin();if(b.production?.recipePatch&&b.production.revision!==revision&&!data.kardex.some(k=>k.productionId===b.production.requestId))fail('El inventario cambió. Actualiza los datos y vuelve a revisar la receta.',409);data=prepare(data,b.production,safeUser(fresh));revision++;await persist(c,data,revision);}
   else if(action==='sale'){
    if(!allowed(fresh,'sale')&&fresh.role==='admin'&&!allowed(fresh,'cash'))fail('Tu perfil no puede vender',403);
    const repeated=data.receipts.some(r=>r.requestId===b.sale?.requestId);
-   const sale=sell(data,b.sale,safeUser(fresh),policy);data=sale.state;receipt=sale.receipt;if(!repeated&&cashPart(receipt)>0)receipt.cashSessionId=requireShift(data);
+   const sale=sell(data,b.sale,safeUser(fresh),policy);data=sale.state;receipt=sale.receipt;if(!repeated)receipt.cashSessionId=requireShift(data,b.sale.register,fresh);
    if(!repeated){revision++;if(fastSale)await writeCashierSale(c,before,data,revision);else await persist(c,data,revision);}
   }else fail('Operación desconocida',404);
   await c.query('INSERT INTO sb_audit(user_id,action,revision,detail) VALUES($1,$2,$3,$4)',[fresh.id,action,revision,{changes:diff(before,data),kind:b.operation?.kind||null}]);const recent=await c.query("SELECT 1 FROM sb_backups WHERE at>now()-interval '24 hours' LIMIT 1");

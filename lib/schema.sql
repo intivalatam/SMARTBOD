@@ -14,3 +14,6 @@ CREATE INDEX IF NOT EXISTS sb_sessions_expiry ON sb_sessions(expires);
 ALTER TABLE sb_users ADD COLUMN IF NOT EXISTS permissions jsonb;
 
 CREATE INDEX IF NOT EXISTS sb_receipt_operator_date ON sb_entities ((payload->>'operatorId'),(payload->>'isoDate') DESC,id DESC) WHERE kind='receipts';
+CREATE TABLE IF NOT EXISTS sb_fiscal (document_key text PRIMARY KEY,ticket text NOT NULL,kind int NOT NULL,series text NOT NULL,number int NOT NULL,payload jsonb NOT NULL,status text NOT NULL DEFAULT 'Pendiente',detail text,updated_at timestamptz NOT NULL DEFAULT now(), UNIQUE(kind,series,number));
+
+ALTER TABLE sb_fiscal ADD COLUMN IF NOT EXISTS links jsonb NOT NULL DEFAULT '{}';
