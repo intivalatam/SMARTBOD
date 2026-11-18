@@ -12,6 +12,13 @@ for(let i=0;i<30;i++){$('pos-search').value='H-001';$('pos-add-search').click();
 assert.deepEqual([...w.document.querySelector('.workspace-shortcuts').children].map(b=>b.id),['guide-sell','guide-restock','btn-open-custom-prod','chip-low-stock']);
 assert.ok(w.document.querySelector('.workspace-sidebar .tabs'));assert.ok(w.document.querySelector('.account-bar #logout'));assert.ok(w.document.querySelector('.workspace-sidebar #guide-prices'));assert.ok(w.document.querySelector('.workspace-footer #connection-status'));assert.ok(w.document.querySelector('.workspace-footer #cloud-status'));assert.ok(w.document.querySelector('.workspace-footer #install-app'));
 $('guide-sell').click();assert.equal($('v-pos').hidden,false);assert.equal($('v-inv').hidden,true);
+state.items[0].minStock=50;
+$('inv-search').dispatchEvent(new w.Event('input'));
+$('chip-low-stock').click();
+assert.equal($('v-inv').hidden,false,'la alerta debe abrir el inventario');
+assert.ok($('inv-search').value.length>0,'la alerta debe localizar un producto');
+assert.ok(w.document.querySelector('#inventory-tbody tr.inventory-alert-focus'),'el producto debe resaltarse en la tabla');
+
 w.document.querySelector('[data-tab="supplies"]').click();assert.equal($('v-supplies').hidden,false);
 $('supply-field-name').value='Bolsas';$('supply-field-unit').value='unidad';$('supply-field-minStock').value='5';$('supply-form').dispatchEvent(new w.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,30));assert.match($('supply-stock').textContent,/Bolsas/);
 w.document.querySelector('[aria-label="Reponer Bolsas"]').click();assert.equal($('supply-mode').value,'supplyPurchase');$('supply-field-qty').value='100';$('supply-field-total').value='20';$('supply-form').dispatchEvent(new w.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,30));
