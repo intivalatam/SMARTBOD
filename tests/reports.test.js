@@ -15,3 +15,33 @@ test('resultado cuenta el uso manual una vez y no duplica compras ni consumibles
  const ctx=vm.createContext({extraState:{receipts},items:[],kardex,getConsumoElaborados:()=>({}),num:v=>Number(v)||0,lsGet:()=>JSON.stringify(receipts),el:id=>({value:({'report-type':'result','report-event':'all','report-from':'2026-11-15','report-to':'2026-11-15'})[id]}),limaDay:()=> '2026-11-15'});
  const r=vm.runInContext(code+';reportData()',ctx);assert.equal(r.rows.find(x=>x[0]==='Costo vendido')[1],10);assert.equal(r.rows.find(x=>x[0].startsWith('Consumibles:'))[1],4);assert.equal(r.rows.at(-1)[1],66);
 });
+
+test('gastos por periodo muestra registros reales y respeta fechas y origen',()=>{
+ const expenses=[
+  {id:'g1',date:'2026-11-15T16:00:00Z',reason:'Movilidad',amount:22.5},
+  {id:'g2',date:'2026-11-15T17:00:00Z',reason:'Limpieza',amount:35,eventId:'feria'},
+  {id:'g3',date:'2026-11-01T16:00:00Z',reason:'Fuera de periodo',amount:100}
+ ];
+ const ctx=vm.createContext({extraState:{expenses,events:[{id:'feria',name:'Feria escolar'}]},
+  items:[],kardex:[],getConsumoElaborados:()=>({}),num:v=>Number(v)||0,lsGet:()=> '[]',
+  el:id=>({value:({'report-type':'expenses','report-event':'all','report-from':'2026-11-15','report-to':'2026-11-15'})[id],
+   selectedOptions:[{textContent:'Todas las ventas'}]}),
+  limaDay:d=>new Date(d).toISOString().slice(0,10)
+ });
+ const result=vm.runInContext(code+';reportData()',ctx);
+ assert.equal(result.type,'expenses');assert.equal(result.rows.length,2);
+ assert.equal(result.rows[0][3],22.5);assert.equal(result.rows[1][2],'Feria escolar');
+ assert.equal(result.rows.reduce((a,row)=>a+row[3],0),57.5);
+});
+test('reporte sin gastos no inventa importes y ofrece vista con cero registros',()=>{
+ const r=report('expenses');
+ assert.deepEqual(r.headers,['Fecha','Motivo','Evento','Importe S/']);
+ assert.equal(r.rows.length,0);
+});
+test('documento HTML incluye tarjetas, estado vacío y exportaciones',()=>{
+ assert.match(html,/id="report-kpis"/);
+ assert.match(html,/id="report-empty-detail"/);
+ assert.match(html,/id="report-csv"/);
+ assert.match(html,/reportDownload/);
+ assert.match(html,/No se encontraron gastos registrados en Caja y gestión/);
+});
