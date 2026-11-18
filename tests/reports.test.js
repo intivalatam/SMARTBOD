@@ -30,12 +30,12 @@ test('gastos por periodo muestra registros reales y respeta fechas y origen',()=
  });
  const result=vm.runInContext(code+';reportData()',ctx);
  assert.equal(result.type,'expenses');assert.equal(result.rows.length,2);
- assert.equal(result.rows[0][3],22.5);assert.equal(result.rows[1][2],'Feria escolar');
- assert.equal(result.rows.reduce((a,row)=>a+row[3],0),57.5);
+ assert.equal(result.rows[0][4],35);assert.equal(result.rows[0][3],'Feria escolar');
+ assert.equal(result.rows.reduce((a,row)=>a+row[4],0),57.5);
 });
 test('reporte sin gastos no inventa importes y ofrece vista con cero registros',()=>{
  const r=report('expenses');
- assert.deepEqual(r.headers,['Fecha','Motivo','Evento','Importe S/']);
+ assert.deepEqual(r.headers,['Fecha','Clasificación','Concepto / producto','Origen','Importe S/']);
  assert.equal(r.rows.length,0);
 });
 test('documento HTML incluye tarjetas, estado vacío y exportaciones',()=>{
@@ -43,7 +43,7 @@ test('documento HTML incluye tarjetas, estado vacío y exportaciones',()=>{
  assert.match(html,/id="report-empty-detail"/);
  assert.match(html,/id="report-csv"/);
  assert.match(html,/reportDownload/);
- assert.match(html,/No se encontraron gastos registrados en Caja y gestión/);
+ assert.match(html,/No hay gastos operativos ni compras registradas/);
 });
 
 test('compras y reposiciones se muestran separadas de los gastos',()=>{
@@ -59,4 +59,22 @@ test('consumo de materiales conserva el signo de reversos',()=>{
  const ctx=vm.createContext({extraState:{},items:[],kardex,getConsumoElaborados:()=>({}),num:v=>Number(v)||0,lsGet:()=> '[]',el:id=>({value:({'report-type':'supplies','report-event':'all','report-from':'2026-11-15','report-to':'2026-11-15'})[id],selectedOptions:[{textContent:'Todas'}]}),limaDay:d=>new Date(d).toISOString().slice(0,10)});
  const r=vm.runInContext(code+';reportData()',ctx);
  assert.equal(r.rows.length,2);assert.equal(r.rows[0][3],-.3);assert.equal(r.rows[1][2],'Reversión de ajuste');
+});
+
+test('gastos y desembolsos incluye compras sin considerarlas gasto operativo',()=>{
+ const expenses=[{date:'2026-11-15T14:00:00Z',reason:'Transporte',amount:18}];
+ const kardex=[
+  {type:'IN',date:'2026-11-15T12:00:00Z',sku:'PAN',name:'Pan de hamburguesa',amount:150},
+  {type:'SUPPLY_BUY',date:'2026-11-15T13:00:00Z',sku:'VAS',name:'Vasos',amount:40},
+  {type:'SUPPLY_USE',date:'2026-11-15T13:30:00Z',sku:'VAS',name:'Vasos',amount:6,expense:6},
+  {type:'ADJ_IN',date:'2026-11-15T13:31:00Z',sku:'PAN',name:'Pan',amount:100}
+ ];
+ const ctx=vm.createContext({extraState:{expenses},items:[],kardex,getConsumoElaborados:()=>({}),num:v=>Number(v)||0,lsGet:()=> '[]',
+ el:id=>({value:({'report-type':'expenses','report-event':'all','report-from':'2026-11-15','report-to':'2026-11-15'})[id],selectedOptions:[{textContent:'Todas'}]}),
+ limaDay:d=>new Date(d).toISOString().slice(0,10)});
+ const report=vm.runInContext(code+';reportData()',ctx);
+ assert.equal(report.rows.length,3);
+ assert.equal(report.rows.filter(x=>x[1]==='Gasto operativo').reduce((t,x)=>t+x[4],0),18);
+ assert.equal(report.rows.filter(x=>x[1]!=='Gasto operativo').reduce((t,x)=>t+x[4],0),190);
+ assert.equal(report.rows.reduce((t,x)=>t+x[4],0),208);
 });

@@ -1763,7 +1763,18 @@
     const usage=getConsumoElaborados();let headers,rows,title;
     if(type==='stock'){title='Existencias actuales';headers=['SKU','Producto','Stock','Última compra S/','Costo promedio / preparado S/','Precio de venta S/'];rows=items.map(p=>{const c=calc(p,usage);return[p.sku,p.nombre,c.stock,p.lastPurchaseCost??'Sin historial',+c.cu.toFixed(2),num(p.precio)];});}
     if(type==='profit'){title='Margen bruto por periodo y origen';headers=['SKU','Producto','Ingresos netos S/','Costo vendido S/','Margen bruto S/'];const groups=new Map();for(const r of selectedReceipts.filter(x=>x.status!=='voided'))for(const l of r.lines){const c=r.costs?.find(x=>x.productId===l.productId||x.sku===l.sku),id=l.productId||l.sku;if(!groups.has(id))groups.set(id,[l.sku,l.nombre,0,0,0]);const row=groups.get(id);row[2]+=num(l.net??l.subtotal);row[3]+=num(c?.unitCost)*l.qty;}for(const r of JSON.parse(lsGet('smartbod-receipts-v1','[]')).filter(r=>origin==='all'||(origin==='daily'?!r.eventId:r.eventId===origin)))for(const ret of r.returns||[]){if(!inRange(ret.date))continue;const l=r.lines.find(x=>x.productId===ret.productId),c=r.costs.find(x=>x.productId===ret.productId);if(!groups.has(ret.productId))groups.set(ret.productId,[l.sku,l.nombre,0,0,0]);const row=groups.get(ret.productId);row[2]-=ret.amount;if(ret.restock)row[3]-=c.unitCost*ret.qty;}rows=[...groups.values()].map(r=>[r[0],r[1],+r[2].toFixed(2),+r[3].toFixed(2),+(r[2]-r[3]).toFixed(2)]);}
-    if(type==='expenses'){title='Gastos por periodo';headers=['Fecha','Motivo','Evento','Importe S/'];rows=(extraState.expenses||[]).filter(x=>inRange(x.date)&&(origin==='all'||(origin==='daily'?!x.eventId:x.eventId===origin))).map(x=>[new Date(x.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),x.reason,extraState.events?.find(e=>e.id===x.eventId)?.name||'Venta diaria / local',num(x.amount)]);}
+    if(type==='expenses'){
+      title='Gastos y desembolsos por periodo';
+      headers=['Fecha','Clasificación','Concepto / producto','Origen','Importe S/'];
+      const recorded=(extraState.expenses||[]).filter(x=>inRange(x.date)&&(origin==='all'||(origin==='daily'?!x.eventId:x.eventId===origin))).map(x=>({
+        date:x.date,values:[new Date(x.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),'Gasto operativo',x.reason,extraState.events?.find(e=>e.id===x.eventId)?.name||'Venta diaria / local',num(x.amount)]
+      }));
+      // No incluir ajustes ADJ_IN como desembolsos ni descuentos por consumo: no representan pagos.
+      const buys=origin==='all'?kardex.filter(k=>['IN','SUPPLY_BUY'].includes(k.type)&&inRange(k.date)&&Number(k.amount)>0).map(k=>({
+        date:k.date,values:[new Date(k.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),k.type==='SUPPLY_BUY'?'Compra de consumibles':'Compra de inventario',k.name||k.sku||'Sin descripción','Inventario / reposición',num(k.amount)]
+      })):[];
+      rows=[...recorded,...buys].sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(x=>x.values);
+    }
     if(type==='purchases'){
       title='Compras y reposiciones por periodo';
       headers=['Fecha','SKU','Producto','Movimiento','Cantidad','Importe S/'];
@@ -1801,8 +1812,13 @@
     const sum=i=>rows.reduce((total,row)=>total+(Number(row[i])||0),0);
     const indicators=[['Registros',rows.length.toLocaleString('es-PE'),'Operaciones incluidas'],['Periodo',r.period||'No definido','Intervalo consultado']];
     if(type==='expenses'){
-      indicators.splice(1,0,['Gastos registrados',reportMoney(sum(3)),'Solo egresos anotados en Caja y gestión']);
-      indicators.push(['Áreas / eventos',new Set(rows.map(row=>row[2])).size.toLocaleString('es-PE'),'Orígenes con gastos']);
+      const operating=rows.filter(row=>row[1]==='Gasto operativo').reduce((sum,row)=>sum+(Number(row[4])||0),0);
+      const inventory=rows.filter(row=>row[1]!=='Gasto operativo').reduce((sum,row)=>sum+(Number(row[4])||0),0);
+      indicators.length=0;
+      indicators.push(['Total desembolsos',reportMoney(operating+inventory),'Gastos registrados y compras, sin duplicaciones de consumo'],
+        ['Gastos operativos',reportMoney(operating),'Registrados en Caja y gestión'],
+        ['Compras de inventario',reportMoney(inventory),'Mercadería y empaques contabilizados por separado'],
+        ['Movimientos',rows.length.toLocaleString('es-PE'),'Periodo: '+(r.period||'')]);
     }else if(type==='purchases'){
       indicators.splice(1,0,['Importe de compras',reportMoney(sum(5)),'Entradas de inventario; no equivale a gasto devengado']);
     }else if(type==='supplies'){
@@ -1828,7 +1844,7 @@
     const sourceNote=el('report-source-note');
     if(sourceNote){
       const instructions={
-        expenses:'Gastos solo incluye egresos anotados en Caja y gestión. Si realizaste compras de mercadería, utiliza «Compras y reposiciones por periodo»; para uso de materiales, «Consumo de empaques y consumibles». No se mezclan importes de compra con gastos para evitar doble contabilización.',
+        expenses:'Este informe muestra los gastos operativos y las compras realizadas en el periodo, clasificados por separado. Las compras de inventario NO son automáticamente gastos del estado de resultados; el consumo se refleja cuando corresponde en el costo vendido. El filtro Origen solo afecta a gastos operativos; compras se muestran cuando seleccionas Todas las ventas.',
         purchases:'Compras y reposiciones muestra entradas monetarias del kardex. Una compra de inventario no se considera automáticamente gasto operativo; consulta Resultado operativo para márgenes.',
         supplies:'Consumo de empaques y consumibles muestra descuentos y ajustes registrados. Los consumibles incluidos en el costo de ventas no se cargan nuevamente como gasto.',
         stock:'Existencias actuales es una fotografía del saldo vigente, no un historial de existencias.'
@@ -1862,7 +1878,7 @@
     });table.append(body);
     const empty=el('report-empty');empty.hidden=r.rows.length>0;
     el('report-empty-detail').textContent=r.type==='expenses'
-      ?'No se encontraron gastos registrados en Caja y gestión para este periodo y origen. Las compras de inventario y el uso de consumibles se registran por separado; revisa Movimientos o Resultado operativo.'
+      ?'No hay gastos operativos ni compras registradas para este periodo y origen. Amplía el periodo o registra los gastos en Caja y gestión; las compras proceden del historial de reposiciones.'
       :'No existen movimientos de este tipo con los filtros seleccionados. Amplía las fechas o revisa el origen.';
     const footer=el('report-footer');footer.replaceChildren();
     if(r.rows.length&&moneyCols.length){
@@ -1877,8 +1893,8 @@
     const breakdown=el('report-breakdown');breakdown.replaceChildren();breakdown.hidden=true;
     if(r.type==='expenses'&&r.rows.length){
       breakdown.hidden=false;
-      const title=document.createElement('h3');title.textContent='Distribución de gastos por origen';breakdown.append(title);
-      const groups=new Map();r.rows.forEach(row=>groups.set(String(row[2]),(groups.get(String(row[2]))||0)+(Number(row[3])||0)));
+      const title=document.createElement('h3');title.textContent='Distribución por clasificación';breakdown.append(title);
+      const groups=new Map();r.rows.forEach(row=>groups.set(String(row[1]),(groups.get(String(row[1]))||0)+(Number(row[4])||0)));
       const max=Math.max(...groups.values(),1);
       [...groups].sort((a,b)=>b[1]-a[1]).slice(0,8).forEach(([name,value])=>{
         const line=document.createElement('div');line.className='report-breakdown-row';
@@ -1891,9 +1907,10 @@
     }
   }
   el('report-generate').onclick=()=>{try{showReport(reportData());}catch(e){showToast('Reporte',e.message,'error');}};
+  el('report-register-expense').onclick=()=>{if(!window.Smartbod?.openExpenseForm?.())showToast('Permiso requerido','Se necesita autorización para registrar gastos.','error');};
   el('report-type').onchange=()=>{el('report-product-label').hidden=el('report-type').value!=='prices';refreshPriceProducts();el('report-event').disabled=['prices','stock','profit','production','movements','purchases','supplies'].includes(el('report-type').value);el('report-from').disabled=false;el('report-to').disabled=false;const snapshot=['stock'].includes(el('report-type').value);el('report-date-hint').textContent=snapshot?'Existencias actuales muestra el inventario de hoy; cambiar fechas no reconstruye inventarios históricos. Para consultar operaciones por fecha, selecciona Movimientos.':'Selecciona las fechas directamente en los calendarios. El periodo personalizado aplica a los reportes históricos.';el('report-generate').click();};
   const reportFileName=(r,ext)=>'SMARTBOD_'+String(r.type||r.title||'reporte').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,65)+'_'+new Date().toISOString().slice(0,10)+'.'+ext;
-  const reportRows=r=>r.rows.length?r.rows:[['SIN REGISTROS: '+(r.type==='expenses'?'No se registraron gastos en Caja y gestión para el periodo consultado. Las compras de productos figuran en Movimientos.':'No existen registros para los filtros seleccionados.'),...r.headers.slice(1).map(()=>'')]];
+  const reportRows=r=>r.rows.length?r.rows:[['SIN REGISTROS: '+(r.type==='expenses'?'No existen gastos ni compras registrados para el periodo consultado.':'No existen registros para los filtros seleccionados.'),...r.headers.slice(1).map(()=>'')]];
   const reportDownload=(blob,name)=>{
     const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
   };
@@ -1932,7 +1949,7 @@
         doc.setFontSize(13);doc.setTextColor(30,41,59);
         doc.text('No hay registros en el periodo seleccionado.',19,y+11);
         doc.setFontSize(10);
-        const note=r.type==='expenses'?'El reporte de gastos solo incluye egresos registrados en Caja y gestion. Las compras de inventario se consultan en Movimientos.':'Revisa las fechas y el origen seleccionados.';
+        const note=r.type==='expenses'?'No se encontraron gastos ni compras en el periodo. Revisa los movimientos o registra gastos en Caja y gestion.':'Revisa las fechas y el origen seleccionados.';
         doc.text(doc.splitTextToSize(note,pageWidth-40),19,y+19);y+=36;
       }else if(typeof doc.autoTable==='function'){
         doc.autoTable({startY:y,head:[r.headers],body:r.rows.map(row=>row.map((v,i)=>typeof v==='number'&&reportCurrencyColumn(r.headers[i])?reportMoney(v):String(v??'—'))),
