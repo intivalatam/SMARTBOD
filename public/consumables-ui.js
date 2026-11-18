@@ -24,7 +24,7 @@ export function installConsumables(app){
   }
   const selected=field('id','Consumible','text',materials().map(p=>[p.id,p.nombre+' · '+p.supplyUnit]));
   if(k==='supplyPurchase'){field('qty','Cantidad de paquetes o envases comprados','number').min='0.000001';field('perPack','Unidades de control por paquete o envase','number').value=1;field('total','Costo total de la compra (S/)','number');field('supplier','Proveedor (opcional)').required=false;field('document','Documento (opcional)').required=false;}
-  if(k==='supplyUse'){field('mode','Tipo de registro','text',[['use','Uso adicional del turno'],['waste','Desperdicio'],['count','Conteo físico: cantidad que queda']]);field('entryUnit','Registrar cantidad en','text',[['control','Unidad de control'],['piece','Piezas sueltas']]);field('qty','Cantidad utilizada o saldo contado','number');field('reason','Motivo / turno / referencia');field('estimated','Medición','text',[['false','Conteo exacto'],['true','Estimado']]);field('eventId','Origen','text',[['','Local / uso general'],...(app.state().events||[]).map(e=>[e.id,e.name])]);field('unitCost','Costo unitario para sobrante si no había stock (S/)','number').value=0;}
+  if(k==='supplyUse'){field('mode','Tipo de registro','text',[['use','Uso adicional del turno'],['waste','Desperdicio'],['count','Conteo físico (SALDO QUE QUEDA, no cantidad comprada)']]);field('entryUnit','Registrar cantidad en','text',[['control','Unidad de control'],['piece','Piezas sueltas']]);field('qty','Cantidad utilizada o saldo contado','number');field('reason','Motivo / turno / referencia');field('estimated','Medición','text',[['false','Conteo exacto'],['true','Estimado']]);field('eventId','Origen','text',[['','Local / uso general'],...(app.state().events||[]).map(e=>[e.id,e.name])]);field('unitCost','Costo unitario para sobrante si no había stock (S/)','number').value=0;}
   if(k==='supplySettings'){field('name','Nombre');packField();field('minStock','Mínimo para alertar','number');}
   const update=()=>{const p=chosen();expectedStock=p?qty(p):0;if(k==='supplySettings'&&p){$('supply-field-name').value=p.nombre;$('supply-field-packContents').value=p.packContents??'';$('supply-field-packContents').required=p.supplyUnit==='paquete';$('supply-field-minStock').value=p.minStock;}$('supply-help').textContent=p?'Disponible: '+fmt(expectedStock)+' '+p.supplyUnit+' · Costo promedio: '+app.money(cost(p))+(k==='supplyUse'?'. El saldo ya incluye descuentos de ventas. Registra solo uso adicional, o elige Conteo físico para ingresar cuánto queda. Actualiza si hubo movimientos mientras contabas.':k==='supplyPurchase'?'. El costo nuevo se promedia con el valor de lo que queda. No se exige precio de venta.':''):'Registra primero un consumible.';};const preview=()=>{
    const p=chosen();if(!p)return;
@@ -34,8 +34,15 @@ export function installConsumables(app){
     $('supply-help').textContent='Ingreso: '+fmt(units)+' '+p.supplyUnit+' · Saldo: '+fmt(expectedStock)+' → '+fmt(expectedStock+units)+' '+p.supplyUnit+(p.supplyUnit==='paquete'&&p.packContents?' · '+fmt((expectedStock+units)*p.packContents)+' piezas en total':'');
    }
    if(k==='supplyUse'){
-    const after=$('supply-field-mode').value==='count'?quantity:expectedStock-quantity;
-    $('supply-help').textContent='Saldo: '+fmt(expectedStock)+' → '+fmt(after)+' '+p.supplyUnit+(after<0?' · Supera las existencias disponibles':'');
+    const isCount=$('supply-field-mode').value==='count';
+    const after=isCount?quantity:expectedStock-quantity;
+    const difference=after-expectedStock;
+    const suspicious=isCount&&difference>Math.max(5,expectedStock*2);
+    $('supply-help').textContent=(isCount?'CONTEO: ingresa cuánto queda físicamente, NO lo que compraste. ':'USO: ingresa cuánto se gastó. ')+
+      'Saldo: '+fmt(expectedStock)+' → '+fmt(after)+' '+p.supplyUnit+
+      (after<0?' · Supera las existencias disponibles':'')+
+      (suspicious?' · ⚠ El conteo SUMARÍA '+fmt(difference)+' '+p.supplyUnit+'. Si se trata de una compra, usa REPONER.':'');
+    $('supply-help').classList.toggle('supply-count-warning',suspicious);
    }
   };
   selected.onchange=()=>{update();const material=chosen();
@@ -81,7 +88,23 @@ export function installConsumables(app){
  $('material-new').hidden=!app.can('catalog');
  $('material-new').onclick=()=>openForm('supplyCreate');
  async function submit(r){if(busy)return;busy=true;$('supply-submit').disabled=true;try{if(await app.run(r)){render();form();$('supply-status').textContent='Registrado. Existencias y costos actualizados.';}else $('supply-status').textContent='No se confirmó. Revisa el aviso antes de reintentar.';}finally{busy=false;$('supply-submit').disabled=!app.can(scope($('supply-mode').value));}}
- $('supply-form').onsubmit=e=>{e.preventDefault();const r=Object.fromEntries(new FormData(e.target));r.kind=$('supply-mode').value;if(r.kind==='supplyUse'){r.expectedStock=expectedStock;r.estimated=r.estimated==='true';}if(r.kind==='supplyAssign'){r.expectedLinks=expectedLinks;const links=JSON.parse(expectedLinks).filter(a=>a.id!==r.supplyId);links.push({id:r.supplyId,qty:Number(r.qty)});r.links=links;delete r.supplyId;delete r.qty;}submit(r);};
+ $('supply-form').onsubmit=e=>{
+  e.preventDefault();
+  const r=Object.fromEntries(new FormData(e.target));r.kind=$('supply-mode').value;
+  if(r.kind==='supplyUse'){
+   r.expectedStock=expectedStock;r.estimated=r.estimated==='true';
+   const product=chosen(),unitFactor=r.entryUnit==='piece'&&product?.supplyUnit==='paquete'?Number(product.packContents||1):1;
+   const finalStock=Number(r.qty)/unitFactor,largeCount=r.mode==='count'&&finalStock-expectedStock>Math.max(5,expectedStock*2);
+   if(largeCount){
+    if(r.estimated){$('supply-status').textContent='Un aumento tan grande requiere un conteo exacto. Si compraste paquetes, utiliza Reponer.';return;}
+    if(!app.can('adjust')){$('supply-status').textContent='Este ajuste excepcional requiere permisos de administrador.';return;}
+    if(!confirm('ATENCIÓN: se AÑADIRÁN '+fmt(finalStock-expectedStock)+' '+(product?.supplyUnit||'unidades')+' al stock y se aumentará su valor contable. ¿Comprobaste físicamente ese saldo? Si compraste paquetes, cancela y usa Reponer.'))return;
+    r.confirmLargeCount=true;
+   }
+  }
+  if(r.kind==='supplyAssign'){r.expectedLinks=expectedLinks;const links=JSON.parse(expectedLinks).filter(a=>a.id!==r.supplyId);links.push({id:r.supplyId,qty:Number(r.qty)});r.links=links;delete r.supplyId;delete r.qty;}
+  submit(r);
+ };
  nav.addEventListener('click',()=>{render();for(const o of $('supply-mode').options)o.disabled=!app.can(scope(o.value));const first=[...$('supply-mode').options].find(o=>!o.disabled);if(first)$('supply-mode').value=first.value;form();});$('supply-mode').onchange=form;$('supply-refresh').onclick=async()=>{if(busy)return;try{app.apply(await Cloud.api('state'));render();form();$('supply-status').textContent='Saldos actualizados. Ingresa el uso o conteo nuevamente.';}catch(e){$('supply-status').textContent=e.message;}};$('supply-from').onchange=history;$('supply-to').onchange=history;
  $('supply-export').onclick=()=>{const rows=[['Fecha','Material','Movimiento','Cantidad','Unidad','Valor','Responsable','Detalle'],...movements().map(k=>[k.date,k.name,labels[k.type],k.delta,k.unit,k.amount,k.operator,k.detail])];const csv='\ufeff'+rows.map(row=>row.map(v=>'"'+String(v??'').replace(/^[=+@-]/,"'$&").replaceAll('"','""')+'"').join(';')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='consumibles.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
  app.openLowSupplies=()=>{nav.click();$('material-search').value='';$('material-low').checked=true;render();};app.openSupplyPurchase=id=>{nav.click();openForm('supplyPurchase',id);};app.refreshSupplies=render;app.openSupplies=()=>nav.click();render();form();
