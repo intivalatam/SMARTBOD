@@ -45,3 +45,18 @@ test('documento HTML incluye tarjetas, estado vacío y exportaciones',()=>{
  assert.match(html,/reportDownload/);
  assert.match(html,/No se encontraron gastos registrados en Caja y gestión/);
 });
+
+test('compras y reposiciones se muestran separadas de los gastos',()=>{
+ const kardex=[{type:'IN',date:'2026-11-15T10:00:00Z',sku:'A',name:'Pan',qty:10,amount:20},{type:'SUPPLY_BUY',date:'2026-11-15T11:00:00Z',sku:'V',name:'Vasos',qty:1,amount:12}];
+ const ctx=vm.createContext({extraState:{expenses:[]},items:[],kardex,getConsumoElaborados:()=>({}),num:v=>Number(v)||0,lsGet:()=> '[]',
+ el:id=>({value:({'report-type':'purchases','report-event':'all','report-from':'2026-11-15','report-to':'2026-11-15'})[id],selectedOptions:[{textContent:'Todas'}]}),
+ limaDay:d=>new Date(d).toISOString().slice(0,10)});
+ const r=vm.runInContext(code+';reportData()',ctx);
+ assert.equal(r.rows.length,2);assert.equal(r.rows.reduce((a,x)=>a+x[5],0),32);assert.equal(r.type,'purchases');
+});
+test('consumo de materiales conserva el signo de reversos',()=>{
+ const kardex=[{type:'SUPPLY_USE',date:'2026-11-15T10:00:00Z',name:'Vasos',delta:-.3,expense:3},{type:'SUPPLY_REVERSAL',date:'2026-11-15T11:00:00Z',name:'Vasos',delta:-69,expense:331.2}];
+ const ctx=vm.createContext({extraState:{},items:[],kardex,getConsumoElaborados:()=>({}),num:v=>Number(v)||0,lsGet:()=> '[]',el:id=>({value:({'report-type':'supplies','report-event':'all','report-from':'2026-11-15','report-to':'2026-11-15'})[id],selectedOptions:[{textContent:'Todas'}]}),limaDay:d=>new Date(d).toISOString().slice(0,10)});
+ const r=vm.runInContext(code+';reportData()',ctx);
+ assert.equal(r.rows.length,2);assert.equal(r.rows[0][3],-.3);assert.equal(r.rows[1][2],'Reversión de ajuste');
+});

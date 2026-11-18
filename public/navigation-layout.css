@@ -113,3 +113,16 @@
  body.printing-report .report-kpi{break-inside:avoid}
  body.printing-report #report-breakdown .report-breakdown-track>span{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+
+/* Panel completo de revisión de stock, independiente de la paginación de inventario */
+.stock-review-panel{margin:0 0 22px;padding:20px 24px;border:1px solid #f0be64;background:var(--surface);border-radius:16px}
+.stock-review-heading{display:flex;align-items:start;justify-content:space-between;gap:18px;margin-bottom:16px}
+.stock-review-heading h2{margin:5px 0 8px;font-size:24px;letter-spacing:-.025em;color:var(--ink)}
+.stock-review-heading p{font-size:13px;color:var(--muted);margin:0}
+.stock-review-summary{border-radius:12px;padding:12px 16px;background:#fff7e3;color:#874d0a;font-weight:750;font-size:14px;margin-bottom:16px}
+.stock-review-table{min-width:610px}
+.stock-review-table td{vertical-align:middle}
+.stock-review-table td:first-child{font-weight:700}
+#v-rep .report-data-note{font-size:13px;line-height:1.6;border-left:4px solid #0e927c;background:var(--surface-2);padding:12px 14px;border-radius:8px;color:var(--ink-2);margin:15px 0}
+@media(max-width:750px){.stock-review-heading{flex-direction:column}.stock-review-panel{padding:15px}}
+[data-theme="dark"] .stock-review-summary{background:#49390b;color:#fce8b1}

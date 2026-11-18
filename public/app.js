@@ -353,31 +353,40 @@
   let stockAlertIndex = 0;
   const stockChip = document.getElementById('chip-low-stock');
   const stockAlertLabel = document.getElementById('stock-alert-product');
+  const stockReviewPanel=document.getElementById('stock-review-panel');
+  const stockReviewBody=document.getElementById('stock-review-rows');
+  const statusCritical=p=>calc(p,getConsumoElaborados()).estado;
+  function criticalProducts(){
+    return items.filter(p=>!p.archived&&p.inventoryKind!=='consumable'&&['Agotado','Stock bajo'].includes(statusCritical(p)))
+      .sort((a,b)=>(statusCritical(a)==='Agotado'?0:1)-(statusCritical(b)==='Agotado'?0:1)||a.nombre.localeCompare(b.nombre,'es'));
+  }
+  function displayStockReview(){
+    const review=criticalProducts(),nOut=review.filter(p=>statusCritical(p)==='Agotado').length;
+    stockReviewBody.replaceChildren();
+    document.getElementById('stock-review-summary').textContent=review.length+' productos requieren revisión · '+nOut+' agotados · '+(review.length-nOut)+' con stock bajo';
+    for(const product of review){
+      const calcProduct=calc(product,getConsumoElaborados());
+      const tr=document.createElement('tr');
+      for(const value of [product.nombre,product.sku,calcProduct.estado,String(Number(calcProduct.stock.toFixed(3)))+' unid.']){
+        const td=document.createElement('td');td.textContent=value;tr.append(td);
+      }
+      const action=document.createElement('td'),button=document.createElement('button');
+      button.type='button';button.className='btn small';button.textContent=product.tipo==='elaborado'?'Revisar preparación':'Reponer';
+      button.onclick=()=>{if(product.tipo==='elaborado'){document.getElementById('inv-search').value=product.sku;document.getElementById('inv-status-filter').value='ALL';renderApp();document.getElementById('inventory-tbody').scrollIntoView({behavior:'smooth',block:'start'});}else openRestock(product);};
+      action.append(button);tr.append(action);stockReviewBody.append(tr);
+    }
+    if(!review.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.textContent='No hay productos agotados ni con stock bajo.';tr.append(td);stockReviewBody.append(tr);}
+  }
+  document.getElementById('stock-review-close').onclick=()=>{stockReviewPanel.hidden=true;};
   stockChip.addEventListener('click', () => {
-    const target = activeStockAlert;
-    if (!target) { showToast('Stock', 'No hay productos críticos para revisar.'); return; }
     switchTab('inv');
-    if (document.getElementById('v-inv').hidden) {
-      showToast('Acceso restringido', 'Tu cuenta no tiene permiso para revisar el inventario.', 'error');
-      return;
+    if(document.getElementById('v-inv').hidden){
+      showToast('Acceso restringido','Tu cuenta no tiene permiso para revisar el inventario.','error');return;
     }
-    // Restablecer todos los filtros que podrían esconder el producto crítico.
-    document.getElementById('inv-search').value = target.sku || target.nombre;
-    document.getElementById('inv-status-filter').value = 'ALL';
-    document.getElementById('inv-sort').value = 'recent';
-    activeInvCat = 'ALL';
-    document.querySelectorAll('#inv-cat-pills .pill').forEach(p => p.classList.toggle('active', p.dataset.cat === 'ALL'));
-    renderApp();
-    const inventory = document.getElementById('v-inv');
-    inventory.scrollIntoView({behavior:'smooth',block:'start'});
-    const rows = [...document.querySelectorAll('#inventory-tbody tr')];
-    const targetRow = rows.find(row => row.textContent.includes(target.sku || target.nombre)) || rows[0];
-    if (targetRow) {
-      targetRow.classList.add('inventory-alert-focus');
-      targetRow.scrollIntoView({behavior:'smooth',block:'center'});
-      setTimeout(() => targetRow.classList.remove('inventory-alert-focus'), 4000);
-    }
-    showToast('Revisar existencias', target.nombre + ' · ' + calc(target, getConsumoElaborados()).estado);
+    // El listado crítico completo no depende de búsqueda, categoría, estado ni paginación.
+    stockReviewPanel.hidden=false;
+    displayStockReview();
+    stockReviewPanel.scrollIntoView({behavior:'smooth',block:'start'});
   });
   function cycleStockAlert() {
     const critical = items.filter(p => !p.archived && p.inventoryKind !== 'consumable' && ['Agotado','Stock bajo'].includes(calc(p, getConsumoElaborados()).estado));
@@ -856,6 +865,7 @@
     const globalMargin = ingTot > 0 ? ((ganTot / ingTot) * 100).toFixed(1) : "0.0";
     document.getElementById('s-margen-sub').textContent = `Margen bruto sobre ventas: ${globalMargin}%`;
 
+    if (!stockReviewPanel.hidden) displayStockReview();
     const totalAlerts = countLow + countOut;
     document.getElementById('s-alertas').textContent = `${totalAlerts} Alertas`;
     document.getElementById('s-alertas-sub').textContent = `${countOut} agotados · ${countLow} stock bajo`;
@@ -1754,6 +1764,22 @@
     if(type==='stock'){title='Existencias actuales';headers=['SKU','Producto','Stock','Última compra S/','Costo promedio / preparado S/','Precio de venta S/'];rows=items.map(p=>{const c=calc(p,usage);return[p.sku,p.nombre,c.stock,p.lastPurchaseCost??'Sin historial',+c.cu.toFixed(2),num(p.precio)];});}
     if(type==='profit'){title='Margen bruto por periodo y origen';headers=['SKU','Producto','Ingresos netos S/','Costo vendido S/','Margen bruto S/'];const groups=new Map();for(const r of selectedReceipts.filter(x=>x.status!=='voided'))for(const l of r.lines){const c=r.costs?.find(x=>x.productId===l.productId||x.sku===l.sku),id=l.productId||l.sku;if(!groups.has(id))groups.set(id,[l.sku,l.nombre,0,0,0]);const row=groups.get(id);row[2]+=num(l.net??l.subtotal);row[3]+=num(c?.unitCost)*l.qty;}for(const r of JSON.parse(lsGet('smartbod-receipts-v1','[]')).filter(r=>origin==='all'||(origin==='daily'?!r.eventId:r.eventId===origin)))for(const ret of r.returns||[]){if(!inRange(ret.date))continue;const l=r.lines.find(x=>x.productId===ret.productId),c=r.costs.find(x=>x.productId===ret.productId);if(!groups.has(ret.productId))groups.set(ret.productId,[l.sku,l.nombre,0,0,0]);const row=groups.get(ret.productId);row[2]-=ret.amount;if(ret.restock)row[3]-=c.unitCost*ret.qty;}rows=[...groups.values()].map(r=>[r[0],r[1],+r[2].toFixed(2),+r[3].toFixed(2),+(r[2]-r[3]).toFixed(2)]);}
     if(type==='expenses'){title='Gastos por periodo';headers=['Fecha','Motivo','Evento','Importe S/'];rows=(extraState.expenses||[]).filter(x=>inRange(x.date)&&(origin==='all'||(origin==='daily'?!x.eventId:x.eventId===origin))).map(x=>[new Date(x.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),x.reason,extraState.events?.find(e=>e.id===x.eventId)?.name||'Venta diaria / local',num(x.amount)]);}
+    if(type==='purchases'){
+      title='Compras y reposiciones por periodo';
+      headers=['Fecha','SKU','Producto','Movimiento','Cantidad','Importe S/'];
+      rows=kardex.filter(k=>['IN','SUPPLY_BUY','ADJ_IN'].includes(k.type)&&inRange(k.date)).map(k=>[
+        new Date(k.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),k.sku||'',k.name||'',
+        k.type==='SUPPLY_BUY'?'Compra de consumible':k.type==='ADJ_IN'?'Ajuste de entrada':'Compra / reposición',
+        num(k.qty),num(k.amount)]);
+    }
+    if(type==='supplies'){
+      title='Consumo de empaques y consumibles';
+      headers=['Fecha','Material','Operación','Cantidad','Impacto en costo S/'];
+      rows=kardex.filter(k=>['SUPPLY_USE','SUPPLY_WASTE','SUPPLY_AUTO','SUPPLY_COUNT_IN','SUPPLY_COUNT_OUT','SUPPLY_REVERSAL'].includes(k.type)&&inRange(k.date)).map(k=>[
+        new Date(k.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),k.name||k.sku||'',
+        ({SUPPLY_USE:'Uso manual',SUPPLY_WASTE:'Desperdicio',SUPPLY_AUTO:'Descuento por venta',SUPPLY_COUNT_IN:'Ajuste positivo',SUPPLY_COUNT_OUT:'Ajuste negativo',SUPPLY_REVERSAL:'Reversión de ajuste'})[k.type],
+        num(k.delta??k.qty),num(k.expense??0)]);
+    }
     if(type==='result'){title='Resultado operativo de costos y gastos registrados';headers=['Concepto','Importe S/'];let revenue=0,cost=0;for(const r of selectedReceipts.filter(x=>x.status!=='voided')){revenue+=r.total;for(const l of r.lines)cost+=(r.costs?.find(c=>c.productId===l.productId||c.sku===l.sku)?.unitCost||0)*l.qty;}for(const r of extraState.receipts||[]){if(origin!=='all'&&(origin==='daily'?!!r.eventId:r.eventId!==origin))continue;for(const ret of r.returns||[])if(inRange(ret.date)){revenue-=ret.amount;if(ret.restock)cost-=(r.costs.find(c=>c.productId===ret.productId)?.unitCost||0)*ret.qty;}}const expenses=(extraState.expenses||[]).filter(x=>inRange(x.date)&&(origin==='all'||(origin==='daily'?!x.eventId:x.eventId===origin))).reduce((a,x)=>a+x.amount,0),waste=origin==='all'?kardex.filter(k=>k.type==='WASTE'&&inRange(k.date)).reduce((a,k)=>a+num(k.amount),0):0;const supplies=kardex.filter(k=>k.type?.startsWith('SUPPLY_')&&inRange(k.date)&&(origin==='all'||(origin==='daily'?!k.eventId:k.eventId===origin))).reduce((a,k)=>a+num(k.expense),0);rows=[['Ventas netas de reembolsos',revenue],['Costo vendido',cost],['Margen bruto',revenue-cost],['Gastos registrados',expenses],['Consumibles: uso manual y ajustes netos',supplies],['Mermas (solo todos los orígenes)',waste],['Resultado registrado; no incluye gastos omitidos',revenue-cost-expenses-waste-supplies]].map(([l,v])=>[l,+v.toFixed(2)]);}
     if(type==='sales'){title='Ventas por ticket';headers=['Fecha','Ticket','Vendedor','Pago','Descuento S/','Total original S/','Estado','Importe vigente S/','Origen / Evento'];rows=selectedReceipts.map(r=>[r.isoDate?new Date(r.isoDate).toLocaleString('es-PE',{timeZone:'America/Lima'}):r.date,r.ticketNum,r.operator||'Sin registro',r.payMethod,num(r.discount),num(r.total),r.status==='voided'?'Anulada':r.returns?.length?'Con devolución':'Vigente',r.status==='voided'?0:num(r.total)-(r.returns||[]).reduce((a,x)=>a+x.amount,0),r.eventSnapshot?.name||'Venta diaria / local']);}
     if(type==='daily'||type==='eventSummary'){
@@ -1765,7 +1791,7 @@
     if(type==='movements'){title='Movimientos de inventario';headers=['Fecha','SKU','Producto','Tipo','Cantidad','Importe S/'];rows=kardex.filter(k=>inRange(k.date)).map(k=>[new Date(k.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),k.sku,k.name,k.type,num(k.qty),num(k.amount)]);}
     if(type==='production'){title='Preparaciones registradas';headers=['Fecha','SKU','Producto','Porciones preparadas','Costo total S/'];rows=kardex.filter(k=>k.type==='PROD_IN'&&inRange(k.date)).map(k=>[new Date(k.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),k.sku,k.name,num(k.qty),num(k.amount)]);}
     if(type==='prices'){const history=PriceAnalytics.rows(items,{productId:el('report-product').value,from,to});return {type,title:'Historial de precios',headers:['Fecha','SKU','Producto','Movimiento','Unidades','Compra neta por unidad S/','Venta por unidad S/','Cambio compra %','Cambio venta %','Responsable'],rows:history.map(h=>[new Date(h.date).toLocaleString('es-PE',{timeZone:'America/Lima'}),h.sku,h.productName,h.source,h.qty,h.unitCost==null?'—':Number(h.unitCost.toFixed(4)),h.salePrice,PriceAnalytics.change(h.previousPurchaseCost,h.unitCost)?.toFixed(2)??'—',PriceAnalytics.change(h.previousSalePrice,h.salePrice)?.toFixed(2)??'—',h.operator]),priceRows:history,priceProduct:el('report-product').value,created:new Date().toISOString(),period:(from||'Inicio')+' a '+(to||'Hoy')};}
-    return {type,title,headers,rows,created:new Date().toISOString(),period:['expenses','result','profit','sales','daily','eventSummary','movements','production'].includes(type)?`${from||'Inicio'} a ${to||'Hoy'}${['sales','daily','eventSummary'].includes(type)?' · '+el('report-event').selectedOptions[0].textContent:''}`:'Las fechas no se aplican: existencias actuales / rentabilidad acumulada'};
+    return {type,title,headers,rows,created:new Date().toISOString(),period:['expenses','purchases','supplies','result','profit','sales','daily','eventSummary','movements','production'].includes(type)?`${from||'Inicio'} a ${to||'Hoy'}${['sales','daily','eventSummary'].includes(type)?' · '+el('report-event').selectedOptions[0].textContent:''}`:'Las fechas no se aplican: existencias actuales / rentabilidad acumulada'};
   }
   const reportMoney=value=>'S/ '+Number(value||0).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
   const reportCurrencyColumn=header=>/S\/|importe|margen bruto|costo vendido|ingresos netos|ventas vigentes|resultado registrado/i.test(header);
@@ -1777,6 +1803,10 @@
     if(type==='expenses'){
       indicators.splice(1,0,['Gastos registrados',reportMoney(sum(3)),'Solo egresos anotados en Caja y gestión']);
       indicators.push(['Áreas / eventos',new Set(rows.map(row=>row[2])).size.toLocaleString('es-PE'),'Orígenes con gastos']);
+    }else if(type==='purchases'){
+      indicators.splice(1,0,['Importe de compras',reportMoney(sum(5)),'Entradas de inventario; no equivale a gasto devengado']);
+    }else if(type==='supplies'){
+      indicators.splice(1,0,['Impacto neto registrado',reportMoney(sum(4)),'Uso, ajustes y reversos contables']);
     }else if(type==='result'){
       const last=rows.at(-1);
       indicators.splice(1,0,['Resultado registrado',reportMoney(last?.[1]),'No incluye gastos no registrados']);
@@ -1795,6 +1825,16 @@
     currentReport=r;showPriceAnalytics(r);
     el('report-title').textContent=r.title;
     el('report-meta').textContent=(r.period||'Periodo sin especificar')+' · Generado '+new Date(r.created||Date.now()).toLocaleString('es-PE',{timeZone:'America/Lima'});
+    const sourceNote=el('report-source-note');
+    if(sourceNote){
+      const instructions={
+        expenses:'Gastos solo incluye egresos anotados en Caja y gestión. Si realizaste compras de mercadería, utiliza «Compras y reposiciones por periodo»; para uso de materiales, «Consumo de empaques y consumibles». No se mezclan importes de compra con gastos para evitar doble contabilización.',
+        purchases:'Compras y reposiciones muestra entradas monetarias del kardex. Una compra de inventario no se considera automáticamente gasto operativo; consulta Resultado operativo para márgenes.',
+        supplies:'Consumo de empaques y consumibles muestra descuentos y ajustes registrados. Los consumibles incluidos en el costo de ventas no se cargan nuevamente como gasto.',
+        stock:'Existencias actuales es una fotografía del saldo vigente, no un historial de existencias.'
+      };
+      sourceNote.textContent=instructions[r.type]||'El informe utiliza únicamente los movimientos registrados en SMARTBOD, según los filtros seleccionados.';
+    }
     el('report-row-count').textContent=r.rows.length.toLocaleString('es-PE')+' registros';
     el('report-status').textContent=r.rows.length?'Informe disponible':'Sin movimientos';
     const kpis=el('report-kpis');kpis.replaceChildren();
@@ -1851,7 +1891,7 @@
     }
   }
   el('report-generate').onclick=()=>{try{showReport(reportData());}catch(e){showToast('Reporte',e.message,'error');}};
-  el('report-type').onchange=()=>{el('report-product-label').hidden=el('report-type').value!=='prices';refreshPriceProducts();el('report-event').disabled=['prices','stock','profit','production','movements'].includes(el('report-type').value);el('report-from').disabled=false;el('report-to').disabled=false;const snapshot=['stock'].includes(el('report-type').value);el('report-date-hint').textContent=snapshot?'Existencias actuales muestra el inventario de hoy; cambiar fechas no reconstruye inventarios históricos. Para consultar operaciones por fecha, selecciona Movimientos.':'Selecciona las fechas directamente en los calendarios. El periodo personalizado aplica a los reportes históricos.';el('report-generate').click();};
+  el('report-type').onchange=()=>{el('report-product-label').hidden=el('report-type').value!=='prices';refreshPriceProducts();el('report-event').disabled=['prices','stock','profit','production','movements','purchases','supplies'].includes(el('report-type').value);el('report-from').disabled=false;el('report-to').disabled=false;const snapshot=['stock'].includes(el('report-type').value);el('report-date-hint').textContent=snapshot?'Existencias actuales muestra el inventario de hoy; cambiar fechas no reconstruye inventarios históricos. Para consultar operaciones por fecha, selecciona Movimientos.':'Selecciona las fechas directamente en los calendarios. El periodo personalizado aplica a los reportes históricos.';el('report-generate').click();};
   const reportFileName=(r,ext)=>'SMARTBOD_'+String(r.type||r.title||'reporte').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,65)+'_'+new Date().toISOString().slice(0,10)+'.'+ext;
   const reportRows=r=>r.rows.length?r.rows:[['SIN REGISTROS: '+(r.type==='expenses'?'No se registraron gastos en Caja y gestión para el periodo consultado. Las compras de productos figuran en Movimientos.':'No existen registros para los filtros seleccionados.'),...r.headers.slice(1).map(()=>'')]];
   const reportDownload=(blob,name)=>{
