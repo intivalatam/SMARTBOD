@@ -353,31 +353,40 @@
   let stockAlertIndex = 0;
   const stockChip = document.getElementById('chip-low-stock');
   const stockAlertLabel = document.getElementById('stock-alert-product');
+  const stockReviewPanel=document.getElementById('stock-review-panel');
+  const stockReviewBody=document.getElementById('stock-review-rows');
+  const statusCritical=p=>calc(p,getConsumoElaborados()).estado;
+  function criticalProducts(){
+    return items.filter(p=>!p.archived&&p.inventoryKind!=='consumable'&&['Agotado','Stock bajo'].includes(statusCritical(p)))
+      .sort((a,b)=>(statusCritical(a)==='Agotado'?0:1)-(statusCritical(b)==='Agotado'?0:1)||a.nombre.localeCompare(b.nombre,'es'));
+  }
+  function displayStockReview(){
+    const review=criticalProducts(),nOut=review.filter(p=>statusCritical(p)==='Agotado').length;
+    stockReviewBody.replaceChildren();
+    document.getElementById('stock-review-summary').textContent=review.length+' productos requieren revisión · '+nOut+' agotados · '+(review.length-nOut)+' con stock bajo';
+    for(const product of review){
+      const calcProduct=calc(product,getConsumoElaborados());
+      const tr=document.createElement('tr');
+      for(const value of [product.nombre,product.sku,calcProduct.estado,String(Number(calcProduct.stock.toFixed(3)))+' unid.']){
+        const td=document.createElement('td');td.textContent=value;tr.append(td);
+      }
+      const action=document.createElement('td'),button=document.createElement('button');
+      button.type='button';button.className='btn small';button.textContent=product.tipo==='elaborado'?'Revisar preparación':'Reponer';
+      button.onclick=()=>{if(product.tipo==='elaborado'){document.getElementById('inv-search').value=product.sku;document.getElementById('inv-status-filter').value='ALL';renderApp();document.getElementById('inventory-tbody').scrollIntoView({behavior:'smooth',block:'start'});}else openRestock(product);};
+      action.append(button);tr.append(action);stockReviewBody.append(tr);
+    }
+    if(!review.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.textContent='No hay productos agotados ni con stock bajo.';tr.append(td);stockReviewBody.append(tr);}
+  }
+  document.getElementById('stock-review-close').onclick=()=>{stockReviewPanel.hidden=true;};
   stockChip.addEventListener('click', () => {
-    const target = activeStockAlert;
-    if (!target) { showToast('Stock', 'No hay productos críticos para revisar.'); return; }
     switchTab('inv');
-    if (document.getElementById('v-inv').hidden) {
-      showToast('Acceso restringido', 'Tu cuenta no tiene permiso para revisar el inventario.', 'error');
-      return;
+    if(document.getElementById('v-inv').hidden){
+      showToast('Acceso restringido','Tu cuenta no tiene permiso para revisar el inventario.','error');return;
     }
-    // Restablecer todos los filtros que podrían esconder el producto crítico.
-    document.getElementById('inv-search').value = target.sku || target.nombre;
-    document.getElementById('inv-status-filter').value = 'ALL';
-    document.getElementById('inv-sort').value = 'recent';
-    activeInvCat = 'ALL';
-    document.querySelectorAll('#inv-cat-pills .pill').forEach(p => p.classList.toggle('active', p.dataset.cat === 'ALL'));
-    renderApp();
-    const inventory = document.getElementById('v-inv');
-    inventory.scrollIntoView({behavior:'smooth',block:'start'});
-    const rows = [...document.querySelectorAll('#inventory-tbody tr')];
-    const targetRow = rows.find(row => row.textContent.includes(target.sku || target.nombre)) || rows[0];
-    if (targetRow) {
-      targetRow.classList.add('inventory-alert-focus');
-      targetRow.scrollIntoView({behavior:'smooth',block:'center'});
-      setTimeout(() => targetRow.classList.remove('inventory-alert-focus'), 4000);
-    }
-    showToast('Revisar existencias', target.nombre + ' · ' + calc(target, getConsumoElaborados()).estado);
+    // El listado crítico completo no depende de búsqueda, categoría, estado ni paginación.
+    stockReviewPanel.hidden=false;
+    displayStockReview();
+    stockReviewPanel.scrollIntoView({behavior:'smooth',block:'start'});
   });
   function cycleStockAlert() {
     const critical = items.filter(p => !p.archived && p.inventoryKind !== 'consumable' && ['Agotado','Stock bajo'].includes(calc(p, getConsumoElaborados()).estado));
@@ -856,6 +865,7 @@
     const globalMargin = ingTot > 0 ? ((ganTot / ingTot) * 100).toFixed(1) : "0.0";
     document.getElementById('s-margen-sub').textContent = `Margen bruto sobre ventas: ${globalMargin}%`;
 
+    if (!stockReviewPanel.hidden) displayStockReview();
     const totalAlerts = countLow + countOut;
     document.getElementById('s-alertas').textContent = `${totalAlerts} Alertas`;
     document.getElementById('s-alertas-sub').textContent = `${countOut} agotados · ${countLow} stock bajo`;
