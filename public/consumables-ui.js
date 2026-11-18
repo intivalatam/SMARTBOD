@@ -3,9 +3,52 @@ export function installConsumables(app){
  const nav=document.createElement('button');nav.type='button';nav.className='tab';nav.dataset.tab='supplies';nav.setAttribute('role','tab');nav.setAttribute('aria-selected','false');nav.textContent='Empaques y consumibles';nav.hidden=app.user().role!=='admin';document.querySelector('.tabs').append(nav);
  const view=document.createElement('section');view.id='v-supplies';view.className='view';view.hidden=true;view.innerHTML=`<div class="panel"><h2>Empaques y consumibles</h2><div class="supply-toolbar"><input type="search" id="material-search" aria-label="Buscar por material o SKU" placeholder="Buscar material o SKU"><label><input type="checkbox" id="material-low"> Solo por reponer</label><button class="btn" id="material-new">+ Registrar material</button></div><p id="supply-summary" class="help-note"></p><div class="clean-table-container"><table class="clean-table"><thead><tr><th>Material / SKU</th><th>Contenido del paquete</th><th>Existencias</th><th>Mínimo</th><th>Costo promedio</th><th>Valor disponible</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="supply-stock"></tbody></table></div></div>
  <div class="panel"><h3>Operaciones rápidas</h3><p class="help-note">Elige una acción o utiliza los botones de cada material. Todas las operaciones conservan su historial y requieren permisos.</p><div class="supply-toolbar" id="supply-quick-actions"><button type="button" class="btn" data-supply-quick="supplyPurchase">+ Reponer</button><button type="button" class="btn ghost" data-supply-quick="supplyUse">− Descontar o contar</button><button type="button" class="btn ghost" data-supply-quick="supplySettings">Editar material</button><button type="button" class="btn ghost" data-supply-quick="supplyAssign">Asignar a preparado</button></div><button id="supply-refresh" class="btn ghost" type="button">Actualizar saldos y formulario</button><label>Operación seleccionada<select id="supply-mode"><option value="supplyCreate">Registrar un consumible</option><option value="supplyPurchase">Comprar / reponer</option><option value="supplyUse">Registrar uso o conteo</option><option value="supplyAssign">Asignar a un preparado</option><option value="supplySettings">Editar material y presentación</option></select></label><form id="supply-form"><div id="supply-fields" class="supply-form-grid"></div><p id="supply-help" class="help-note"></p><div id="supply-links"></div><button id="supply-submit" class="btn" type="submit">Guardar</button><p id="supply-status" role="status" aria-live="polite"></p></form></div>
+ <section class="panel" id="supply-reconcile-panel" hidden><h3>Conciliar un conteo incorrecto</h3><p id="supply-reconcile-info" class="help-note"></p><div class="supply-toolbar"><label>Paquetes comprados<input id="supply-reconcile-packs" type="number" min="0.001" step="any" value="1"></label><label>Piezas por paquete<input id="supply-reconcile-content" type="number" min="1" step="1"></label><label>Piezas consumidas<input id="supply-reconcile-used" type="number" min="0" step="1"></label></div><p id="supply-reconcile-preview" role="status"></p><label>Confirmación<input id="supply-reconcile-confirm" placeholder="Escribe CONCILIAR" autocomplete="off"></label><div class="supply-toolbar"><button type="button" id="supply-reconcile-submit" class="btn">Registrar conciliación con auditoría</button><button type="button" id="supply-reconcile-cancel" class="btn ghost">Cancelar</button></div></section>
  <div class="panel"><h3>Compras y consumo del periodo</h3><div class="report-controls"><label>Desde<input id="supply-from" type="date"></label><label>Hasta<input id="supply-to" type="date"></label><button class="btn ghost" id="supply-export">Descargar CSV</button></div><p id="supply-period-summary" class="help-note"></p><p>El costo del descuento automático ya está incluido en el costo de la venta. El uso manual y las diferencias de conteo se incluyen por separado en el resultado operativo. Las compras aumentan las existencias.</p><div class="clean-table-container"><table class="clean-table"><thead><tr><th>Fecha</th><th>Material</th><th>Movimiento</th><th>Entrada / salida</th><th>Valor S/</th><th>Responsable</th><th>Detalle</th></tr></thead><tbody id="supply-history"></tbody></table></div></div>`;
  document.querySelector('.workspace-main').insertBefore(view,document.querySelector('.workspace-footer'));
  let expectedStock=0,expectedLinks='[]',busy=false;
+ let pendingReconcile=null;
+ function lastSupplyMovement(p){return (app.state().kardex||[]).find(k=>k.productId===p.id||(!k.productId&&k.sku===p.sku));}
+ const reconcileEligible=(p,k)=>k?.type==='SUPPLY_COUNT_IN'&&k.estimated===true&&k.productId===p.id&&
+    Number(k.delta)>Math.max(5,Number(k.before||0)*2)&&
+    Math.abs(qty(p)-Number(k.after))<1e-8&&p.supplyUnit==='paquete'&&Math.abs(Number(k.before)-1)<1e-8;
+ function reconcilePreview(){
+  if(!pendingReconcile)return;
+  const packs=Number($('supply-reconcile-packs').value),size=Number($('supply-reconcile-content').value),used=Number($('supply-reconcile-used').value);
+  const valid=Number.isFinite(packs)&&packs>0&&Number.isSafeInteger(size)&&size>0&&Number.isInteger(used)&&used>=0&&used<=packs*size;
+  $('supply-reconcile-preview').textContent=valid?'Saldo final: '+(packs*size-used)+' piezas ('+fmt(packs-used/size)+' paquetes). El conteo erróneo permanecerá visible y será compensado con movimientos auditables.':'Comprueba paquetes, contenido y consumo. El consumo no puede superar la compra.';
+  $('supply-reconcile-submit').disabled=!valid||busy||!app.can('adjust');
+ }
+ function openReconcile(p,k){
+  pendingReconcile={id:p.id,movementId:k.id,expectedStock:qty(p)};
+  const isNapkin=/servilleta/i.test(p.nombre),isCup=/vaso/i.test(p.nombre);
+  $('supply-reconcile-packs').value='1';
+  $('supply-reconcile-content').value=String(isNapkin?500:isCup?100:p.packContents||'');
+  $('supply-reconcile-used').value=String(isNapkin?400:isCup?30:0);
+  $('supply-reconcile-confirm').value='';
+  $('supply-reconcile-info').textContent=p.nombre+' · Conteo erróneo: +'+fmt(k.delta)+' paquetes, valor contable '+app.money(k.amount)+'. Saldo anterior: '+fmt(k.before)+' paquete. No se borrará el asiento histórico.';
+  $('supply-reconcile-panel').hidden=false;
+  reconcilePreview();
+  $('supply-reconcile-panel').scrollIntoView({behavior:'smooth',block:'center'});
+ }
+ ['supply-reconcile-packs','supply-reconcile-content','supply-reconcile-used'].forEach(id=>$(id).addEventListener('input',reconcilePreview));
+ $('supply-reconcile-cancel').onclick=()=>{pendingReconcile=null;$('supply-reconcile-panel').hidden=true;};
+ $('supply-reconcile-submit').onclick=async()=>{
+  if(!pendingReconcile||busy||!app.can('adjust'))return;
+  const p=materials().find(x=>x.id===pendingReconcile.id),k=p&&lastSupplyMovement(p);
+  if(!p||!k||k.id!==pendingReconcile.movementId||!reconcileEligible(p,k)){$('supply-reconcile-preview').textContent='Los movimientos cambiaron: actualiza antes de conciliar.';return;}
+  reconcilePreview();if($('supply-reconcile-submit').disabled)return;
+  if($('supply-reconcile-confirm').value.trim()!=='CONCILIAR'){$('supply-reconcile-preview').textContent='Escribe CONCILIAR para autorizar.';return;}
+  if(!confirm('¿Confirmas el conteo físico de '+p.nombre+' y la reversión contable del asiento '+k.id+'?'))return;
+  busy=true;$('supply-reconcile-submit').disabled=true;
+  try{
+   const ok=await app.run({kind:'supplyReconcile',id:p.id,movementId:k.id,expectedStock:pendingReconcile.expectedStock,
+    purchasedPackages:Number($('supply-reconcile-packs').value),packContents:Number($('supply-reconcile-content').value),
+    usedPieces:Number($('supply-reconcile-used').value),confirmText:'CONCILIAR',reason:'Corrección de conteo estimado registrado como paquetes; inventario físico verificado'});
+   if(ok){pendingReconcile=null;$('supply-reconcile-panel').hidden=true;render();$('supply-status').textContent='Conciliación registrada con reversión y consumo físico en kardex.';}
+  }finally{busy=false;if(!$('supply-reconcile-panel').hidden)reconcilePreview();}
+ };
+
  const materials=()=>app.state().items.filter(p=>p.inventoryKind==='consumable'&&!p.archived);
  const scope=k=>({supplyCreate:'catalog',supplySettings:'catalog',supplyAssign:'catalog',supplyPurchase:'purchase',supplyUse:'adjust'})[k];
  function field(name,label,type='text',options){const l=document.createElement('label');l.textContent=label;const i=document.createElement(options?'select':'input');i.name=name;i.id='supply-field-'+name;if(options)for(const [v,t] of options)i.add(new Option(t,v));else{i.type=type;i.required=true;if(type==='number'){i.min='0';i.step='any';}}l.append(i);$('supply-fields').append(l);return i;}
@@ -64,6 +107,11 @@ export function installConsumables(app){
   ['Material / SKU','Contenido del paquete','Existencias','Mínimo','Costo promedio','Valor disponible','Estado'].forEach((label,index)=>row.cells[index].dataset.label=label);
   row.cells[6].className=lowStock?'stock-low':'stock-ok';
   const actions=row.insertCell(),group=document.createElement('div');group.className='material-actions';actions.append(group);
+  const erroneous=lastSupplyMovement(p);
+  if(app.can('adjust')&&reconcileEligible(p,erroneous)){
+   const correct=document.createElement('button');correct.type='button';correct.className='btn soft small';correct.textContent='Conciliar conteo';correct.setAttribute('aria-label','Conciliar conteo de '+p.nombre);
+   correct.onclick=()=>openReconcile(p,erroneous);group.append(correct);
+  }
   for(const [label,kind,permission] of [['Reponer','supplyPurchase','purchase'],['Descontar','supplyUse','adjust'],['Editar','supplySettings','catalog'],['Eliminar','supplyRemove','catalog']]){
    if(!app.can(permission))continue;
    const button=document.createElement('button');button.type='button';button.textContent=label;button.setAttribute('aria-label',label+' '+p.nombre);group.append(button);

@@ -71,3 +71,47 @@ test('reponer una caja no genera una diferencia de conteo',()=>{
  const id=state.items[0].id;state=op(state,{kind:'supplyPurchase',id,qty:1,total:10});
  assert.equal(stock(state.items[0]),1);assert.equal(state.kardex[0].type,'SUPPLY_BUY');
 });
+
+test('conciliación de 1 paquete de 500 servilletas, consume 400 sin borrar el asiento equivocado',()=>{
+ let state=op(empty(),{kind:'supplyCreate',name:'SERVILLETAS',sku:'SERV-CORR',unit:'paquete',packContents:500,minStock:1});
+ const id=state.items[0].id;
+ state=op(state,{kind:'supplyPurchase',id,qty:1,total:13.20});
+ // Simula el asiento histórico de noviembre, anterior a la protección de conteos.
+ state.items[0].unidadesCompradas+=399;state.items[0].costoTotal+=5266.8;state.items[0].inventoryValue+=5266.8;
+ const originalId=randomUUID();
+ state.kardex.unshift({id:originalId,productId:id,sku:'SERV-CORR',name:'SERVILLETAS',type:'SUPPLY_COUNT_IN',estimated:true,before:1,after:400,delta:399,qty:399,amount:5266.8,expense:-5266.8,date:new Date().toISOString(),unit:'paquete'});
+ const old=state.kardex[0];
+ assert.equal(stock(state.items[0]),400);
+ assert.equal(state.items[0].inventoryValue,5280);
+ state=op(state,{kind:'supplyReconcile',id,movementId:originalId,expectedStock:400,purchasedPackages:1,packContents:500,usedPieces:400,confirmText:'CONCILIAR',reason:'Conciliación de compra real de 500 servilletas'});
+ assert.ok(Math.abs(stock(state.items[0])-.2)<1e-8);
+ assert.ok(Math.abs(state.items[0].inventoryValue-2.64)<1e-8);
+ assert.ok(Math.abs(state.items[0].consumed-.8)<1e-8);
+ assert.equal(state.kardex.find(x=>x.id===originalId).reconciledOperationId,state.kardex[0].operationId);
+ assert.equal(state.kardex[0].type,'SUPPLY_USE');
+ assert.equal(state.kardex[1].type,'SUPPLY_REVERSAL');
+ assert.equal(state.kardex[2].type,'SUPPLY_COUNT_IN');
+ assert.ok(Math.abs(state.kardex[0].amount-10.56)<1e-8);
+});
+test('conciliación de 1 paquete de 100 vasos, consume 30 y conserva 70',()=>{
+ let state=op(empty(),{kind:'supplyCreate',name:'VASOS DESCARTABLES',sku:'VAS-CORR',unit:'paquete',packContents:100,minStock:1});
+ const id=state.items[0].id;
+ state=op(state,{kind:'supplyPurchase',id,qty:1,total:4.80});
+ state.items[0].unidadesCompradas+=69;state.items[0].costoTotal+=331.2;state.items[0].inventoryValue+=331.2;
+ const mistaken=randomUUID();
+ state.kardex.unshift({id:mistaken,productId:id,sku:'VAS-CORR',name:'VASOS DESCARTABLES',type:'SUPPLY_COUNT_IN',estimated:true,before:1,after:70,delta:69,qty:69,amount:331.2,expense:-331.2,date:new Date().toISOString(),unit:'paquete'});
+ state=op(state,{kind:'supplyReconcile',id,movementId:mistaken,expectedStock:70,purchasedPackages:1,packContents:100,usedPieces:30,confirmText:'CONCILIAR',reason:'Conciliación de vasos utilizados en ventas'});
+ assert.ok(Math.abs(stock(state.items[0])-.7)<1e-8);
+ assert.ok(Math.abs(state.items[0].inventoryValue-3.36)<1e-8);
+ assert.ok(Math.abs(state.kardex[0].amount-1.44)<1e-8);
+});
+test('conciliación rechaza saldos modificados y segunda reversión',()=>{
+ let state=op(empty(),{kind:'supplyCreate',name:'Servilletas',sku:'S-REJ',unit:'paquete',packContents:500,minStock:1});
+ const id=state.items[0].id;state=op(state,{kind:'supplyPurchase',id,qty:1,total:13.2});
+ state.items[0].unidadesCompradas+=399;state.items[0].costoTotal+=5266.8;state.items[0].inventoryValue+=5266.8;
+ const old=randomUUID();state.kardex.unshift({id:old,productId:id,sku:'S-REJ',type:'SUPPLY_COUNT_IN',estimated:true,before:1,after:400,delta:399,qty:399,amount:5266.8,expense:-5266.8,date:new Date().toISOString(),unit:'paquete'});
+ const request={kind:'supplyReconcile',id,movementId:old,expectedStock:400,purchasedPackages:1,packContents:500,usedPieces:400,confirmText:'CONCILIAR',reason:'Corrección física documentada'};
+ assert.throws(()=>op(state,{...request,expectedStock:399}),/saldo cambió/i);
+ const next=op(state,request);
+ assert.throws(()=>op(next,request),/último movimiento/i);
+});
