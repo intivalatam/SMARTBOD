@@ -16,8 +16,9 @@ state.items[0].minStock=50;
 $('inv-search').dispatchEvent(new w.Event('input'));
 $('chip-low-stock').click();
 assert.equal($('v-inv').hidden,false,'la alerta debe abrir el inventario');
-assert.ok($('inv-search').value.length>0,'la alerta debe localizar un producto');
-assert.ok(w.document.querySelector('#inventory-tbody tr.inventory-alert-focus'),'el producto debe resaltarse en la tabla');
+assert.equal($('stock-review-panel').hidden,false,'el panel debe mostrar todos los críticos');
+assert.ok($('stock-review-rows').textContent.includes('Pan para hamburguesa'),'debe incluir todos los productos con stock bajo');
+assert.ok($('stock-review-rows').querySelector('button'),'cada producto debe mostrar una acción de reposición');
 
 w.document.querySelector('[data-tab="supplies"]').click();assert.equal($('v-supplies').hidden,false);
 $('supply-field-name').value='Bolsas';$('supply-field-unit').value='unidad';$('supply-field-minStock').value='5';$('supply-form').dispatchEvent(new w.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,30));assert.match($('supply-stock').textContent,/Bolsas/);
