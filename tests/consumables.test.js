@@ -51,3 +51,23 @@ test('un saldo histórico de 50 paquetes admite definir contenido y descontar pi
  assert.equal(state.items[0].inventoryValue,99.5);
  assert.throws(()=>op(state,{kind:'supplySettings',id,name:'Bolsas',minStock:1,packContents:50}),/presentación/);
 });
+
+test('el conteo erróneo de 400 paquetes desde 1 no suma 399 ni infla el valor',()=>{
+ let state=op(empty(),{kind:'supplyCreate',name:'Servilletas',sku:'SERV',unit:'paquete',packContents:100,minStock:1});
+ const id=state.items[0].id;state=op(state,{kind:'supplyPurchase',id,qty:1,total:13.20});
+ assert.throws(()=>op(state,{kind:'supplyUse',id,mode:'count',qty:400,expectedStock:1,reason:'Conteo estimado',estimated:true}),/conteo físico exacto/);
+ assert.throws(()=>op(state,{kind:'supplyUse',id,mode:'count',qty:400,expectedStock:1,reason:'Conteo incorrecto'}),/confirma el ajuste/);
+ assert.equal(stock(state.items[0]),1);assert.equal(state.items[0].inventoryValue,13.2);
+});
+test('70 paquetes de vasos desde 1 requieren conteo exacto y confirmación',()=>{
+ let state=op(empty(),{kind:'supplyCreate',name:'Vasos',sku:'VAS',unit:'paquete',packContents:50,minStock:1});
+ const id=state.items[0].id;state=op(state,{kind:'supplyPurchase',id,qty:1,total:4.80});
+ assert.throws(()=>op(state,{kind:'supplyUse',id,mode:'count',qty:70,expectedStock:1,estimated:true,reason:'Conteo estimado',confirmLargeCount:true}),/conteo físico exacto/);
+ const next=op(state,{kind:'supplyUse',id,mode:'count',qty:70,expectedStock:1,estimated:false,reason:'Conteo físico exacto',confirmLargeCount:true});
+ assert.equal(stock(next.items[0]),70);assert.equal(next.kardex[0].delta,69);
+});
+test('reponer una caja no genera una diferencia de conteo',()=>{
+ let state=op(empty(),{kind:'supplyCreate',name:'Vasos',sku:'VASC',unit:'paquete',packContents:100,minStock:1});
+ const id=state.items[0].id;state=op(state,{kind:'supplyPurchase',id,qty:1,total:10});
+ assert.equal(stock(state.items[0]),1);assert.equal(state.kardex[0].type,'SUPPLY_BUY');
+});
