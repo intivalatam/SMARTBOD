@@ -354,12 +354,30 @@
   const stockChip = document.getElementById('chip-low-stock');
   const stockAlertLabel = document.getElementById('stock-alert-product');
   stockChip.addEventListener('click', () => {
+    const target = activeStockAlert;
+    if (!target) { showToast('Stock', 'No hay productos críticos para revisar.'); return; }
     switchTab('inv');
-    document.getElementById('inv-search').value = activeStockAlert ? activeStockAlert.sku : '';
+    if (document.getElementById('v-inv').hidden) {
+      showToast('Acceso restringido', 'Tu cuenta no tiene permiso para revisar el inventario.', 'error');
+      return;
+    }
+    // Restablecer todos los filtros que podrían esconder el producto crítico.
+    document.getElementById('inv-search').value = target.sku || target.nombre;
     document.getElementById('inv-status-filter').value = 'ALL';
+    document.getElementById('inv-sort').value = 'recent';
     activeInvCat = 'ALL';
     document.querySelectorAll('#inv-cat-pills .pill').forEach(p => p.classList.toggle('active', p.dataset.cat === 'ALL'));
     renderApp();
+    const inventory = document.getElementById('v-inv');
+    inventory.scrollIntoView({behavior:'smooth',block:'start'});
+    const rows = [...document.querySelectorAll('#inventory-tbody tr')];
+    const targetRow = rows.find(row => row.textContent.includes(target.sku || target.nombre)) || rows[0];
+    if (targetRow) {
+      targetRow.classList.add('inventory-alert-focus');
+      targetRow.scrollIntoView({behavior:'smooth',block:'center'});
+      setTimeout(() => targetRow.classList.remove('inventory-alert-focus'), 4000);
+    }
+    showToast('Revisar existencias', target.nombre + ' · ' + calc(target, getConsumoElaborados()).estado);
   });
   function cycleStockAlert() {
     const critical = items.filter(p => !p.archived && p.inventoryKind !== 'consumable' && ['Agotado','Stock bajo'].includes(calc(p, getConsumoElaborados()).estado));

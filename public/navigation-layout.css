@@ -60,3 +60,7 @@
 [data-theme="dark"] .workspace-shortcuts #chip-low-stock{background:linear-gradient(115deg,#53390a,#654714);border-color:#ae8226;color:#fff1cc}
 [data-theme="dark"] .workspace-shortcuts #low-stock-count{background:#47300c;color:#fff1cc}
 @media(max-width:650px){#v-rep .report-advanced>summary{align-items:flex-start;flex-direction:column}#v-rep .report-controls label{flex:1 1 155px}#v-rep #report-from,#v-rep #report-to{width:100%;min-width:0}}
+
+/* Señala el artículo al que apunta la alerta de la cabecera. */
+#inventory-tbody tr.inventory-alert-focus{outline:3px solid #d79a19;outline-offset:-3px;background:rgba(251,191,36,.15);transition:background .3s ease}
+.supply-count-warning{color:#a64b00!important;font-weight:700;border-left:4px solid #e5a326;padding:10px 14px;background:rgba(250,204,21,.12);border-radius:8px}
