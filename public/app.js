@@ -348,11 +348,33 @@
     renderStats(getConsumoElaborados());
   });
 
-  document.getElementById('chip-low-stock').addEventListener('click', () => {
+  // Un aviso a la vez: clic abre exactamente el producto señalado.
+  let activeStockAlert = null;
+  let stockAlertIndex = 0;
+  const stockChip = document.getElementById('chip-low-stock');
+  const stockAlertLabel = document.createElement('span');
+  stockAlertLabel.id = 'stock-alert-product';
+  stockAlertLabel.setAttribute('aria-live', 'off');
+  stockAlertLabel.style.cssText = 'display:inline-block;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;font-size:12px;font-weight:600';
+  stockChip.append(' · ', stockAlertLabel);
+  stockChip.addEventListener('click', () => {
     switchTab('inv');
-    document.getElementById('inv-status-filter').value = 'Stock bajo';
+    document.getElementById('inv-search').value = activeStockAlert ? activeStockAlert.sku : '';
+    document.getElementById('inv-status-filter').value = 'ALL';
+    activeInvCat = 'ALL';
+    document.querySelectorAll('#inv-cat-pills .pill').forEach(p => p.classList.toggle('active', p.dataset.cat === 'ALL'));
     renderApp();
   });
+  function cycleStockAlert() {
+    const critical = items.filter(p => !p.archived && p.inventoryKind !== 'consumable' && ['Agotado','Stock bajo'].includes(calc(p, getConsumoElaborados()).estado));
+    if (!critical.length) { activeStockAlert = null; stockAlertLabel.textContent = 'Sin alertas'; stockChip.title = 'Todos los productos con stock suficiente'; return; }
+    stockAlertIndex %= critical.length;
+    activeStockAlert = critical[stockAlertIndex++];
+    const status = calc(activeStockAlert, getConsumoElaborados()).estado;
+    stockAlertLabel.textContent = activeStockAlert.nombre + ' (' + status.toLowerCase() + ')';
+    stockChip.title = 'Ver ' + activeStockAlert.nombre + ' · ' + status + ' · ' + critical.length + ' alertas';
+  }
+  setInterval(() => { if (!document.hidden) cycleStockAlert(); }, 4500);
 
   // ==================== AUTOCOMPLETE (ABASTECER STOCK) ====================
   const acInput = document.getElementById('ac-input');
@@ -790,7 +812,7 @@
     else if (sortBy === 'stock-asc') filtered.sort((a, b) => num(calc(a, uso).stock) - num(calc(b, uso).stock));
     else if (sortBy === 'profit-desc') filtered.sort((a, b) => calc(b, uso).ganancia - calc(a, uso).ganancia);
 
-    const queryKey=JSON.stringify([q,statusFilter,sortBy,activeInvCat]);if(queryKey!==lastInventoryQuery){inventoryPage=0;lastInventoryQuery=queryKey;}const pages=Math.max(1,Math.ceil(filtered.length/25));inventoryPage=Math.max(0,Math.min(inventoryPage,pages-1));document.getElementById('inventory-page').textContent='Página '+(inventoryPage+1)+' de '+pages+' · '+filtered.length+' productos';document.getElementById('inventory-prev').disabled=inventoryPage===0;document.getElementById('inventory-next').disabled=inventoryPage>=pages-1;filtered=filtered.slice(inventoryPage*25,(inventoryPage+1)*25);
+    const queryKey=JSON.stringify([q,statusFilter,sortBy,activeInvCat]);if(queryKey!==lastInventoryQuery){inventoryPage=0;lastInventoryQuery=queryKey;}const pages=Math.max(1,Math.ceil(filtered.length/50));inventoryPage=Math.max(0,Math.min(inventoryPage,pages-1));document.getElementById('inventory-page').textContent='Página '+(inventoryPage+1)+' de '+pages+' · '+filtered.length+' productos';document.getElementById('inventory-prev').disabled=inventoryPage===0;document.getElementById('inventory-next').disabled=inventoryPage>=pages-1;filtered=filtered.slice(inventoryPage*50,(inventoryPage+1)*50);
     if (filtered.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No se encontraron productos con los filtros actuales.</td></tr>';
     } else {
@@ -824,6 +846,7 @@
     document.getElementById('s-alertas').textContent = `${totalAlerts} Alertas`;
     document.getElementById('s-alertas-sub').textContent = `${countOut} agotados · ${countLow} stock bajo`;
     document.getElementById('low-stock-count').textContent = totalAlerts;
+    if (!activeStockAlert || !items.some(p => p.id === activeStockAlert.id && !p.archived && ['Agotado','Stock bajo'].includes(calc(p, uso).estado))) cycleStockAlert();
     
     
     document.getElementById('header-biz-name').textContent = neg || "SMARTBOD";
