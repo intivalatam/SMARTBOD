@@ -2111,7 +2111,6 @@
       const base=reference??Number(el('restock-base-kg').value);
       weightHelp.textContent=reference!==null?'Equivalencia existente: 1 unidad de inventario = '+reference+' kg. Las existencias no se reinician.':'Confirma cuántos kg equivale 1 unidad ya registrada. Por ejemplo, si 0.5 unidades equivalen a 1.5 kg, escribe 3. Esta equivalencia se conservará para futuras compras.';
     }
-    const byUnit=el('restock-mode').value==='units';
     el('restock-units').disabled=byUnit;el('restock-units-label').hidden=byUnit;if(byUnit)el('restock-units').value=1;
     const totalMode=el('restock-price-mode').value==='total';
     el('restock-total-fields').hidden=!totalMode;el('restock-unit-fields').hidden=totalMode;
