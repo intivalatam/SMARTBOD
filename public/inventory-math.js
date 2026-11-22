@@ -5,3 +5,13 @@ export const purchaseCost=p=>p.inventoryValue!=null&&remaining(p)>1e-9?p.invento
 export function ingredient(source,entry,y=1){const i={...entry};if(i.legacyConsumption||(!i.consumeAt&&source.deductOnSale&&i.measureMode!=='coverage'&&i.measureMode!=='dose')){i.legacyConsumption=true;i.measureMode='coverage';i.servingsPerUnit=Number(source.portionsPerUnit);}i.consumeAt=i.consumeAt||(source.deductOnSale?'sale':'prepare');i.deductAtSale=i.consumeAt==='sale';if(i.measureMode==='dose')i.cantidad=Number(i.dose)*y/content(source);else if(i.measureMode==='coverage')i.cantidad=y/Number(i.servingsPerUnit);i.cantidad=Number(i.cantidad);i.servingsPerUnit=y/i.cantidad;return i;}
 export function recipeNeeds(items,p,qty,phase){const needs={};for(const raw of p.ingredientes||[]){const ins=items.find(x=>x.id===raw.idInsumo);if(!ins)continue;const i=ingredient(ins,raw,p.recipeYield||1);if(phase&&i.consumeAt!==phase)continue;needs[ins.id]=(needs[ins.id]||0)+i.cantidad*qty/(p.recipeYield||1);}return needs;}
 export function sellable(items,p){if(p.archived||p.inventoryKind==='consumable')return 0;if(p.tipo!=='elaborado'){if(!p.purchaseLots?.length)return remaining(p);const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Lima'}).format(new Date());return Math.max(0,remaining(p)-(p.purchaseLots||[]).filter(l=>l.expiry<today).reduce((n,l)=>n+l.qty,0));}let n=Number(p.preparedStock||0);if(p.batches){const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Lima'}).format(new Date());n=Math.min(n,p.batches.filter(b=>!b.expiry||b.expiry>=today).reduce((a,b)=>a+b.qty,0));}for(const [id,q] of Object.entries(recipeNeeds(items,p,1,'sale')))n=Math.min(n,Math.floor((remaining(items.find(x=>x.id===id))+1e-9)/q));for(const a of p.consumables||[]){const ins=items.find(x=>x.id===a.id);if(!ins||ins.archived)return 0;n=Math.min(n,Math.floor((remaining(ins)+1e-9)/a.qty));}return n;}
+
+/** Proyección informativa: no descuenta inventario hasta confirmar el cobro. */
+export function ticketRemaining(items,cart,productId){
+ const product=items.find(p=>p.id===productId);
+ if(!product)return null;
+ const available=sellable(items,product);
+ const selected=cart.filter(line=>line.item?.id===productId).reduce((sum,line)=>sum+Number(line.qty||0)*Number(line.factor||1),0);
+ const remaining=Number((available-selected).toFixed(6));
+ return {available,selected,remaining:Math.max(0,remaining),shortage:remaining< -1e-8};
+}
