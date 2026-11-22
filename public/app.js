@@ -453,6 +453,32 @@
     }
   }
 
+  // El costo de compra introducido es bruto. El descuento es por producto, nunca por boleta completa.
+  function purchaseDiscountTotals(qty, gross, mode, amount){
+    if(!Number.isInteger(qty)||qty<0||!Number.isFinite(gross)||gross<0||!['none','global','unit'].includes(mode))throw Error('Revisa cantidad, costo y descuento.');
+    const value=mode==='none'?0:Number(amount);
+    if(!Number.isFinite(value)||value<0||Math.abs(value*100-Math.round(value*100))>1e-6)throw Error('El descuento debe ser un importe válido de hasta dos decimales.');
+    const discountCents=mode==='none'?0:mode==='global'?Math.round(value*100):Math.round(value*100)*qty;
+    const grossCents=Math.round(gross*100);
+    if(Math.abs(gross*100-grossCents)>1e-6)throw Error('El costo total debe tener máximo dos decimales.');
+    if(discountCents>grossCents)throw Error('El descuento no puede superar el costo total del producto.');
+    return {grossTotal:grossCents/100,discountTotal:discountCents/100,netTotal:(grossCents-discountCents)/100,discountMode:mode};
+  }
+  function readPurchaseDiscount(prefix,qty,gross){
+    const mode=document.getElementById(prefix+'-discount-mode').value;
+    const amount=document.getElementById(prefix+'-discount-amount').value;
+    return purchaseDiscountTotals(qty,gross,mode,amount===''?0:amount);
+  }
+  function updateDiscountField(prefix){
+    const mode=document.getElementById(prefix+'-discount-mode').value;
+    document.getElementById(prefix+'-discount-label').hidden=mode==='none';
+    document.getElementById(prefix+'-discount-amount').disabled=mode==='none';
+    if(prefix==='mp')updateConsumptionPreview();else updateStockFormMarginPreview();
+  }
+  ['mp','sf'].forEach(prefix=>{
+    document.getElementById(prefix+'-discount-mode').addEventListener('change',()=>updateDiscountField(prefix));
+    document.getElementById(prefix+'-discount-amount').addEventListener('input',()=>{if(prefix==='mp')updateConsumptionPreview();else updateStockFormMarginPreview();});
+  });
   function selectStockItem(match) {
     selectedMasterItem = match;
     acInput.value = match.nombre;
@@ -467,6 +493,7 @@
       ? (num(exist.costoTotal) / num(exist.unidadesCompradas))
       : (match.costoSug || 2.5);
     document.getElementById('sf-cost').value = (unitCost * 10).toFixed(2);
+    document.getElementById('sf-discount-mode').value='none';document.getElementById('sf-discount-amount').value='0';updateDiscountField('sf');
     document.getElementById('sf-price').value = exist ? exist.precio : (match.precioSug || 4.00);
     updateStockFormMarginPreview();
     formStock.style.display = 'flex';
@@ -474,12 +501,13 @@
 
   function updateStockFormMarginPreview() {
     const qty = Math.max(1, num(document.getElementById('sf-qty').value));
-    const cost = num(document.getElementById('sf-cost').value);
+    const gross = Number(document.getElementById('sf-cost').value);
     const price = num(document.getElementById('sf-price').value);
-    const cu = cost / qty;
-    const util = price - cu;
-    document.getElementById('sf-preview-margin').innerHTML =
-      `Costo unitario: <b>${money(cu)}</b> · Ganancia por unidad: <b style="color:${util >= 0 ? 'var(--good)' : 'var(--bad)'}">${money(util)}</b>`;
+    try {
+      const amounts=readPurchaseDiscount('sf',qty,gross);
+      const cu=amounts.netTotal/qty,util=price-cu;
+      document.getElementById('sf-preview-margin').textContent='Costo bruto: '+money(amounts.grossTotal)+' · Descuento: '+money(amounts.discountTotal)+' · Costo neto: '+money(amounts.netTotal)+' · Costo unitario: '+money(cu)+' · Ganancia por unidad: '+money(util);
+    }catch(err){document.getElementById('sf-preview-margin').textContent=err.message;}
   }
 
   ['sf-qty', 'sf-cost', 'sf-price'].forEach(id => {
@@ -506,16 +534,16 @@
 
   document.getElementById('btn-save-stock').addEventListener('click', async () => {
     if (!selectedMasterItem) return;
-    const qty = num(document.getElementById('sf-qty').value);
-    const cost = num(document.getElementById('sf-cost').value);
-    const price = num(document.getElementById('sf-price').value);
-
-    if (qty <= 0 || cost < 0 || price <= 0) {
-      return showToast("Datos incompletos", "Ingresa una cantidad y precio mayores a cero.", "error");
-    }
+    const qty = Number(document.getElementById('sf-qty').value);
+    const gross = Number(document.getElementById('sf-cost').value);
+    const price = Number(document.getElementById('sf-price').value);
+    if(!Number.isInteger(qty)||qty<=0||!Number.isFinite(price)||price<=0)return showToast('Datos inválidos','Ingresa unidades enteras y un precio válido.','error');
+    let purchase;
+    try{purchase=readPurchaseDiscount('sf',qty,gross);}catch(err){return showToast('Revisa el descuento',err.message,'error');}
+    const cost=purchase.netTotal;
 
     const exist = items.find(i => i.sku === selectedMasterItem.sku);
-    if(exist){try{applyCloud(await Cloud.api('restock',{restock:{id:exist.id,packages:1,units:qty,cost,discount:0,price,requestId:crypto.randomUUID()}}));document.getElementById('btn-cancel-stock').click();showToast('Compra guardada','Stock actualizado.');}catch(e){showToast('No se guardó',e.message,'error');}return;
+    if(exist){try{applyCloud(await Cloud.api('restock',{restock:{id:exist.id,packages:1,units:qty,purchaseMode:'total',grossTotal:purchase.grossTotal,discountTotal:purchase.discountTotal,price,requestId:crypto.randomUUID()}}));document.getElementById('btn-cancel-stock').click();showToast('Compra guardada','Stock actualizado.');}catch(e){showToast('No se guardó',e.message,'error');}return;
     } else {
       const newItem = {
         id: uuid(),
@@ -526,6 +554,7 @@
         imgUrl: selectedMasterItem.imgUrl,
         unidadesCompradas: qty,
         costoTotal: cost,
+        initialPurchase:{...purchase,qty},
         precio: price,
         vendidos: 0,
         minStock: 5
@@ -655,7 +684,9 @@
       document.getElementById('mp-cost').value = editItem ? num(editItem.costoTotal) : 36.00;
       document.getElementById('mp-price').value = editItem ? num(editItem.precio) : 4.50;
     }
-    document.getElementById('mp-qty').disabled=!!editItem;document.getElementById('mp-cost').disabled=!!editItem;updateConsumptionPreview();
+    document.getElementById('mp-qty').disabled=!!editItem;document.getElementById('mp-cost').disabled=!!editItem;
+    document.getElementById('mp-purchase-discount-panel').hidden=!!editItem;
+    document.getElementById('mp-discount-mode').value='none';document.getElementById('mp-discount-amount').value='0';updateDiscountField('mp');
     modalProduct.hidden = false;
   }
 
@@ -671,7 +702,14 @@
     document.getElementById('mp-measure-fields').hidden=!measured;document.getElementById('mp-dose-unit').textContent=d.doseUnit+' por porción';document.getElementById('mp-deduct-sale').checked=d.deductOnSale;
     if(measured)document.getElementById('mp-portions').value=Number.isFinite(d.portionsPerUnit)&&d.portionsPerUnit>0?Number(d.portionsPerUnit.toFixed(6)):'';
     document.getElementById('mp-classification-hint').textContent='Cremas y bolsas grandes no equivalen a una hamburguesa. Indica su rendimiento real o la dosis por porción. No se asigna un rendimiento automático por el nombre.';
-    const quantity=num(document.getElementById('mp-qty').value),cost=num(document.getElementById('mp-cost').value),perPack=quantity>0?cost/quantity:0;
+    const quantity=num(document.getElementById('mp-qty').value),gross=Number(document.getElementById('mp-cost').value);
+    let cost=gross,perPack=quantity>0?cost/quantity:0;
+    const discountPreview=document.getElementById('mp-discount-preview');
+    if(!document.getElementById('mp-purchase-discount-panel').hidden){
+      try{const result=readPurchaseDiscount('mp',quantity,gross);cost=result.netTotal;perPack=quantity>0?cost/quantity:0;
+      discountPreview.textContent='Bruto '+money(result.grossTotal)+' − Descuento '+money(result.discountTotal)+' = Costo neto '+money(result.netTotal)+' · Costo unitario '+money(perPack);}
+      catch(err){discountPreview.textContent=err.message;}
+    }else{discountPreview.textContent='';}
     document.getElementById('mp-yield-preview').textContent=!d.consumptionMode?'Selecciona la clasificación antes de guardar.':unitMode?'Se usa la cantidad indicada en la receta al preparar. Venta directa: una unidad por unidad vendida.':d.portionsPerUnit>=1&&Number.isFinite(d.portionsPerUnit)?'1 envase = '+Number(d.portionsPerUnit.toFixed(4))+' porciones · Costo por porción: '+money(perPack/d.portionsPerUnit)+' · 24 ventas usan '+Number((24/d.portionsPerUnit).toFixed(4))+' envases (costo '+money(24*perPack/d.portionsPerUnit)+'). El momento de consumo se configura en cada receta.':'Completa un rendimiento válido. En peso/volumen, la dosis no puede superar el contenido del envase.';
   }
   ['mp-consumption-mode','mp-portions','mp-content-amount','mp-content-unit','mp-dose-amount','mp-qty','mp-cost'].forEach(id=>document.getElementById(id).addEventListener('input',updateConsumptionPreview));
@@ -698,8 +736,11 @@
     const sku = document.getElementById('mp-sku').value.trim().toUpperCase();
     const cat = document.getElementById('mp-cat').value;
     const minStock = Math.max(1, num(document.getElementById('mp-min-stock').value));
-    const qty = Math.max(0, num(document.getElementById('mp-qty').value));
-    const cost = Math.max(0, num(document.getElementById('mp-cost').value));
+    const qty = Number(document.getElementById('mp-qty').value);
+    const gross = Number(document.getElementById('mp-cost').value);
+    let purchase=null;
+    if(!id){try{purchase=readPurchaseDiscount('mp',qty,gross);if(qty<=0)throw Error('Las unidades deben ser mayores que cero.');}catch(err){return showToast('Compra inválida',err.message,'error');}}
+    const cost=id?gross:purchase.netTotal;
     const editingRecipe=items.find(p=>p.id===id)?.tipo==='elaborado';
     const details=consumptionDetails();
     if(!editingRecipe&&!details.consumptionMode)return showToast('Clasificación pendiente','Selecciona cómo se utiliza este producto: unidades, porciones o peso/volumen.','error');
@@ -752,6 +793,7 @@
         imgUrl: productImage || getCategoryVisual(cat, nombre),
         unidadesCompradas: qty,
         costoTotal: cost,
+        initialPurchase:{...purchase,qty},
         precio: price > 0 ? price : 1.00,
         vendidos: 0,
         minStock
