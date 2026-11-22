@@ -2072,21 +2072,42 @@
   renderEvents();eventDuration();
 
   let restockAttempt=null;
+  function stockKilogramReference(product){
+    if(product.consumptionMode==='measure')return ['g','kg'].includes(product.contentUnit)?content(product)/1000:null;
+    if(product.saleUnit==='kg')return 1;
+    const stored=Number(product.weightBaseKg);
+    return product.weightBaseKg!==undefined&&Number.isFinite(stored)&&stored>0?stored:null;
+  }
   function openRestock(product){
     el('restock-id').value=product.id;el('restock-heading').textContent='Reponer: '+product.nombre;el('restock-sku').textContent='SKU: '+product.sku;
     const weighed=['kg','L'].includes(product.saleUnit);el('restock-size-label').hidden=product.consumptionMode!=='measure'&&!weighed;
     el('restock-size').value=product.consumptionMode==='measure'?content(product):1;
     el('restock-size-caption').textContent='Contenido de cada envase comprado ('+(['kg','g'].includes(product.contentUnit)?'g':'ml')+')';
     if(weighed&&product.consumptionMode!=='measure')el('restock-size-caption').textContent='Cantidad neta por envase comprado ('+product.saleUnit+')';
-    el('restock-stock').textContent='Stock actual: '+Number(calc(product,getConsumoElaborados()).stock.toFixed(4))+' unidades / envases';
+    const reference=stockKilogramReference(product),existing=calc(product,getConsumoElaborados()).stock;
+    el('restock-stock').textContent='Stock actual: '+Number(existing.toFixed(4))+' unidades de referencia'+(reference?' ('+Number((existing*reference).toFixed(3))+' kg)':' · Equivalencia en kg pendiente');
     el('restock-previous').textContent='Último costo de compra registrado: '+(product.lastPurchaseCost==null?'Aún no hay historial':money(product.lastPurchaseCost))+' · Precio de venta actual: '+money(product.precio);
     el('restock-lot').value='';el('restock-expiry').value='';el('restock-supplier').value='';el('restock-document').value='';el('restock-date').value=limaDay(new Date());
-    el('restock-extra').value=0;el('restock-mode').value='units';el('restock-count').value=1;el('restock-units').value=1;
+    el('restock-extra').value=0;el('restock-mode').value='units';el('restock-count').value=1;el('restock-units').value=1;el('restock-weight-kg').value=3;el('restock-base-kg').value=reference||'';el('restock-base-confirm').checked=false;
     el('restock-price-mode').value='total';el('restock-gross-total').value='';el('restock-discount-total').value=0;el('restock-discount-choice').value='none';
     el('restock-cost').value='';el('restock-discount').value=0;el('restock-price').value=product.precio>0?product.precio:'';el('restock-margin').value=25;
     el('restock-status').textContent='';restockAttempt=null;restockPreview();el('restock-dialog').showModal();el('restock-gross-total').focus();
   }
   function restockPreview(){
+    const weightMode=el('restock-mode').value==='weight';
+    const byUnit=el('restock-mode').value!=='packages';
+    const product=items.find(p=>p.id===el('restock-id').value);
+    const reference=stockKilogramReference(product);
+    el('restock-weight-label').hidden=!weightMode;
+    el('restock-weight-kg').required=weightMode;
+    el('restock-base-label').hidden=!weightMode||reference!==null;
+    el('restock-base-confirm-label').hidden=!weightMode||reference!==null;
+    const weightHelp=el('restock-weight-help');
+    weightHelp.hidden=!weightMode;
+    if(weightMode){
+      const base=reference??Number(el('restock-base-kg').value);
+      weightHelp.textContent=reference!==null?'Equivalencia existente: 1 unidad de inventario = '+reference+' kg. Las existencias no se reinician.':'Confirma cuántos kg equivale 1 unidad ya registrada. Por ejemplo, si 0.5 unidades equivalen a 1.5 kg, escribe 3. Esta equivalencia se conservará para futuras compras.';
+    }
     const byUnit=el('restock-mode').value==='units';
     el('restock-units').disabled=byUnit;el('restock-units-label').hidden=byUnit;if(byUnit)el('restock-units').value=1;
     const totalMode=el('restock-price-mode').value==='total';
@@ -2095,7 +2116,7 @@
     const discountApplicable=totalMode&&el('restock-discount-choice').value==='yes';
     el('restock-discount-total-label').hidden=!discountApplicable;
     el('restock-discount-total').disabled=!discountApplicable;
-    el('restock-count-label').textContent=byUnit?'Unidades que ingresan':'Cantidad de paquetes';
+    el('restock-count-label').textContent=weightMode?'Número de bolsas compradas':byUnit?'Unidades que ingresan':'Cantidad de paquetes';
     el('restock-cost-label').textContent=byUnit?'Costo por unidad / envase (S/)':'Costo por paquete (S/)';
     el('restock-discount-label').textContent=byUnit?'Descuento por unidad (S/)':'Descuento por paquete (S/)';
     const source=totalMode?el('restock-gross-total'):el('restock-cost');
@@ -2109,9 +2130,16 @@
       const extra=Number(el('restock-extra').value||0);
       if(![gross,discount,extra].every(Number.isFinite)||gross<0||discount<0||discount>gross||extra<0)throw Error('El descuento no puede exceder el subtotal y los importes deben ser positivos.');
       if(totalMode&&([gross,discount].some(n=>Math.abs(n*100-Math.round(n*100))>1e-6)))throw Error('Registra los importes con máximo dos decimales.');
-      const product=items.find(p=>p.id===el('restock-id').value);
-      let qty=packages*units;
-      if(product.consumptionMode==='measure'||['kg','L'].includes(product.saleUnit)){
+      let qty=packages*units,totalKg=null;
+      if(weightMode){
+        if(product.consumptionMode==='measure'&&!['g','kg'].includes(product.contentUnit))throw Error('Este producto se mide por volumen, no por peso.');
+        const bagKg=Number(el('restock-weight-kg').value);
+        const base=reference??Number(el('restock-base-kg').value);
+        if(!Number.isFinite(bagKg)||bagKg<0.001||bagKg>1000||!Number.isFinite(base)||base<0.001||base>1000)throw Error('Indica el peso de la bolsa y la equivalencia válida del stock existente.');
+        if(reference===null&&!el('restock-base-confirm').checked)throw Error('Confirma cuántos kg representa cada unidad que ya figura en el inventario.');
+        totalKg=packages*bagKg;
+        qty=totalKg/base;
+      }else if(product.consumptionMode==='measure'||['kg','L'].includes(product.saleUnit)){
         const received=Number(el('restock-size').value);
         if(!(received>0))throw Error('Indica el contenido real de cada envase.');
         qty*=received/content(product);
@@ -2119,12 +2147,13 @@
       const total=Math.round((gross-discount+extra)*100)/100,unit=total/qty,price=Math.ceil(unit/(1-margin/100)*100)/100;
       if(!(total>=0)&&Number.isFinite(total))throw Error('Costo neto inválido.');
       const result={qty,total,unit,price};
-      el('restock-preview').textContent='Cantidad ingresada: '+Number(qty.toFixed(4))+' · Subtotal '+money(gross)+' − Descuento '+money(discount)+' + Gastos adicionales '+money(extra)+' = Compra neta '+money(total)+' · Costo real por unidad '+money(unit)+' · Precio de venta '+(el('restock-price').value?money(el('restock-price').value):'por completar')+' · Stock después '+Number((calc(product,getConsumoElaborados()).stock+qty).toFixed(4));
+      el('restock-preview').textContent=(weightMode?'Bolsas: '+packages+' · Peso total: '+Number(totalKg.toFixed(3))+' kg · Equivalencia en stock: ':'Cantidad ingresada: ')+Number(qty.toFixed(4))+' · Subtotal '+money(gross)+' − Descuento '+money(discount)+' + Gastos adicionales '+money(extra)+' = Compra neta '+money(total)+' · Costo real por unidad '+money(unit)+' · Precio de venta '+(el('restock-price').value?money(el('restock-price').value):'por completar')+' · Stock después '+Number((calc(product,getConsumoElaborados()).stock+qty).toFixed(4));
       if(product.consumptionMode==='measure')el('restock-preview').textContent+=' · Ingreso medido: '+quantityLabel(product,qty);
       return result;
     }catch(e){el('restock-preview').textContent=e.message;return null;}
   }
-  ['restock-extra','restock-size','restock-mode','restock-count','restock-units','restock-price-mode','restock-gross-total','restock-discount-choice','restock-discount-total','restock-cost','restock-discount','restock-margin','restock-price'].forEach(id=>el(id).oninput=restockPreview);
+  ['restock-extra','restock-size','restock-mode','restock-count','restock-units','restock-weight-kg','restock-base-kg','restock-price-mode','restock-gross-total','restock-discount-choice','restock-discount-total','restock-cost','restock-discount','restock-margin','restock-price'].forEach(id=>el(id).oninput=restockPreview);
+  el('restock-base-confirm').onchange=restockPreview;
   el('restock-use-price').onclick=()=>{const r=restockPreview();if(r){el('restock-price').value=r.price;restockPreview();}};
   el('restock-keep-price').onclick=()=>{el('restock-price').value=items.find(p=>p.id===el('restock-id').value).precio;restockPreview();};
   el('restock-close').onclick=()=>el('restock-dialog').close();
@@ -2136,6 +2165,7 @@
       supplier:el('restock-supplier').value,document:el('restock-document').value,purchaseDate:el('restock-date').value,
       extraCost:Number(el('restock-extra').value),id:el('restock-id').value,
       packages:Number(el('restock-count').value),units:Number(el('restock-units').value),purchaseMode,
+      ...(el('restock-mode').value==='weight'?{purchaseModeWeight:'kg',purchaseWeightKg:Number(el('restock-weight-kg').value),weightBaseKg:Number(el('restock-base-kg').value),confirmWeightBase:el('restock-base-confirm').checked}:{}),
       price:Number(el('restock-price').value)
     };
     if(purchaseMode==='total'){input.grossTotal=Number(el('restock-gross-total').value);input.discountTotal=el('restock-discount-choice').value==='yes'?Number(el('restock-discount-total').value||0):0;}
