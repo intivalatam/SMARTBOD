@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {empty,normalize,sell,prepare,publicState,stock,unitCost,restock} from '../lib/domain.js';
+import test from 'node:test';import assert from 'node:assert/strict';import {empty,normalize,sell,prepare,publicState,stock,unitCost} from '../lib/domain.js';
 const admin={id:'a',name:'Admin',role:'admin'},seller={id:'v',name:'Vendedor',role:'seller'},policy={admin:100,seller:5};
 const source=()=>({...empty(),items:[{id:'bread',sku:'PAN',nombre:'Pan',tipo:'producto',precio:2,unidadesCompradas:48,costoTotal:48,vendidos:0},{id:'meat',sku:'CARNE',nombre:'Carne',tipo:'producto',precio:3,unidadesCompradas:24,costoTotal:48,vendidos:0},{id:'recipe',sku:'HAMB',nombre:'Hamburguesa',tipo:'elaborado',precio:10,vendidos:0,recipeYield:24,ingredientes:[{idInsumo:'bread',cantidad:24},{idInsumo:'meat',cantidad:24}]}]});
 const production=(qty=24,id='11111111-1111-1111-1111-111111111111')=>({id:'recipe',qty,requestId:id});const sale=(extra={})=>({requestId:'22222222-2222-2222-2222-222222222222',lines:[{id:'recipe',qty:1}],payMethod:'Efectivo',cash:100,discount:0,...extra});
