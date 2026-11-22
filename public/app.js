@@ -2038,26 +2038,71 @@
     if(weighed&&product.consumptionMode!=='measure')el('restock-size-caption').textContent='Cantidad neta por envase comprado ('+product.saleUnit+')';
     el('restock-stock').textContent='Stock actual: '+Number(calc(product,getConsumoElaborados()).stock.toFixed(4))+' unidades / envases';
     el('restock-previous').textContent='Último costo de compra registrado: '+(product.lastPurchaseCost==null?'Aún no hay historial':money(product.lastPurchaseCost))+' · Precio de venta actual: '+money(product.precio);
-    el('restock-lot').value='';el('restock-expiry').value='';el('restock-supplier').value='';el('restock-document').value='';el('restock-date').value=limaDay(new Date());el('restock-extra').value=0;el('restock-mode').value='units';el('restock-count').value=1;el('restock-units').value=1;el('restock-cost').value='';el('restock-discount').value=0;el('restock-price').value='';el('restock-margin').value=25;el('restock-status').textContent='';restockAttempt=null;restockPreview();el('restock-dialog').showModal();el('restock-count').focus();
+    el('restock-lot').value='';el('restock-expiry').value='';el('restock-supplier').value='';el('restock-document').value='';el('restock-date').value=limaDay(new Date());
+    el('restock-extra').value=0;el('restock-mode').value='units';el('restock-count').value=1;el('restock-units').value=1;
+    el('restock-price-mode').value='total';el('restock-gross-total').value='';el('restock-discount-total').value=0;
+    el('restock-cost').value='';el('restock-discount').value=0;el('restock-price').value=product.precio>0?product.precio:'';el('restock-margin').value=25;
+    el('restock-status').textContent='';restockAttempt=null;restockPreview();el('restock-dialog').showModal();el('restock-gross-total').focus();
   }
   function restockPreview(){
-    const byUnit=el('restock-mode').value==='units';el('restock-units').disabled=byUnit;el('restock-units-label').hidden=byUnit;if(byUnit)el('restock-units').value=1;
-    el('restock-count-label').textContent=byUnit?'Unidades que ingresan':'Cantidad de paquetes';el('restock-cost-label').textContent=byUnit?'Nuevo costo por unidad / envase (S/)':'Nuevo costo por paquete (S/)';el('restock-discount-label').textContent=byUnit?'Descuento por unidad (S/)':'Descuento por paquete (S/)';
-    if(el('restock-cost').value===''){el('restock-preview').textContent='Ingresa el costo de esta compra. Puede ser diferente al anterior.';return null;}
-    try{const result=packageMath(...['restock-count','restock-units','restock-cost','restock-discount','restock-margin'].map(id=>Number(el(id).value)));const product=items.find(p=>p.id===el('restock-id').value);
-    if(product.consumptionMode==='measure'||['kg','L'].includes(product.saleUnit)){
-      const received=Number(el('restock-size').value);
-      if(!(received>0))throw Error('Indica el contenido real de cada envase.');
-      result.qty*=received/content(product);
-    }
-    result.total+=Number(el('restock-extra').value)||0;result.unit=result.total/result.qty;result.price=result.unit/(1-Number(el('restock-margin').value)/100);el('restock-preview').textContent=`Ingresan ${result.qty} unidades · Compra neta ${money(result.total)} · Costo unitario ${money(result.unit)} · Nuevo precio de venta: ${el('restock-price').value?money(el('restock-price').value):'por completar'} · Stock después: ${Number((calc(items.find(p=>p.id===el('restock-id').value),getConsumoElaborados()).stock+result.qty).toFixed(4))}`;if(product.consumptionMode==='measure')el('restock-preview').textContent+=' · Ingreso medido: '+quantityLabel(product,result.qty)+' · '+Math.floor(result.qty*product.portionsPerUnit+1e-9)+' dosis de referencia';return result;}catch(e){el('restock-preview').textContent=e.message;return null;}
+    const byUnit=el('restock-mode').value==='units';
+    el('restock-units').disabled=byUnit;el('restock-units-label').hidden=byUnit;if(byUnit)el('restock-units').value=1;
+    const totalMode=el('restock-price-mode').value==='total';
+    el('restock-total-fields').hidden=!totalMode;el('restock-unit-fields').hidden=totalMode;
+    el('restock-gross-total').required=totalMode;el('restock-cost').required=!totalMode;el('restock-discount').required=!totalMode;
+    el('restock-count-label').textContent=byUnit?'Unidades que ingresan':'Cantidad de paquetes';
+    el('restock-cost-label').textContent=byUnit?'Costo por unidad / envase (S/)':'Costo por paquete (S/)';
+    el('restock-discount-label').textContent=byUnit?'Descuento por unidad (S/)':'Descuento por paquete (S/)';
+    const source=totalMode?el('restock-gross-total'):el('restock-cost');
+    if(source.value===''){el('restock-preview').textContent=totalMode?'Ingresa el subtotal total de este producto tal como aparece en la boleta; el descuento global es opcional.':'Ingresa el costo por unidad o paquete.';return null;}
+    try{
+      const packages=Number(el('restock-count').value),units=Number(el('restock-units').value),margin=Number(el('restock-margin').value);
+      if(!Number.isInteger(packages)||packages<=0||!Number.isInteger(units)||units<=0||packages*units>1000000)throw Error('Revisa la cantidad de paquetes y unidades.');
+      if(!Number.isFinite(margin)||margin<0||margin>=100)throw Error('El margen debe ser menor de 100%.');
+      const gross=totalMode?Number(el('restock-gross-total').value):packages*Number(el('restock-cost').value);
+      const discount=totalMode?Number(el('restock-discount-total').value):packages*Number(el('restock-discount').value);
+      const extra=Number(el('restock-extra').value||0);
+      if(![gross,discount,extra].every(Number.isFinite)||gross<0||discount<0||discount>gross||extra<0)throw Error('El descuento no puede exceder el subtotal y los importes deben ser positivos.');
+      if(totalMode&&([gross,discount].some(n=>Math.abs(n*100-Math.round(n*100))>1e-6)))throw Error('Registra los importes con máximo dos decimales.');
+      const product=items.find(p=>p.id===el('restock-id').value);
+      let qty=packages*units;
+      if(product.consumptionMode==='measure'||['kg','L'].includes(product.saleUnit)){
+        const received=Number(el('restock-size').value);
+        if(!(received>0))throw Error('Indica el contenido real de cada envase.');
+        qty*=received/content(product);
+      }
+      const total=Math.round((gross-discount+extra)*100)/100,unit=total/qty,price=Math.ceil(unit/(1-margin/100)*100)/100;
+      if(!(total>=0)&&Number.isFinite(total))throw Error('Costo neto inválido.');
+      const result={qty,total,unit,price};
+      el('restock-preview').textContent='Cantidad ingresada: '+Number(qty.toFixed(4))+' · Subtotal '+money(gross)+' − Descuento '+money(discount)+' + Gastos adicionales '+money(extra)+' = Compra neta '+money(total)+' · Costo real por unidad '+money(unit)+' · Precio de venta '+(el('restock-price').value?money(el('restock-price').value):'por completar')+' · Stock después '+Number((calc(product,getConsumoElaborados()).stock+qty).toFixed(4));
+      if(product.consumptionMode==='measure')el('restock-preview').textContent+=' · Ingreso medido: '+quantityLabel(product,qty);
+      return result;
+    }catch(e){el('restock-preview').textContent=e.message;return null;}
   }
-  ['restock-extra','restock-size','restock-mode','restock-count','restock-units','restock-cost','restock-discount','restock-margin','restock-price'].forEach(id=>el(id).oninput=restockPreview);
+  ['restock-extra','restock-size','restock-mode','restock-count','restock-units','restock-price-mode','restock-gross-total','restock-discount-total','restock-cost','restock-discount','restock-margin','restock-price'].forEach(id=>el(id).oninput=restockPreview);
   el('restock-use-price').onclick=()=>{const r=restockPreview();if(r){el('restock-price').value=r.price;restockPreview();}};
   el('restock-keep-price').onclick=()=>{el('restock-price').value=items.find(p=>p.id===el('restock-id').value).precio;restockPreview();};
   el('restock-close').onclick=()=>el('restock-dialog').close();
-  el('restock-form').onsubmit=async e=>{e.preventDefault();if(!restockPreview()||saving)return;const input={lot:el('restock-lot').value,expiry:el('restock-expiry').value,receivedContent:Number(el('restock-size').value),supplier:el('restock-supplier').value,document:el('restock-document').value,purchaseDate:el('restock-date').value,extraCost:Number(el('restock-extra').value),id:el('restock-id').value,packages:Number(el('restock-count').value),units:Number(el('restock-units').value),cost:Number(el('restock-cost').value),discount:Number(el('restock-discount').value),price:Number(el('restock-price').value)};const signature=JSON.stringify(input);if(restockAttempt?.signature!==signature)restockAttempt={signature,requestId:crypto.randomUUID()};saving=true;e.submitter.disabled=true;try{const result=await Cloud.api('restock',{restock:{...input,requestId:restockAttempt.requestId}});applyCloud(result);el('restock-dialog').close();restockAttempt=null;showToast('Stock repuesto','Compra guardada. Stock, precio de venta e historial actualizados.');}catch(err){el('restock-status').textContent=err.message;}finally{saving=false;e.submitter.disabled=false;}};
-
+  el('restock-form').onsubmit=async e=>{
+    e.preventDefault();if(!restockPreview()||saving)return;
+    const purchaseMode=el('restock-price-mode').value;
+    const input={
+      lot:el('restock-lot').value,expiry:el('restock-expiry').value,receivedContent:Number(el('restock-size').value),
+      supplier:el('restock-supplier').value,document:el('restock-document').value,purchaseDate:el('restock-date').value,
+      extraCost:Number(el('restock-extra').value),id:el('restock-id').value,
+      packages:Number(el('restock-count').value),units:Number(el('restock-units').value),purchaseMode,
+      price:Number(el('restock-price').value)
+    };
+    if(purchaseMode==='total'){input.grossTotal=Number(el('restock-gross-total').value);input.discountTotal=Number(el('restock-discount-total').value);}
+    else{input.cost=Number(el('restock-cost').value);input.discount=Number(el('restock-discount').value);}
+    const signature=JSON.stringify(input);if(restockAttempt?.signature!==signature)restockAttempt={signature,requestId:crypto.randomUUID()};
+    saving=true;e.submitter.disabled=true;
+    try{
+      const result=await Cloud.api('restock',{restock:{...input,requestId:restockAttempt.requestId}});
+      applyCloud(result);el('restock-dialog').close();restockAttempt=null;
+      showToast('Stock repuesto','Compra guardada. Stock, precio de venta e historial actualizados.');
+    }catch(err){el('restock-status').textContent=err.message;}finally{saving=false;e.submitter.disabled=false;}
+  };
 
   let priceChart=null;
   function refreshPriceProducts(){const selected=el('report-product').value;el('report-product').replaceChildren(new Option('Todos los productos','all'));items.forEach(p=>el('report-product').add(new Option(p.sku+' · '+p.nombre,p.id)));if([...el('report-product').options].some(o=>o.value===selected))el('report-product').value=selected;}
