@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';import vm f
 const html=(readFileSync(new URL('../public/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../public/app.js',import.meta.url),'utf8'));const functions=html.slice(html.indexOf('  function openRestock('),html.indexOf("  ['restock-extra'"));const math=html.slice(html.indexOf('  function packageMath('),html.indexOf('  function packPreview('));
 function setup(){const elements={},el=id=>elements[id]??={value:'',textContent:'',focus(){},showModal(){this.open=true;}},product={id:'a',sku:'A',nombre:'Mayonesa',precio:20,lastPurchaseCost:17};const ctx=vm.createContext({limaDay:()=>"2026-11-16",el,items:[product],calc:()=>({stock:5}),getConsumoElaborados:()=>({}),money:v=>'S/ '+Number(v).toFixed(2)});vm.runInContext(math+functions,ctx);return {ctx,el,product};}
 test('reposición pide costo nuevo y precio nuevo, conserva anteriores como referencia',()=>{const {ctx,el,product}=setup();ctx.product=product;vm.runInContext('openRestock(product)',ctx);assert.equal(el('restock-cost').value,'');assert.equal(el('restock-price').value,20);assert.equal(el('restock-price-mode').value,'total');assert.equal(el('restock-gross-total').value,'');assert.match(el('restock-previous').textContent,/17.00/);assert.match(el('restock-previous').textContent,/20.00/);assert.equal(el('restock-units-label').hidden,true);});
-test('resumen claro de compra por paquete y stock después',()=>{const {ctx,el}=setup();for(const [id,value] of Object.entries({'restock-id':'a','restock-mode':'packages','restock-price-mode':'total','restock-count':'2','restock-units':'10','restock-gross-total':'400','restock-discount-total':'40','restock-price':'25','restock-margin':'25'}))el(id).value=value;const result=vm.runInContext('restockPreview()',ctx);assert.equal(result.qty,20);assert.equal(result.total,360);assert.match(el('restock-preview').textContent,/Stock después 25/);assert.match(el('restock-preview').textContent,/Precio de venta S\/ 25.00/);});
+test('resumen claro de compra por paquete y stock después',()=>{const {ctx,el}=setup();for(const [id,value] of Object.entries({'restock-id':'a','restock-mode':'packages','restock-price-mode':'total','restock-count':'2','restock-units':'10','restock-gross-total':'400','restock-discount-choice':'yes','restock-discount-total':'40','restock-price':'25','restock-margin':'25'}))el(id).value=value;const result=vm.runInContext('restockPreview()',ctx);assert.equal(result.qty,20);assert.equal(result.total,360);assert.match(el('restock-preview').textContent,/Stock después 25/);assert.match(el('restock-preview').textContent,/Precio de venta S\/ 25.00/);});
 
 test('modo tradicional sigue calculando costo y descuento por paquete',()=>{
  const {ctx,el}=setup();
@@ -11,4 +11,20 @@ test('modo tradicional sigue calculando costo y descuento por paquete',()=>{
  assert.equal(result.qty,20);assert.equal(result.total,360);assert.equal(result.unit,18);
  assert.equal(el('restock-total-fields').hidden,true);
  assert.equal(el('restock-unit-fields').hidden,false);
+});
+
+test('sin descuento permite opción No aplica y cálculo con descuento cero',()=>{
+ const {ctx,el}=setup();
+ for(const [id,value] of Object.entries({'restock-id':'a','restock-price-mode':'total','restock-discount-choice':'none','restock-mode':'units','restock-count':'4','restock-gross-total':'39.60','restock-discount-total':'99','restock-price':'20','restock-margin':'25'}))el(id).value=value;
+ const result=vm.runInContext('restockPreview()',ctx);
+ assert.equal(result.total,39.60);assert.equal(result.qty,4);
+ assert.equal(el('restock-discount-total-label').hidden,true);
+ assert.equal(el('restock-discount-total').disabled,true);
+});
+test('descuento global opcional acepta explícitamente S/ 0.00',()=>{
+ const {ctx,el}=setup();
+ for(const [id,value] of Object.entries({'restock-id':'a','restock-price-mode':'total','restock-discount-choice':'yes','restock-mode':'units','restock-count':'2','restock-gross-total':'30','restock-discount-total':'0','restock-price':'20','restock-margin':'25'}))el(id).value=value;
+ const result=vm.runInContext('restockPreview()',ctx);
+ assert.equal(result.total,30);
+ assert.equal(el('restock-discount-total-label').hidden,false);
 });
