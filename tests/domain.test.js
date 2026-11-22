@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {empty,normalize,sell,prepare,publicState,stock,unitCost} from '../lib/domain.js';
+import test from 'node:test';import assert from 'node:assert/strict';import {empty,normalize,sell,prepare,publicState,stock,unitCost,secureSave} from '../lib/domain.js';
 const admin={id:'a',name:'Admin',role:'admin'},seller={id:'v',name:'Vendedor',role:'seller'},policy={admin:100,seller:5};
 const source=()=>({...empty(),items:[{id:'bread',sku:'PAN',nombre:'Pan',tipo:'producto',precio:2,unidadesCompradas:48,costoTotal:48,vendidos:0},{id:'meat',sku:'CARNE',nombre:'Carne',tipo:'producto',precio:3,unidadesCompradas:24,costoTotal:48,vendidos:0},{id:'recipe',sku:'HAMB',nombre:'Hamburguesa',tipo:'elaborado',precio:10,vendidos:0,recipeYield:24,ingredientes:[{idInsumo:'bread',cantidad:24},{idInsumo:'meat',cantidad:24}]}]});
 const production=(qty=24,id='11111111-1111-1111-1111-111111111111')=>({id:'recipe',qty,requestId:id});const sale=(extra={})=>({requestId:'22222222-2222-2222-2222-222222222222',lines:[{id:'recipe',qty:1}],payMethod:'Efectivo',cash:100,discount:0,...extra});
@@ -75,4 +75,27 @@ test('paquetes y descuento total sin redondeo intermedio conservan centavos',()=
 test('descuento total superior al subtotal se rechaza sin modificar inventario',()=>{
  
  assert.throws(()=>restock(source(),{id:'bread',packages:4,units:12,purchaseMode:'total',grossTotal:39.60,discountTotal:40,price:2,requestId:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'},admin),/subtotal y descuento global/i);
+});
+
+test('nuevo producto registra descuento global y costo neto con historial trazable',()=>{
+ const product={id:'nuevo-1',sku:'NVO-1',nombre:'Galletas',tipo:'producto',precio:2,unidadesCompradas:20,costoTotal:12.9,vendidos:0,initialPurchase:{qty:20,grossTotal:13.9,discountTotal:1,netTotal:12.9,discountMode:'global'}};
+ const saved=secureSave(empty(),{...empty(),items:[product]},admin);
+ assert.equal(saved.items[0].costoTotal,12.9);
+ assert.equal(saved.items[0].inventoryValue,12.9);
+ assert.equal(saved.items[0].priceHistory[0].grossTotal,13.9);
+ assert.equal(saved.items[0].priceHistory[0].discountTotal,1);
+ assert.equal(saved.items[0].priceHistory[0].unitCost,12.9/20);
+ assert.equal(saved.items[0].initialPurchase,undefined);
+});
+test('nuevo producto acepta descuento por unidad, incluido cero',()=>{
+ const item={id:'nuevo-2',sku:'NVO-2',nombre:'Bebidas',tipo:'producto',precio:5,unidadesCompradas:10,costoTotal:37,vendidos:0,initialPurchase:{qty:10,grossTotal:40,discountTotal:3,netTotal:37,discountMode:'unit'}};
+ const saved=secureSave(empty(),{...empty(),items:[item]},admin);
+ assert.equal(saved.items[0].priceHistory[0].discountTotal,3);
+ const noDiscount={...item,id:'nuevo-3',sku:'NVO-3',costoTotal:40,initialPurchase:{qty:10,grossTotal:40,discountTotal:0,netTotal:40,discountMode:'none'}};
+ const clean=secureSave(empty(),{...empty(),items:[noDiscount]},admin);
+ assert.equal(clean.items[0].priceHistory[0].discountTotal,0);
+});
+test('rechaza descuentos falsos o superiores al total en alta inicial',()=>{
+ const product={id:'nuevo-4',sku:'NVO-4',nombre:'Bebida',tipo:'producto',precio:5,unidadesCompradas:10,costoTotal:10,vendidos:0,initialPurchase:{qty:10,grossTotal:40,discountTotal:50,netTotal:10,discountMode:'global'}};
+ assert.throws(()=>secureSave(empty(),{...empty(),items:[product]},admin),/descuento inicial/i);
 });
