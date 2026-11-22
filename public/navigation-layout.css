@@ -147,3 +147,13 @@
 [data-theme="dark"] #business-tools .cash-quick-panel{background:linear-gradient(135deg,#123e37,#0c302b);border-color:#316c5d}
 [data-theme="dark"] #business-tools .cash-quick-header h3{color:#ecfff7}
 [data-theme="dark"] #business-tools .cash-quick-header p,#business-tools .cash-quick-form label{color:#c1ded4}
+
+/* Inventario previsto en el ticket de venta: se actualiza sin descontar stock hasta cobrar */
+#cart-items .cart-stock-balance{margin-top:5px;font-size:11.5px;line-height:1.4;font-weight:700;padding:4px 7px;border-radius:7px;display:inline-block;max-width:100%;white-space:normal}
+#cart-items .cart-stock-balance.is-ok{background:#e7f8ef;color:#116b47}
+#cart-items .cart-stock-balance.is-zero{background:#fff3d8;color:#995c00}
+#cart-items .cart-stock-balance.is-shortage{background:#ffebee;color:#ad2638}
+[data-theme="dark"] #cart-items .cart-stock-balance.is-ok{background:#173d2e;color:#b9f5d1}
+[data-theme="dark"] #cart-items .cart-stock-balance.is-zero{background:#42310c;color:#ffe1a2}
+[data-theme="dark"] #cart-items .cart-stock-balance.is-shortage{background:#441b26;color:#ffc9d1}
+@media(max-width:580px){#cart-items .cart-stock-balance{font-size:10.5px;padding:3px 5px}}
