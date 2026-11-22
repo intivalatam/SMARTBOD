@@ -2095,6 +2095,9 @@
   }
   function restockPreview(){
     const weightMode=el('restock-mode').value==='weight';
+    const physicalWeight=items.find(p=>p.id===el('restock-id').value);
+    const standardSizeLabel=el('restock-size-label');
+    standardSizeLabel.hidden=weightMode||!(physicalWeight?.consumptionMode==='measure'||['kg','L'].includes(physicalWeight?.saleUnit));
     const byUnit=el('restock-mode').value!=='packages';
     const product=items.find(p=>p.id===el('restock-id').value);
     const reference=stockKilogramReference(product);
