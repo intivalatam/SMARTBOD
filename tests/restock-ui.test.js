@@ -31,7 +31,7 @@ test('descuento global opcional acepta explícitamente S/ 0.00',()=>{
 
 test('reposición por bolsa de 3 kg muestra kg y equivalencia sin borrar stock previo',()=>{
  const {ctx,el,product}=setup();
- product.weightBaseKg=3;product.nombre='Maiz popcorn';
+ product.weightBaseKg=3;product.nombre='Maiz popcorn';ctx.product=product;
  vm.runInContext('openRestock(product)',ctx);
  for(const [id,value] of Object.entries({'restock-id':'a','restock-mode':'weight','restock-count':'1','restock-weight-kg':'3','restock-gross-total':'19.50','restock-price-mode':'total','restock-margin':'25'}))el(id).value=value;
  const result=vm.runInContext('restockPreview()',ctx);
@@ -41,7 +41,7 @@ test('reposición por bolsa de 3 kg muestra kg y equivalencia sin borrar stock p
  assert.equal(el('restock-weight-label').hidden,false);
 });
 test('bolsa de 5 kg exige confirmar equivalencia cuando existe stock antiguo',()=>{
- const {ctx,el,product}=setup();product.nombre='Maiz popcorn';
+ const {ctx,el,product}=setup();product.nombre='Maiz popcorn';ctx.product=product;
  vm.runInContext('openRestock(product)',ctx);
  for(const [id,value] of Object.entries({'restock-id':'a','restock-mode':'weight','restock-count':'1','restock-weight-kg':'5','restock-base-kg':'3','restock-gross-total':'30','restock-price-mode':'total','restock-margin':'25'}))el(id).value=value;
  assert.equal(vm.runInContext('restockPreview()',ctx),null);
