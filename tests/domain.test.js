@@ -55,3 +55,24 @@ test('rendimiento de envase cero rechazado',()=>{const s=creams();s.items[1].ing
 test('guardar rendimiento y preparar es una sola operación',()=>{const s=creams();s.items[1].recipeYield=1;const a=prepare(s,{...production(),recipePatch:{recipeYield:24,precio:10,ingredientes:[{idInsumo:'mayo',cantidad:1}]}},admin);assert.equal(a.items[1].recipeYield,24);assert.equal(a.items[1].preparedStock,24);assert.equal(a.items[0].consumed,1);assert.equal(s.items[1].recipeYield,1);});
 test('fallo al preparar no guarda cambios parciales de receta',()=>{const s=creams();const req={...production(),recipePatch:{recipeYield:24,ingredientes:[{idInsumo:'mayo',cantidad:2}]}};assert.throws(()=>prepare(s,req,admin),/Stock insuficiente/);assert.equal(s.items[1].ingredientes[0].cantidad,1);assert.equal(s.items[1].preparedStock,undefined);});
 test('reintento con cambios de receta conserva un único lote',()=>{const req={...production(),recipePatch:{recipeYield:24,ingredientes:[{idInsumo:'mayo',cantidad:1}]}};const a=prepare(creams(),req,admin),b=prepare(a,req,admin);assert.deepEqual(a,b);});
+
+test('compra por importe total aplica descuento global y calcula costo unitario exacto',()=>{
+ 
+ const request={id:'bread',packages:24,units:1,purchaseMode:'total',grossTotal:86.40,discountTotal:17.28,price:5,requestId:'88888888-8888-8888-8888-888888888888'};
+ const result=restock(source(),request,admin),product=result.items.find(p=>p.id==='bread');
+ assert.equal(product.unidadesCompradas,72);
+ assert.ok(Math.abs(product.lastPurchaseCost-2.88)<1e-10);
+ assert.equal(result.kardex[0].amount,69.12);
+ assert.equal(product.priceHistory.at(-1).grossTotal,86.40);
+ assert.equal(product.priceHistory.at(-1).discountTotal,17.28);
+ assert.deepEqual(restock(result,request,admin),result);
+});
+test('paquetes y descuento total sin redondeo intermedio conservan centavos',()=>{
+ 
+ const r=restock(source(),{id:'bread',packages:4,units:12,purchaseMode:'total',grossTotal:39.60,discountTotal:0,price:2,requestId:'99999999-9999-9999-9999-999999999999'},admin);
+ assert.equal(r.kardex[0].qty,48);assert.equal(r.kardex[0].amount,39.60);
+});
+test('descuento total superior al subtotal se rechaza sin modificar inventario',()=>{
+ 
+ assert.throws(()=>restock(source(),{id:'bread',packages:4,units:12,purchaseMode:'total',grossTotal:39.60,discountTotal:40,price:2,requestId:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'},admin),/subtotal y descuento global/i);
+});
