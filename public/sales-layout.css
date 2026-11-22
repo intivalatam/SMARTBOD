@@ -34,3 +34,60 @@ img[src^="/assets/productos/"] {
   box-sizing: border-box;
   padding: 5px;
 }
+
+/* Ticket POS compacto: acciones siempre accesibles sin reducir la legibilidad */
+#v-pos .pos-cart{position:sticky;top:8px;max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden;border-radius:15px}
+#v-pos .cart-header{padding:11px 14px;gap:8px;min-height:0;flex:0 0 auto;align-items:center}
+#v-pos .cart-header h2{font-size:21px;line-height:1.12;margin:2px 0 0}
+#v-pos .ticket-eyebrow{font-size:9px;letter-spacing:.10em}
+#v-pos .cart-header small{font-size:11px;line-height:1.2;display:block;margin-top:3px}
+#v-pos .cart-header .btn{min-height:34px;padding:6px 10px;font-size:12px}
+#v-pos .cart-items{min-height:0;max-height:none;flex:1 1 auto;padding:8px 12px;gap:5px;overflow-y:auto;overscroll-behavior:contain}
+#v-pos .cart-items:has(> .empty-state){flex:0 0 auto;padding:9px 12px}
+#v-pos .cart-items .empty-state{font-size:12px;line-height:1.4;padding:9px 7px!important;margin:0}
+#v-pos .cart-checkout-box{padding:10px 12px;gap:8px;min-height:0;flex:0 0 auto}
+#v-pos .cart-checkout-box>.row-inputs{grid-template-columns:minmax(0,1.25fr) minmax(102px,.75fr)!important;gap:8px}
+#v-pos .cart-checkout-box .input-group{gap:3px;min-width:0}
+#v-pos .cart-checkout-box label{font-size:10px;line-height:1.3;font-weight:750;letter-spacing:.02em}
+#v-pos .cart-checkout-box input,#v-pos .cart-checkout-box select{padding:7px 9px;font-size:12px;min-height:36px;height:36px}
+#v-pos .pos-event-help{font-size:10px;line-height:1.2;margin:2px 0 0}
+#v-pos .pos-optional{border:1px solid var(--line);border-radius:8px;min-width:0}
+#v-pos .pos-optional>summary{cursor:pointer;font-size:11px;font-weight:700;color:var(--ink-2);padding:5px 10px;line-height:1.4}
+#v-pos .pos-optional[open]{padding-bottom:8px}
+#v-pos .pos-optional[open]>label,#v-pos .pos-optional[open]>input{display:block;margin:4px 10px;width:calc(100% - 20px)}
+#v-pos .pay-methods{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+#v-pos .pay-btn{min-height:35px;padding:6px 2px;font-size:11px;line-height:1.15;white-space:normal}
+#v-pos .pos-payment-extras{display:grid;gap:5px;min-width:0}
+#v-pos .pos-payment-extras[hidden],#v-pos #split-payments[hidden]{display:none!important}
+#v-pos .pos-payment-extras #split-payments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+#v-pos .pos-payment-extras #split-payments p{grid-column:1/-1;font-size:10px;margin:0}
+#v-pos .pos-payment-extras #split-payments label{min-width:0}
+#v-pos #cash-calc-section{gap:5px!important}
+#v-pos #cash-calc-section .row-inputs{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px}
+#v-pos #cash-calc-section #pos-change-val{padding:7px 9px!important;min-height:36px;display:flex;align-items:center;font-size:15px!important}
+#v-pos .quick-cash{gap:4px;flex-wrap:nowrap}
+#v-pos .quick-cash button{min-width:0;padding:5px 2px;font-size:10px;min-height:29px}
+#v-pos .pos-checkout-footer{display:grid;gap:7px;border-top:1px solid var(--line);padding-top:7px}
+#v-pos .pos-total-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#v-pos .pos-total-row>span:first-child{font-size:12px!important;font-weight:800}
+#v-pos #cart-total-val{font-size:23px!important;line-height:1.1;white-space:nowrap}
+#v-pos #btn-process-sale{width:100%;min-height:42px;font-size:13px!important;font-weight:750;padding:9px 11px!important}
+@media(max-height:760px){
+ #v-pos .cart-header{padding:8px 12px}
+ #v-pos .cart-header small{display:none}
+ #v-pos .cart-checkout-box{gap:6px;padding:8px 11px}
+ #v-pos .pos-event-help{display:none}
+ #v-pos .pay-btn{min-height:32px}
+ #v-pos .pos-optional>summary{padding:4px 9px}
+ #v-pos .cart-items:has(> .empty-state){padding:5px 11px}
+ #v-pos .cart-items .empty-state{padding:5px!important}
+}
+@media(max-width:760px){
+ #v-pos .pos-cart{position:relative;top:auto;max-height:min(780px,calc(100dvh - 12px));}
+ #v-pos .cart-checkout-box{overflow-y:auto}
+ #v-pos .pos-checkout-footer{position:sticky;bottom:0;background:var(--surface-2);padding-bottom:3px;z-index:1}
+}
+@media(max-width:420px){
+ #v-pos .cart-checkout-box>.row-inputs{grid-template-columns:minmax(0,1fr) minmax(100px,.65fr)!important}
+ #v-pos .pay-btn{font-size:10px}
+}
