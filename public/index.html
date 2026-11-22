@@ -288,14 +288,19 @@
         <div class="cart-checkout-box">
           <div class="row-inputs">
             <div class="input-group">
-              <label for="pos-event">Destino de la venta</label><select id="pos-event"><option value="">Venta diaria / local</option></select><p class="sub-t">Solo aparecen eventos habilitados para hoy (hora de Lima).</p><label for="pos-client">Cliente / DNI (Opcional)</label>
-              <input type="text" id="pos-client" placeholder="Cliente General">
+              <label for="pos-event">Destino de la venta</label><select id="pos-event"><option value="">Venta diaria / local</option></select><p class="sub-t pos-event-help">Eventos habilitados para hoy (Lima).</p>
             </div>
             <div class="input-group">
               <label for="pos-discount">Descuento (S/)</label>
               <input type="number" aria-describedby="discount-policy-note" id="pos-discount" value="0" min="0" step="0.5">
             </div>
           </div>
+
+          <details class="pos-optional" id="pos-optional">
+            <summary>Cliente / DNI (opcional)</summary>
+            <label for="pos-client">Cliente o DNI</label>
+            <input type="text" id="pos-client" placeholder="Cliente General">
+          </details>
 
           <div class="input-group">
             <label>Método de Pago</label>
@@ -327,14 +332,16 @@
             </div>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: baseline; padding-top: 6px; border-top: 1px solid var(--line);">
+          <div class="pos-checkout-footer">
+            <div class="pos-total-row">
             <span style="font-weight:700; font-size:15px;">TOTAL A COBRAR:</span>
             <span id="cart-total-val" style="font-family:var(--font-display); font-size: 26px; font-weight: 700; color: var(--accent);">S/ 0.00</span>
           </div>
 
-          <button type="button" class="btn" style="width: 100%; font-size: 15px; padding: 14px;" id="btn-process-sale">
-            Confirmar venta y emitir ticket
-          </button>
+            <button type="button" class="btn" id="btn-process-sale">
+              Confirmar venta y emitir ticket
+            </button>
+          </div>
         </div>
       </div>
       <div class="pos-products">
