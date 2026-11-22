@@ -153,6 +153,14 @@
             </div>
           </div>
 
+          <div class="report-controls">
+            <label>Descuento de esta compra
+              <select id="sf-discount-mode"><option value="none">No aplica (S/ 0.00)</option><option value="global">Descuento global de este producto</option><option value="unit">Descuento por unidad</option></select>
+            </label>
+            <label id="sf-discount-label" hidden>Importe del descuento (S/)
+              <input id="sf-discount-amount" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+            </label>
+          </div>
           <div id="sf-preview-margin" style="font-size:12px; color:var(--ink-2); background:var(--surface); padding:8px 10px; border-radius:6px; border:1px solid var(--line);">
             Costo unitario estimado: <b>S/ 0.00</b> · Ganancia por unidad: <b>S/ 0.00</b>
           </div>
@@ -557,6 +565,23 @@
         <input type="number" id="mp-price" value="4.50" min="0" step="0.1">
       </div>
     </div>
+    <section class="panel" id="mp-purchase-discount-panel" style="margin-top:10px;">
+      <h4>Descuento de esta compra</h4>
+      <p class="sub-t">El costo total indicado arriba es ANTES del descuento. Puedes aplicar un descuento a todas las unidades, por unidad, o ninguno.</p>
+      <div class="report-controls">
+        <label for="mp-discount-mode">Descuento aplicado
+          <select id="mp-discount-mode">
+            <option value="none">No aplica (S/ 0.00)</option>
+            <option value="global">Descuento global de este producto</option>
+            <option value="unit">Descuento por unidad</option>
+          </select>
+        </label>
+        <label id="mp-discount-label" hidden>Importe del descuento (S/)
+          <input id="mp-discount-amount" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+        </label>
+      </div>
+      <p id="mp-discount-preview" class="help-note" role="status"></p>
+    </section>
     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
       <button type="button" class="btn ghost" id="btn-cancel-prod-modal">Cancelar</button>
       <button type="button" class="btn" id="btn-save-prod-modal">💾 Guardar Producto</button>
