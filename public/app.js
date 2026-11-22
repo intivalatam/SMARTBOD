@@ -1,5 +1,5 @@
 (async function () {
-  const {purchaseCost,quantityLabel,content,ingredient,recipeNeeds,sellable}=await import("/inventory-math.js");
+  const {purchaseCost,quantityLabel,content,ingredient,recipeNeeds,sellable,ticketRemaining}=await import("/inventory-math.js");
   const boot=await Cloud.start();
   let cloudRevision=boot.revision;
   const memory=new Map();
@@ -1049,12 +1049,22 @@
     } else {
       cart.forEach((c, idx) => {
         const line = num(c.item.precio) * c.qty;
+        const projected = ticketRemaining(items,cart,c.item.id);
+        const product = items.find(p=>p.id===c.item.id)||c.item;
+        const balanceLabel = value=>product.tipo==='elaborado'
+          ? Number(value.toFixed(3)).toLocaleString('es-PE')+' porciones'
+          : quantityLabel(product,value);
+        const availability = projected
+          ? 'Disponibles: '+balanceLabel(projected.available)+' · Quedarían: '+balanceLabel(projected.remaining)
+          : 'Stock no disponible: actualiza los datos';
+        const balanceClass = projected?.shortage?'is-shortage':projected?.remaining<=0?'is-zero':'is-ok';
         const div = document.createElement('div');
         div.style.cssText = "display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--line); padding-bottom:8px; gap:8px;";
         div.innerHTML = `
-          <div style="flex:1;">
+          <div style="flex:1;min-width:0;">
             <div style="font-weight:600;font-size:13px;">${esc(c.item.nombre)}</div>
             <div style="font-size:11px;color:var(--muted);">${money(num(c.item.precio))} c/u</div>
+            <div class="cart-stock-balance ${balanceClass}" role="status" aria-live="polite">${esc(availability)}</div>
           </div>
           <div style="display:flex; align-items:center; gap:4px;">
             <button type="button" class="btn ghost small btn-cart-dec" data-idx="${idx}" style="padding:3px 8px;">-</button>
