@@ -99,3 +99,34 @@ test('rechaza descuentos falsos o superiores al total en alta inicial',()=>{
  const product={id:'nuevo-4',sku:'NVO-4',nombre:'Bebida',tipo:'producto',precio:5,unidadesCompradas:10,costoTotal:10,vendidos:0,initialPurchase:{qty:10,grossTotal:40,discountTotal:50,netTotal:10,discountMode:'global'}};
  assert.throws(()=>secureSave(empty(),{...empty(),items:[product]},admin),/descuento inicial/i);
 });
+
+test('reposición por bolsa de 1, 3 o 5 kg convierte según referencia comprobada',()=>{
+ const orig={...empty(),items:[{id:'maiz',sku:'MAIZ',nombre:'Maíz popcorn',tipo:'producto',precio:7,unidadesCompradas:1,costoTotal:9,vendidos:0,consumed:0.5}]};
+ const req=(kg,stamp,extra={})=>({id:'maiz',packages:1,units:1,purchaseModeWeight:'kg',purchaseWeightKg:kg,purchaseMode:'total',grossTotal:kg*7,discountTotal:0,price:7,requestId:stamp,...extra});
+ assert.throws(()=>restock(orig,req(3,'00000000-0000-4000-8000-000000000101',{weightBaseKg:3}),admin),/Confirma cuántos kg/);
+ const first=restock(orig,req(3,'00000000-0000-4000-8000-000000000101',{weightBaseKg:3,confirmWeightBase:true}),admin);
+ assert.equal(first.items[0].weightBaseKg,3);
+ assert.equal(stock(first.items[0]),1.5);
+ assert.equal(first.kardex[0].qty,1);
+ assert.equal(first.items[0].priceHistory.at(-1).purchaseTotalKg,3);
+ const second=restock(first,req(5,'00000000-0000-4000-8000-000000000102'),admin);
+ assert.ok(Math.abs(stock(second.items[0])-(1.5+5/3))<1e-10);
+ assert.ok(Math.abs(second.kardex[0].qty-5/3)<1e-10);
+ assert.equal(second.kardex[0].amount,35);
+ const third=restock(second,req(1,'00000000-0000-4000-8000-000000000103'),admin);
+ assert.ok(Math.abs(stock(third.items[0])-(1.5+6/3))<1e-10);
+ assert.equal(third.items[0].priceHistory.at(-1).purchaseTotalKg,1);
+ assert.deepEqual(restock(third,req(1,'00000000-0000-4000-8000-000000000103'),admin),third);
+});
+test('productos medidos en gramos usan su contenido anterior como referencia',()=>{
+ const source={...empty(),items:[{id:'m',sku:'MAIZM',nombre:'Maíz',tipo:'producto',precio:9,unidadesCompradas:1,costoTotal:15,vendidos:0,consumptionMode:'measure',contentUnit:'kg',contentAmount:3,doseUnit:'g',doseAmount:100}]};
+ const changed=restock(source,{id:'m',packages:1,units:1,purchaseModeWeight:'kg',purchaseWeightKg:5,purchaseMode:'total',grossTotal:25,discountTotal:0,price:9,requestId:'00000000-0000-4000-8000-000000000104'},admin);
+ assert.ok(Math.abs(changed.kardex[0].qty-5/3)<1e-10);
+ assert.equal(changed.items[0].priceHistory.at(-1).weightBaseKg,3);
+});
+test('rechaza pesos inválidos y no infla inventario',()=>{
+ const source={...empty(),items:[{id:'m',sku:'MAIZI',nombre:'Maíz',tipo:'producto',precio:9,unidadesCompradas:1,costoTotal:15,vendidos:0,weightBaseKg:3}]};
+ const request={id:'m',packages:1,units:1,purchaseModeWeight:'kg',purchaseWeightKg:0,purchaseMode:'total',grossTotal:25,discountTotal:0,price:9,requestId:'00000000-0000-4000-8000-000000000105'};
+ assert.throws(()=>restock(source,request,admin),/peso por bolsa/i);
+ assert.equal(source.items[0].unidadesCompradas,1);
+});
